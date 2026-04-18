@@ -1,4 +1,4 @@
-<![CDATA[# Lab 01: Mapping a Software Delivery Pipeline
+# Lab 01: Mapping a Software Delivery Pipeline
 
 ## 🎯 Objective
 
@@ -223,4 +223,4 @@ You've completed this lab successfully when you can:
 ---
 
 [← Back to Module README](../README.md) | [Next Lab: DevOps Self-Assessment →](./lab-02-devops-self-assessment.md)
-]]>
+

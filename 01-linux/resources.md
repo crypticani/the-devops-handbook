@@ -1,4 +1,4 @@
-<![CDATA[# Module 01: Linux — Resources
+# Module 01: Linux — Resources
 
 Curated resources for mastering Linux, organized by topic and difficulty.
 
@@ -56,4 +56,4 @@ Curated resources for mastering Linux, organized by topic and difficulty.
 2. **Week 2**: Complete OverTheWire Bandit levels 0-15, practice permissions and process management
 3. **Ongoing**: Use `explainshell.com` for any command you don't understand
 4. **Reference**: Bookmark `crontab.guru` and `chmod calculator` — you'll use them regularly
-]]>
+

@@ -1,4 +1,4 @@
-<![CDATA[# Lab 01: Linux Filesystem Mastery
+# Lab 01: Linux Filesystem Mastery
 
 ## 🎯 Objective
 
@@ -357,4 +357,4 @@ You've completed this lab successfully when you can:
 ---
 
 [← Back to Module README](../README.md) | [Next Lab: Permissions & Users →](./lab-02-permissions-users.md)
-]]>
+

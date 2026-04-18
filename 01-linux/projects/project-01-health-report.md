@@ -1,4 +1,4 @@
-<![CDATA[# Project: Linux Server Health Report Generator
+# Project: Linux Server Health Report Generator
 
 ## 🎯 Problem Statement
 
@@ -253,4 +253,4 @@ A clean report showing system status with warnings highlights:
 ---
 
 [← Back to Module README](../README.md)
-]]>
+

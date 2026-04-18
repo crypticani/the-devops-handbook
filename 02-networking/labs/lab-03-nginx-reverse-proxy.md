@@ -1,4 +1,4 @@
-<![CDATA[# Lab 03: Nginx Reverse Proxy Setup
+# Lab 03: Nginx Reverse Proxy Setup
 
 ## 🎯 Objective
 
@@ -395,4 +395,4 @@ You've completed this lab when you can:
 ---
 
 [← Previous Lab](./lab-02-tcp-ports-connectivity.md) | [Back to Module README](../README.md)
-]]>
+

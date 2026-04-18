@@ -1,4 +1,4 @@
-<![CDATA[<div align="center">
+<div align="center">
 
 # 🛠️ The DevOps Handbook
 
@@ -340,4 +340,4 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 ⭐ If this helped you, consider starring the repo!
 
 </div>
-]]>
+

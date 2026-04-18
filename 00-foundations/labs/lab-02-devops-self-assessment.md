@@ -1,4 +1,4 @@
-<![CDATA[# Lab 02: DevOps Self-Assessment & Environment Setup
+# Lab 02: DevOps Self-Assessment & Environment Setup
 
 ## 🎯 Objective
 
@@ -321,4 +321,4 @@ chmod +x env-check.sh
 ---
 
 [← Previous Lab](./lab-01-mapping-delivery-pipeline.md) | [Back to Module README](../README.md)
-]]>
+

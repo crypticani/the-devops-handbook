@@ -1,4 +1,4 @@
-<![CDATA[# Module 02: Networking
+# Module 02: Networking
 
 > *"If you don't understand networking, every single production issue will confuse you. Networking is the circulatory system of every modern application."*
 
@@ -983,4 +983,4 @@ You now understand how data moves across networks and how to debug connectivity 
 [← Back to Linux](../01-linux/) | [Next: Git →](../03-git/)
 
 </div>
-]]>
+

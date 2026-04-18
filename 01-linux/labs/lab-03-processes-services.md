@@ -1,4 +1,4 @@
-<![CDATA[# Lab 03: Process Management & Systemd Services
+# Lab 03: Process Management & Systemd Services
 
 ## 🎯 Objective
 
@@ -509,4 +509,4 @@ pkill -f worker.sh 2>/dev/null
 ---
 
 [← Previous Lab](./lab-02-permissions-users.md) | [Next Lab: Text Processing & Log Analysis →](./lab-04-text-processing.md)
-]]>
+

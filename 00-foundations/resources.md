@@ -1,4 +1,4 @@
-<![CDATA[# Module 00: Foundations — Resources
+# Module 00: Foundations — Resources
 
 Curated learning resources, organized by type and difficulty.
 
@@ -57,4 +57,4 @@ For this module, prioritize:
 4. The Google **SRE Book Chapter 1** — understand SRE vs DevOps relationship
 
 Don't try to consume everything at once. Come back to these resources as you progress through later modules.
-]]>
+

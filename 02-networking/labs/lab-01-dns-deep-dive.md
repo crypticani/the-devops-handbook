@@ -1,4 +1,4 @@
-<![CDATA[# Lab 01: DNS Deep Dive
+# Lab 01: DNS Deep Dive
 
 ## 🎯 Objective
 
@@ -293,4 +293,4 @@ You've completed this lab when you can:
 ---
 
 [← Back to Module README](../README.md) | [Next Lab: TCP, Ports & Connectivity →](./lab-02-tcp-ports-connectivity.md)
-]]>
+

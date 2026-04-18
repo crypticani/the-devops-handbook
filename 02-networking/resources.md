@@ -1,4 +1,4 @@
-<![CDATA[# Module 02: Networking — Resources
+# Module 02: Networking — Resources
 
 Curated resources for mastering networking from a DevOps perspective.
 
@@ -67,4 +67,4 @@ Curated resources for mastering networking from a DevOps perspective.
 2. **Week 1**: Complete the TCP/IP and HTTP sections, practice with `curl` and `httpbin.org`
 3. **Practice daily**: Use `curl -v` for every HTTP request to understand what's happening
 4. **Reference**: Bookmark `httpstatuses.io` and the subnet calculator
-]]>
+

@@ -1,4 +1,4 @@
-<![CDATA[# Contributing to The DevOps Handbook
+# Contributing to The DevOps Handbook
 
 Thank you for your interest in contributing! This project aims to be the most comprehensive, practical DevOps learning resource available.
 
@@ -57,4 +57,4 @@ Be respectful, constructive, and focused on helping learners succeed.
 ## Questions?
 
 Open an issue with the `question` label if you're unsure about anything.
-]]>
+

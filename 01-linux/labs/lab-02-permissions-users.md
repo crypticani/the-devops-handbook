@@ -1,4 +1,4 @@
-<![CDATA[# Lab 02: Permissions, Users, and Security
+# Lab 02: Permissions, Users, and Security
 
 ## 🎯 Objective
 
@@ -397,4 +397,4 @@ You've completed this lab when you can:
 ---
 
 [← Previous Lab](./lab-01-filesystem-mastery.md) | [Next Lab: Process Management & Services →](./lab-03-processes-services.md)
-]]>
+

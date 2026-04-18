@@ -1,4 +1,4 @@
-<![CDATA[# Module 00: DevOps Foundations
+# Module 00: DevOps Foundations
 
 > *"DevOps is not a tool, a team, or a title. It's a culture of collaboration, automation, and continuous improvement."*
 
@@ -500,4 +500,4 @@ Linux is the backbone of DevOps. Almost every server, container, and CI/CD runne
 [← Back to Main README](../README.md) | [Next: Linux →](../01-linux/)
 
 </div>
-]]>
+

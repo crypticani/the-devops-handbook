@@ -1,4 +1,4 @@
-<![CDATA[# Module 01: Linux
+# Module 01: Linux
 
 > *"If you can't navigate Linux confidently, you cannot do DevOps. Period."*
 
@@ -1159,4 +1159,4 @@ You now have solid Linux fundamentals. Next, we tackle the network layer — und
 [← Back to Foundations](../00-foundations/) | [Next: Networking →](../02-networking/)
 
 </div>
-]]>
+

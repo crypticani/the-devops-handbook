@@ -1,4 +1,4 @@
-<![CDATA[# Lab 04: Text Processing & Log Analysis
+# Lab 04: Text Processing & Log Analysis
 
 ## 🎯 Objective
 
@@ -443,4 +443,4 @@ You've completed this lab when you can:
 ---
 
 [← Previous Lab](./lab-03-processes-services.md) | [Back to Module README](../README.md)
-]]>
+
