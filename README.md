@@ -54,8 +54,8 @@ This roadmap is **strictly ordered**. Do NOT skip ahead. Each module builds on t
  ┌─────────────────────┐        ┌─────────────────────┐        ┌─────────────────────┐
  │  00 Foundations      │        │  05 Docker           │        │  09 Cloud            │
  │  01 Linux            │───────▶│  06 CI/CD            │───────▶│  10 Terraform        │
- │  02 Networking       │        │  07 Observability ⚠️ │        │  11 Ansible          │
- │  03 Git              │        │  08 Logging ⚠️       │        │  12 Kubernetes       │
+ │  02 Networking       │        │  07 Observability    │        │  11 Ansible          │
+ │  03 Git              │        │  08 Logging          │        │  12 Kubernetes       │
  │  04 Scripting        │        └─────────────────────┘        └─────────────────────┘
  └─────────────────────┘                                                 │
                                                                          ▼
@@ -68,7 +68,7 @@ This roadmap is **strictly ordered**. Do NOT skip ahead. Each module builds on t
                                  └─────────────────────┘
 ```
 
-> ⚠️ **CRITICAL**: Observability & Logging are taught **before** Kubernetes, Terraform, and Ansible. You must understand how systems behave and how to debug failures **before** you automate or scale them.
+> **NOTE**: Observability & Logging are taught **before** Kubernetes, Terraform, and Ansible. You must understand how systems behave and how to debug failures **before** you automate or scale them.
 
 ---
 
