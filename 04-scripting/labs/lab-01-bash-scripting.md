@@ -9,7 +9,7 @@ Write production-grade Bash scripts for real DevOps tasks — deployment, health
 ## 📋 Prerequisites
 
 - Bash shell (Linux/WSL2/macOS)
-- ShellCheck installed: `sudo apt install -y shellcheck`
+- ShellCheck installed: `sudo apt install -y shellcheck` on Debian/Ubuntu or `sudo dnf install -y ShellCheck` on RHEL-compatible systems
 
 ---
 

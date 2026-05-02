@@ -76,6 +76,8 @@ COMPOSE
 docker compose up -d
 ```
 
+This local lab uses Ubuntu containers because they are lightweight and predictable. The same Ansible patterns apply to RHEL-compatible hosts; use `ansible_os_family` facts, `package`, `dnf`, or `yum` instead of hard-coding `apt`.
+
 ### Step 2: Create Inventory
 
 ```bash
@@ -116,8 +118,11 @@ ansible all -i inventory.ini -m ping
 # Check uptime on all hosts
 ansible all -i inventory.ini -m command -a "uptime"
 
-# Install curl on web servers only
+# Install curl on web servers only (Ubuntu lab containers)
 ansible webservers -i inventory.ini -m apt -a "name=curl state=present"
+
+# Cross-distro alternative for real mixed fleets
+ansible webservers -i inventory.ini -m package -a "name=curl state=present" --become
 
 # Check disk space
 ansible all -i inventory.ini -m command -a "df -h"
@@ -148,13 +153,14 @@ cat > webserver.yml << 'PLAYBOOK'
   gather_facts: true
 
   tasks:
-    - name: Update apt cache
+    - name: Update apt cache on Debian/Ubuntu
       apt:
         update_cache: true
         cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
 
-    - name: Install required packages
-      apt:
+    - name: Install required packages on any supported Linux family
+      package:
         name:
           - nginx
           - curl

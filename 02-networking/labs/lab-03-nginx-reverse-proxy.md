@@ -13,7 +13,8 @@ Set up Nginx as a reverse proxy — the standard production pattern used in near
 - `sudo` access
 
 ```bash
-sudo apt install -y nginx python3
+sudo apt install -y nginx python3       # Debian/Ubuntu
+sudo dnf install -y nginx python3       # RHEL-compatible
 ```
 
 ---
@@ -104,6 +105,14 @@ curl -s http://localhost:8080/health | python3 -m json.tool
 ### Step 2: Configure Nginx as Reverse Proxy
 
 ```bash
+# Debian/Ubuntu packages usually include sites-available/sites-enabled.
+# RHEL-compatible packages usually use /etc/nginx/conf.d/*.conf.
+# This lab uses the Debian-style layout; create it if your distro does not provide it.
+sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
+if ! sudo grep -q "sites-enabled" /etc/nginx/nginx.conf; then
+  echo 'include /etc/nginx/sites-enabled/*;' | sudo tee /etc/nginx/conf.d/00-sites-enabled.conf
+fi
+
 # Create Nginx configuration
 sudo tee /etc/nginx/sites-available/devops-lab << 'NGINX'
 # Reverse Proxy Configuration for DevOps Lab
@@ -408,4 +417,3 @@ You've completed this lab when you can:
 ---
 
 [← Previous Lab](./lab-02-tcp-ports-connectivity.md) | [Back to Module README](../README.md)
-

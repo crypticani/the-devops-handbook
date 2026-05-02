@@ -246,11 +246,21 @@ docker volume rm pgdata
 docker scout cves nginx:1.25 2>/dev/null || echo "Docker Scout not available"
 
 # Alternative: Trivy (popular open-source scanner)
-# Install Trivy
+# Install Trivy on Debian/Ubuntu
 sudo apt-get install -y wget apt-transport-https gnupg lsb-release
 wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
 echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
 sudo apt-get update && sudo apt-get install -y trivy
+
+# Install Trivy on RHEL-compatible systems
+sudo tee /etc/yum.repos.d/trivy.repo << 'REPO'
+[trivy]
+name=Trivy repository
+baseurl=https://aquasecurity.github.io/trivy-repo/rpm/releases/$releasever/$basearch/
+gpgcheck=0
+enabled=1
+REPO
+sudo dnf install -y trivy
 
 # Scan an image
 trivy image nginx:1.25

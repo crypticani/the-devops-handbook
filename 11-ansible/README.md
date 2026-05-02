@@ -104,10 +104,10 @@ HANDLER:        Task that runs only when notified (restart service)
 # pip (recommended)
 pip install ansible
 
-# Ubuntu/Debian
+# Debian/Ubuntu
 sudo apt update && sudo apt install ansible
 
-# Fedora
+# RHEL-compatible/Fedora
 sudo dnf install ansible
 
 # Verify
@@ -237,11 +237,20 @@ ansible web1 -i inventory.ini -m setup
         group: www-data
         mode: "0644"
 
-    - name: Ensure firewall allows HTTP
+    - name: Ensure firewall allows HTTP on Debian/Ubuntu
       ufw:
         rule: allow
         port: "80"
         proto: tcp
+      when: ansible_os_family == "Debian"
+
+    - name: Ensure firewall allows HTTP on RHEL-compatible systems
+      ansible.posix.firewalld:
+        service: http
+        permanent: true
+        immediate: true
+        state: enabled
+      when: ansible_os_family == "RedHat"
 ```
 
 ### Running Playbooks

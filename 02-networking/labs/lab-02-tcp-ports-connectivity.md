@@ -9,12 +9,13 @@ Master TCP connectivity testing, port scanning, and the debugging techniques you
 ## 📋 Prerequisites
 
 - Completed Lab 01 (DNS Deep Dive)
-- Ubuntu 22.04+ with `sudo` access
-- Nginx installed (`sudo apt install -y nginx`)
+- Debian/Ubuntu or RHEL-compatible Linux with `sudo` access
+- Nginx installed
 
 ```bash
 # Install required tools
-sudo apt install -y nginx netcat-openbsd curl net-tools nmap traceroute
+sudo apt install -y nginx netcat-openbsd curl net-tools nmap traceroute    # Debian/Ubuntu
+sudo dnf install -y nginx nmap-ncat curl net-tools nmap traceroute         # RHEL-compatible
 ```
 
 ---
@@ -301,9 +302,10 @@ watch -n 1 'ss -tnp | grep :80 | wc -l'
 
 ## 🔬 Exercise 5: Firewall Testing
 
-### Step 1: Test with UFW
+### Step 1: Test with UFW or firewalld
 
 ```bash
+# Debian/Ubuntu with UFW
 # Check firewall status
 sudo ufw status verbose
 
@@ -341,6 +343,19 @@ sudo ufw allow 80/tcp
 
 # Verify rule set
 sudo ufw status verbose
+
+# RHEL-compatible with firewalld
+sudo systemctl enable --now firewalld
+sudo firewall-cmd --permanent --add-service=ssh
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --reload
+sudo firewall-cmd --list-all
+
+# Block HTTP, then re-allow it
+sudo firewall-cmd --permanent --remove-service=http
+sudo firewall-cmd --reload
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --reload
 ```
 
 ### Step 2: Test Service on a Non-Standard Port
@@ -359,12 +374,14 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:8888
 
 # Add the rule
 sudo ufw allow 8888/tcp
+sudo firewall-cmd --permanent --add-port=8888/tcp && sudo firewall-cmd --reload
 
 # Now it would be accessible from outside too
 
 # Clean up
 kill $PID
 sudo ufw delete allow 8888/tcp
+sudo firewall-cmd --permanent --remove-port=8888/tcp && sudo firewall-cmd --reload
 ```
 
 ---
@@ -482,7 +499,7 @@ You've completed this lab when you can:
 - [ ] Measure request timing with `curl -w`
 - [ ] Use `traceroute` to trace the network path
 - [ ] Distinguish between "Connection refused" and "Connection timed out"
-- [ ] Debug firewall issues using `iptables` and `ufw`
+- [ ] Debug firewall issues using `iptables`, `ufw`, or `firewalld`
 - [ ] Write a basic health check script using `curl`
 
 ---
@@ -498,4 +515,3 @@ You've completed this lab when you can:
 ---
 
 [← Previous Lab](./lab-01-dns-deep-dive.md) | [Next Lab: Nginx Reverse Proxy Setup →](./lab-03-nginx-reverse-proxy.md)
-

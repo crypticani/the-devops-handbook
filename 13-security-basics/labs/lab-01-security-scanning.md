@@ -32,11 +32,21 @@ Treat the validation section as the minimum proof that the lab worked.
 ### Step 1: Install Trivy
 
 ```bash
-# Linux
+# Debian/Ubuntu
 sudo apt-get install wget apt-transport-https gnupg lsb-release
 wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
 echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee /etc/apt/sources.list.d/trivy.list
 sudo apt-get update && sudo apt-get install trivy
+
+# RHEL-compatible
+sudo tee /etc/yum.repos.d/trivy.repo << 'REPO'
+[trivy]
+name=Trivy repository
+baseurl=https://aquasecurity.github.io/trivy-repo/rpm/releases/$releasever/$basearch/
+gpgcheck=0
+enabled=1
+REPO
+sudo dnf install -y trivy
 
 # Or via Docker (no install needed)
 alias trivy="docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest"

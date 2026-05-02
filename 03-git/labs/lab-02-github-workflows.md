@@ -10,7 +10,7 @@ Practice the complete GitHub collaboration workflow — forking, branching, PRs,
 
 - GitHub account
 - Git configured with SSH keys
-- GitHub CLI (`gh`) installed: `sudo apt install -y gh && gh auth login`
+- GitHub CLI (`gh`) installed: `sudo apt install -y gh` on Debian/Ubuntu or `sudo dnf install -y gh` on RHEL-compatible systems, then `gh auth login`
 
 ---
 

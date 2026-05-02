@@ -315,6 +315,7 @@ git push origin main
 ```bash
 # Install GitHub CLI
 sudo apt install -y gh
+sudo dnf install -y gh
 
 # Authenticate
 gh auth login

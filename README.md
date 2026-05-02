@@ -78,7 +78,7 @@ This roadmap is **strictly ordered**. Do NOT skip ahead. Each module builds on t
 |---|--------|-------|-----------|
 | **Phase 1: Fundamentals** |||
 | 00 | [Foundations](./00-foundations/) | DevOps culture, SDLC, Agile, tooling overview | 1 week |
-| 01 | [Linux](./01-linux/) | Ubuntu, filesystem, processes, permissions, systemd | 2 weeks |
+| 01 | [Linux](./01-linux/) | Debian/Ubuntu and RHEL-family Linux, filesystem, processes, permissions, systemd | 2 weeks |
 | 02 | [Networking](./02-networking/) | TCP/IP, DNS, HTTP, firewalls, troubleshooting | 1.5 weeks |
 | 03 | [Git](./03-git/) | Version control, branching, PRs, Git workflows | 1 week |
 | 04 | [Scripting](./04-scripting/) | Bash scripting, Python basics for automation | 2 weeks |
@@ -108,7 +108,7 @@ We use a **specific, industry-relevant** stack throughout this handbook. No tool
 
 | Category | Tool(s) | Why |
 |----------|---------|-----|
-| **Operating System** | Ubuntu (Linux) | Industry standard for servers |
+| **Operating System** | Debian/Ubuntu + RHEL-compatible Linux | Both families are common in production: Ubuntu/Debian in cloud-native and developer-heavy environments; RHEL, Rocky, AlmaLinux, CentOS Stream, and Amazon Linux in enterprise/cloud estates |
 | **Version Control** | Git + GitHub | Universal adoption, GitHub Actions integration |
 | **Scripting** | Bash + Python | Bash for system tasks, Python for complex automation |
 | **Containers** | Docker + Docker Compose | Industry standard containerization |

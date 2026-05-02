@@ -545,9 +545,10 @@ curl -vI https://example.com 2>&1 | grep -A 5 "SSL certificate"
 
 ## 7. Firewalls and Network Security
 
-### UFW (Uncomplicated Firewall) — Ubuntu's Firewall
+### Host Firewalls: UFW and firewalld
 
 ```bash
+# Debian/Ubuntu commonly uses UFW
 # Check status
 sudo ufw status verbose
 
@@ -575,6 +576,23 @@ sudo ufw reset
 # Best practice: Default deny incoming
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
+
+# RHEL-compatible systems commonly use firewalld
+sudo systemctl enable --now firewalld
+
+# Common rules
+sudo firewall-cmd --permanent --add-service=ssh
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
+sudo firewall-cmd --permanent --add-port=8080/tcp
+
+# Allow PostgreSQL from an internal network only
+sudo firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="10.0.1.0/24" port protocol="tcp" port="5432" accept'
+
+# Remove a rule and reload
+sudo firewall-cmd --permanent --remove-port=8080/tcp
+sudo firewall-cmd --reload
+sudo firewall-cmd --list-all
 ```
 
 ### iptables (Lower Level — Know the Concept)
@@ -809,13 +827,15 @@ Client ── Nginx ────┼──── App Server 2 (10.0.1.11)
 ### ❌ Forgetting to Allow SSH Before Enabling Firewall
 
 ```bash
-# THIS LOCKS YOU OUT OF YOUR SERVER:
+# THIS CAN LOCK YOU OUT OF YOUR SERVER:
 sudo ufw enable         # Blocks everything, including SSH!
+sudo firewall-cmd --remove-service=ssh --permanent && sudo firewall-cmd --reload
 # You can never SSH back in. Server is lost.
 
 # CORRECT ORDER:
 sudo ufw allow 22/tcp   # Allow SSH first!
 sudo ufw enable          # Then enable firewall
+sudo firewall-cmd --permanent --add-service=ssh && sudo firewall-cmd --reload
 ```
 
 ### ❌ Using HTTP for Sensitive Data
@@ -831,9 +851,11 @@ Even internal services should use TLS in production.
 ```bash
 # BAD: Database accessible from anywhere
 sudo ufw allow 5432/tcp
+sudo firewall-cmd --permanent --add-port=5432/tcp
 
 # GOOD: Database only from application servers
 sudo ufw allow from 10.0.1.0/24 to any port 5432
+sudo firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="10.0.1.0/24" port protocol="tcp" port="5432" accept'
 ```
 
 ### ❌ Hardcoding IP Addresses

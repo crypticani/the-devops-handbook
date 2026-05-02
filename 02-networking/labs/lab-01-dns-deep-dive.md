@@ -14,7 +14,8 @@ Master DNS resolution, understand how domain names work in practice, and learn t
 
 ```bash
 # Install DNS tools if not present
-sudo apt install -y dnsutils net-tools
+sudo apt install -y dnsutils net-tools              # Debian/Ubuntu
+sudo dnf install -y bind-utils net-tools            # RHEL-compatible
 ```
 
 ---
@@ -306,4 +307,3 @@ You've completed this lab when you can:
 ---
 
 [← Back to Module README](../README.md) | [Next Lab: TCP, Ports & Connectivity →](./lab-02-tcp-ports-connectivity.md)
-

@@ -16,7 +16,7 @@ Thank you for your interest in contributing! This project aims to be the most co
 - Follow the existing lab format (Objective → Prerequisites → Steps → Validation → Cleanup)
 - Include expected output for every command
 - Add at least one "Break It" scenario
-- Test all steps on a fresh Ubuntu 22.04+ system
+- Test Linux-specific steps on a fresh Debian/Ubuntu system and a RHEL-compatible system when practical; otherwise clearly label the supported family
 - Use the rubric in [Practical Learning Guide](./PRACTICAL-LEARNING.md) to include evidence, validation, debugging, and cleanup expectations for completed modules
 
 #### New Projects

@@ -8,7 +8,7 @@ Navigate the Linux filesystem with confidence, understand the hierarchy, manage 
 
 ## 📋 Prerequisites
 
-- A Linux system (Ubuntu 22.04+ recommended, WSL2 works)
+- A Debian/Ubuntu or RHEL-compatible Linux system (Ubuntu, Debian, RHEL, Rocky, AlmaLinux, Amazon Linux; WSL2 works for most filesystem tasks)
 - Terminal access
 - No root access required except where `sudo` is specified
 
@@ -39,7 +39,8 @@ cd /
 ls -la
 
 # Use tree (install if needed)
-sudo apt install -y tree
+sudo apt install -y tree       # Debian/Ubuntu
+sudo dnf install -y tree       # RHEL-compatible
 tree -L 1 /
 ```
 
@@ -370,4 +371,3 @@ You've completed this lab successfully when you can:
 ---
 
 [← Back to Module README](../README.md) | [Next Lab: Permissions & Users →](./lab-02-permissions-users.md)
-

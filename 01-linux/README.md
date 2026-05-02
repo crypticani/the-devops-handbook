@@ -47,14 +47,16 @@ If you're uncomfortable in a Linux terminal, you are stuck. This module makes yo
 
 Linux is an **open-source operating system kernel** created by Linus Torvalds in 1991. What we call "Linux" is actually GNU/Linux — the Linux kernel combined with GNU tools and utilities.
 
-### Why Ubuntu?
+### Linux Distribution Families You Must Know
 
-We standardize on **Ubuntu** in this handbook because:
-- Most widely used server distribution
-- Excellent documentation
-- LTS (Long Term Support) versions with 5-year support
-- Default on most cloud providers
-- Large community for troubleshooting
+Production Linux commonly falls into two families:
+
+| Family | Common Distros | Package Manager | Firewall Default | Notes |
+|--------|----------------|-----------------|------------------|-------|
+| Debian-based | Ubuntu, Debian | `apt`, `dpkg` | `ufw` often used on Ubuntu | Common in cloud-native, startups, CI runners, and developer environments |
+| RHEL-compatible | RHEL, Rocky Linux, AlmaLinux, CentOS Stream, Amazon Linux, Oracle Linux | `dnf`/`yum`, `rpm` | `firewalld` often used | Common in enterprise, regulated environments, and many AWS estates |
+
+This handbook supports both families. When commands differ, examples show Debian/Ubuntu and RHEL-compatible variants. Core skills such as filesystem navigation, permissions, processes, systemd, logs, SSH, and shell scripting transfer across both.
 
 ### The Linux Architecture
 
@@ -111,7 +113,8 @@ Understanding the filesystem is **non-negotiable**. Every DevOps task touches it
 │   ├── shadow          #   Password hashes
 │   └── fstab           #   Filesystem mount table
 ├── home/               # User home directories
-│   └── ubuntu/         #   Default user on Ubuntu
+│   ├── ubuntu/         #   Common default cloud user on Ubuntu
+│   └── ec2-user/       #   Common default cloud user on Amazon Linux
 ├── var/                # Variable data (changes during operation)
 │   ├── log/            #   System and application logs ⭐
 │   ├── www/            #   Web server content
@@ -148,7 +151,7 @@ Understanding the filesystem is **non-negotiable**. Every DevOps task touches it
 ```bash
 # Where am I?
 pwd
-# Output: /home/ubuntu
+# Output: /home/<your-user>
 
 # List files (basic)
 ls
@@ -239,7 +242,7 @@ wc -l file.txt                           # Count lines
 # Search for a pattern
 grep "error" /var/log/syslog
 grep -i "error" /var/log/syslog          # Case-insensitive
-grep -r "TODO" /home/ubuntu/project/     # Recursive search
+grep -r "TODO" ~/project/                # Recursive search
 grep -c "error" /var/log/syslog          # Count matches
 grep -n "error" /var/log/syslog          # Show line numbers
 grep -v "debug" /var/log/syslog          # Invert (exclude debug)
@@ -249,8 +252,9 @@ grep -A 3 "error" /var/log/syslog        # 3 lines AFTER match
 grep -B 3 "error" /var/log/syslog        # 3 lines BEFORE match
 grep -C 3 "error" /var/log/syslog        # 3 lines before AND after
 
-# Real-world example: Find all failed SSH attempts
-grep "Failed password" /var/log/auth.log | tail -20
+# Real-world example: Find failed SSH attempts
+sudo grep "Failed password" /var/log/auth.log | tail -20      # Debian/Ubuntu
+sudo grep "Failed password" /var/log/secure | tail -20        # RHEL-compatible
 ```
 
 ---
@@ -260,7 +264,7 @@ grep "Failed password" /var/log/auth.log | tail -20
 ### Understanding Permission Notation
 
 ```
--rwxr-xr-- 1 ubuntu devops 4096 Jan 15 10:30 deploy.sh
+-rwxr-xr-- 1 deploy devops 4096 Jan 15 10:30 deploy.sh
 │├──┤├──┤├──┤ │  │      │     │      │         │
 │ │   │   │  │  │      │     │      │         └── Filename
 │ │   │   │  │  │      │     │      └── Last modified
@@ -308,8 +312,8 @@ chmod g-w file.txt                       # Remove write from group
 chmod o-rwx secret.txt                   # Remove all permissions from others
 
 # Change owner
-chown ubuntu:devops file.txt             # Change user and group
-chown -R ubuntu:devops /var/www/         # Recursive
+chown deploy:devops file.txt             # Change user and group
+chown -R deploy:devops /var/www/         # Recursive
 
 # Change group only
 chgrp devops file.txt
@@ -338,18 +342,18 @@ chmod +t /tmp                            # Sticky bit (only owner can delete)
 ```bash
 # Current user
 whoami
-# Output: ubuntu
+# Output: <your-user>
 
 # User details
 id
-# Output: uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm),27(sudo),999(docker)
+# Output: uid=1000(<your-user>) gid=1000(<your-user>) groups=1000(<your-user>),27(sudo),999(docker)
 
 # All users on the system
 cat /etc/passwd
 
 # User entry format:
 # username:x:UID:GID:comment:home_dir:shell
-# ubuntu:x:1000:1000:Ubuntu User:/home/ubuntu:/bin/bash
+# deploy:x:1001:1001:Deploy User:/home/deploy:/bin/bash
 
 # Users currently logged in
 w
@@ -504,7 +508,7 @@ cat /proc/cpuinfo | grep processor | wc -l
 
 ## 7. Package Management
 
-### APT (Ubuntu/Debian)
+### APT (Debian/Ubuntu)
 
 ```bash
 # Update package list (always do this first!)
@@ -534,22 +538,49 @@ sudo apt autoremove -y                   # Remove unneeded dependencies
 sudo apt clean                           # Clear download cache
 ```
 
+### DNF/YUM (RHEL-Compatible)
+
+```bash
+# Refresh metadata and upgrade packages
+sudo dnf upgrade -y                      # RHEL 8+, Rocky, Alma, Fedora, Amazon Linux 2023
+sudo yum update -y                       # Older RHEL/CentOS/Amazon Linux 2
+
+# Install a package
+sudo dnf install -y nginx
+
+# Remove a package
+sudo dnf remove -y nginx
+
+# Search for packages
+dnf search nginx
+
+# Show package info
+dnf info nginx
+
+# List installed packages
+rpm -qa | grep nginx
+
+# Clean cache
+sudo dnf clean all
+```
+
 ### Real-World Package Management
 
 ```bash
-# Add a third-party repository (example: Docker)
-# 1. Add the GPG key
+# Debian/Ubuntu: add a third-party repository (example: Docker)
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-
-# 2. Add the repository
 echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
-
-# 3. Update and install
 sudo apt update
 sudo apt install -y docker-ce
 
+# RHEL-compatible: add a third-party repository (example: Docker CE)
+sudo dnf install -y dnf-plugins-core
+sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+sudo dnf install -y docker-ce docker-ce-cli containerd.io
+
 # Check what repository a package comes from
 apt policy nginx
+dnf repoquery -i nginx
 ```
 
 ---
@@ -794,7 +825,8 @@ sudo umount /mnt/data
 # Connect to a remote server
 ssh username@hostname
 ssh -p 2222 username@hostname            # Different port
-ssh -i ~/.ssh/mykey.pem ubuntu@10.0.1.5  # With specific key
+ssh -i ~/.ssh/mykey.pem ubuntu@10.0.1.5   # Ubuntu cloud image default user
+ssh -i ~/.ssh/mykey.pem ec2-user@10.0.1.5 # Amazon Linux default user
 
 # Generate SSH key pair
 ssh-keygen -t ed25519 -C "your.email@example.com"
@@ -811,7 +843,7 @@ cat ~/.ssh/config
 # Example:
 # Host production
 #     HostName 10.0.1.5
-#     User ubuntu
+#     User deploy
 #     IdentityFile ~/.ssh/production.pem
 #     Port 22
 #
@@ -935,13 +967,15 @@ crontab -l
 ```bash
 # BAD
 sudo su -
-apt install nginx
+apt install nginx       # Debian/Ubuntu
+dnf install nginx       # RHEL-compatible
 vim /etc/nginx/nginx.conf
 systemctl restart nginx
 # You're root for everything — no audit trail, easy to destroy things
 
 # GOOD
 sudo apt install nginx
+sudo dnf install nginx
 sudo vim /etc/nginx/nginx.conf
 sudo systemctl restart nginx
 # Each command is explicit, auditable
@@ -1082,32 +1116,35 @@ ps aux --sort=-%mem | head -10
 
 ### System Updates
 ```bash
-# Keep your system patched
+# Debian/Ubuntu
 sudo apt update && sudo apt upgrade -y
-
-# Enable automatic security updates
 sudo apt install -y unattended-upgrades
 sudo dpkg-reconfigure -plow unattended-upgrades
+
+# RHEL-compatible
+sudo dnf upgrade -y
+sudo dnf install -y dnf-automatic
+sudo systemctl enable --now dnf-automatic.timer
 ```
 
-### Firewall Basics (UFW)
+### Firewall Basics
 ```bash
-# Enable firewall
+# Debian/Ubuntu with UFW
 sudo ufw enable
-
-# Allow SSH (do this BEFORE enabling!)
 sudo ufw allow 22/tcp
-
-# Allow web traffic
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
-
-# Check status
 sudo ufw status verbose
-
-# Deny by default, allow explicitly
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
+
+# RHEL-compatible with firewalld
+sudo systemctl enable --now firewalld
+sudo firewall-cmd --permanent --add-service=ssh
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
+sudo firewall-cmd --reload
+sudo firewall-cmd --list-all
 ```
 
 ---

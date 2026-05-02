@@ -196,7 +196,7 @@ chmod 600 ~/.ssh/id_rsa               # Private key — OWNER ONLY
 ### Firewall Basics
 
 ```bash
-# UFW (Uncomplicated Firewall) — Ubuntu
+# Debian/Ubuntu with UFW
 sudo ufw default deny incoming         # Block all incoming
 sudo ufw default allow outgoing        # Allow all outgoing
 sudo ufw allow 22/tcp                  # Allow SSH
@@ -207,6 +207,14 @@ sudo ufw enable
 # Check status
 sudo ufw status verbose
 
+# RHEL-compatible with firewalld
+sudo systemctl enable --now firewalld
+sudo firewall-cmd --permanent --add-service=ssh
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
+sudo firewall-cmd --reload
+sudo firewall-cmd --list-all
+
 # iptables equivalent
 sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
@@ -216,15 +224,23 @@ sudo iptables -P INPUT DROP
 ### System Updates
 
 ```bash
-# Enable unattended security updates (Ubuntu)
+# Debian/Ubuntu: enable unattended security updates
 sudo apt install unattended-upgrades
 sudo dpkg-reconfigure -plow unattended-upgrades
 
-# Manual: update regularly
+# Debian/Ubuntu: manual update
 sudo apt update && sudo apt upgrade -y
+
+# RHEL-compatible: enable automatic updates
+sudo dnf install -y dnf-automatic
+sudo systemctl enable --now dnf-automatic.timer
+
+# RHEL-compatible: manual update
+sudo dnf upgrade -y
 
 # Check for known vulnerabilities
 sudo apt install lynis
+sudo dnf install -y lynis
 sudo lynis audit system
 ```
 
@@ -276,7 +292,9 @@ CMD ["python3", "-m", "src.app"]
 
 ```bash
 # Install Trivy
-sudo apt install trivy  # or: brew install trivy
+sudo apt install trivy       # Debian/Ubuntu, if available in configured repos
+sudo dnf install -y trivy    # RHEL-compatible, if available in configured repos
+# or: brew install trivy
 
 # Scan an image
 trivy image nginx:1.25

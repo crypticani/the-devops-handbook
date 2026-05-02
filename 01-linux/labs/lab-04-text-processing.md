@@ -9,7 +9,7 @@ Master the Linux text processing pipeline — the combination of `grep`, `awk`, 
 ## 📋 Prerequisites
 
 - Completed Labs 01-03
-- Ubuntu 22.04+ with `sudo` access
+- Debian/Ubuntu or RHEL-compatible Linux with `sudo` access
 
 ---
 
@@ -456,4 +456,3 @@ You've completed this lab when you can:
 ---
 
 [← Previous Lab](./lab-03-processes-services.md) | [Back to Module README](../README.md)
-

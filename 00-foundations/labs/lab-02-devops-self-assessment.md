@@ -74,7 +74,7 @@ Rate yourself 1-5 on each skill. Be honest — this is for you, not anyone else.
 
 ### Option A: Native Linux (Best for Learning)
 
-If you're on Ubuntu/Debian:
+If you're on Debian/Ubuntu:
 
 ```bash
 # Update system
@@ -94,6 +94,34 @@ sudo apt install -y \
     unzip \
     build-essential \
     software-properties-common
+
+# Verify installations
+git --version
+curl --version
+python3 --version
+```
+
+If you're on a RHEL-compatible distro:
+
+```bash
+# Update system
+sudo dnf upgrade -y
+
+# Install essential tools
+sudo dnf groupinstall -y "Development Tools"
+sudo dnf install -y \
+    curl \
+    wget \
+    git \
+    vim \
+    nano \
+    htop \
+    net-tools \
+    tree \
+    jq \
+    unzip \
+    python3 \
+    python3-pip
 
 # Verify installations
 git --version
@@ -167,7 +195,7 @@ DevOps Handbook - Environment Ready!
 
 We install Docker now because some early labs benefit from it.
 
-### Ubuntu/Debian/WSL2
+### Debian/Ubuntu/WSL2
 
 ```bash
 # Remove old versions
@@ -195,6 +223,34 @@ echo \
 # Install Docker Engine
 sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Add your user to the docker group (no sudo needed for docker commands)
+sudo usermod -aG docker $USER
+
+# Apply the group change (or log out and back in)
+newgrp docker
+
+# Verify Docker installation
+docker --version
+docker compose version
+docker run hello-world
+```
+
+### RHEL-Compatible
+
+```bash
+# Remove old versions if present
+sudo dnf remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine podman runc 2>/dev/null
+
+# Add Docker CE repository
+sudo dnf install -y dnf-plugins-core
+sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+# Install Docker Engine
+sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Enable and start Docker
+sudo systemctl enable --now docker
 
 # Add your user to the docker group (no sudo needed for docker commands)
 sudo usermod -aG docker $USER
@@ -334,4 +390,3 @@ chmod +x env-check.sh
 ---
 
 [← Previous Lab](./lab-01-mapping-delivery-pipeline.md) | [Back to Module README](../README.md)
-

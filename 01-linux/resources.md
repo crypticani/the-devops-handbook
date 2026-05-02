@@ -47,6 +47,8 @@ Curated resources for mastering Linux, organized by topic and difficulty.
 | [chmod Calculator](https://chmod-calculator.com/) | Tool | Visual permission calculator |
 | [crontab.guru](https://crontab.guru/) | Tool | Cron expression builder |
 | [Ubuntu Man Pages](https://manpages.ubuntu.com/) | Documentation | Official Ubuntu manual pages |
+| [Red Hat Enterprise Linux Documentation](https://docs.redhat.com/en/documentation/red_hat_enterprise_linux) | Documentation | Official RHEL administration docs |
+| [Fedora Quick Docs](https://docs.fedoraproject.org/en-US/quick-docs/) | Documentation | Useful RHEL-family command references |
 
 ---
 
@@ -56,4 +58,3 @@ Curated resources for mastering Linux, organized by topic and difficulty.
 2. **Week 2**: Complete OverTheWire Bandit levels 0-15, practice permissions and process management
 3. **Ongoing**: Use `explainshell.com` for any command you don't understand
 4. **Reference**: Bookmark `crontab.guru` and `chmod calculator` — you'll use them regularly
-

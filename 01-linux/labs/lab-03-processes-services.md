@@ -9,7 +9,7 @@ Master process management and systemd — the skills you'll use to monitor runni
 ## 📋 Prerequisites
 
 - Completed Labs 01 and 02
-- Ubuntu 22.04+ with `sudo` access
+- Debian/Ubuntu or RHEL-compatible Linux with `sudo` access
 
 ---
 
@@ -74,7 +74,8 @@ pidof sshd
 
 ```bash
 # Install htop
-sudo apt install -y htop
+sudo apt install -y htop       # Debian/Ubuntu
+sudo dnf install -y htop       # RHEL-compatible
 
 # Run htop
 htop
@@ -216,7 +217,8 @@ pkill -f worker.sh
 
 ```bash
 # Install nginx for practice
-sudo apt install -y nginx
+sudo apt install -y nginx       # Debian/Ubuntu
+sudo dnf install -y nginx       # RHEL-compatible
 
 # Check status
 sudo systemctl status nginx
@@ -522,4 +524,3 @@ pkill -f worker.sh 2>/dev/null
 ---
 
 [← Previous Lab](./lab-02-permissions-users.md) | [Next Lab: Text Processing & Log Analysis →](./lab-04-text-processing.md)
-

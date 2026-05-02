@@ -9,7 +9,7 @@ Master Linux permissions, user management, and security fundamentals. These skil
 ## 📋 Prerequisites
 
 - Completed Lab 01 (Filesystem Mastery)
-- Ubuntu 22.04+ (or WSL2)
+- Debian/Ubuntu or RHEL-compatible Linux (WSL2 works for most exercises)
 - `sudo` access
 
 ---
@@ -47,11 +47,11 @@ echo "Welcome to our app" > configs/index.html
 ls -la scripts/deploy.sh configs/.env configs/index.html
 ```
 
-**Expected output (similar to):**
+**Expected output (similar to; user/group names vary by distro):**
 ```
--rw-r--r-- 1 ubuntu ubuntu  72 Jan 15 10:30 scripts/deploy.sh
--rw-r--r-- 1 ubuntu ubuntu  29 Jan 15 10:30 configs/.env
--rw-r--r-- 1 ubuntu ubuntu  21 Jan 15 10:30 configs/index.html
+-rw-r--r-- 1 <user> <group>  72 Jan 15 10:30 scripts/deploy.sh
+-rw-r--r-- 1 <user> <group>  29 Jan 15 10:30 configs/.env
+-rw-r--r-- 1 <user> <group>  21 Jan 15 10:30 configs/index.html
 ```
 
 ### Step 2: Practice the Permission Math
@@ -198,8 +198,11 @@ sudo -u webapp whoami
 # Output: webapp
 
 # Key concept: sudo provides AUDIT TRAIL
-# Every sudo command is logged in /var/log/auth.log
+# Debian/Ubuntu logs sudo activity in /var/log/auth.log
 sudo grep "sudo" /var/log/auth.log | tail -5
+
+# RHEL-compatible systems usually log sudo activity in /var/log/secure
+sudo grep "sudo" /var/log/secure | tail -5
 ```
 
 ### Step 2: Examining sudoers (Read Only!)
@@ -410,4 +413,3 @@ You've completed this lab when you can:
 ---
 
 [← Previous Lab](./lab-01-filesystem-mastery.md) | [Next Lab: Process Management & Services →](./lab-03-processes-services.md)
-

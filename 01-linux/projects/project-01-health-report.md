@@ -133,7 +133,7 @@ check_services() {
     echo "⚙️  CRITICAL SERVICES"
     echo "──────────────────────────────────────"
     
-    local services=("sshd" "nginx" "docker" "cron")
+    local services=("sshd" "nginx" "docker" "cron" "crond")
     for svc in "${services[@]}"; do
         if systemctl is-active "$svc" &>/dev/null; then
             echo "  ✅ ${svc}: running"
@@ -162,10 +162,19 @@ check_security() {
     echo "  Last 5 logins:"
     last -5 -w 2>/dev/null | head -5 | sed 's/^/    /'
     
-    # Failed login attempts (last 24 hours)
+    # Failed login attempts
+    local auth_log=""
     if [ -f /var/log/auth.log ]; then
-        local failed_logins=$(grep "Failed password" /var/log/auth.log 2>/dev/null | wc -l)
-        echo "  Failed login attempts (auth.log): $failed_logins"
+        auth_log="/var/log/auth.log"
+    elif [ -f /var/log/secure ]; then
+        auth_log="/var/log/secure"
+    fi
+
+    if [ -n "$auth_log" ]; then
+        local failed_logins=$(grep "Failed password" "$auth_log" 2>/dev/null | wc -l)
+        echo "  Failed login attempts (${auth_log}): $failed_logins"
+    else
+        echo "  Failed login attempts: auth log not found"
     fi
     
     # Check for users with UID 0 (root-level)
@@ -248,7 +257,7 @@ A clean report showing system status with warnings highlights:
 - [ ] Report shows all sections (CPU, Memory, Disk, Network, Services, Security)
 - [ ] Warnings appear when thresholds are exceeded
 - [ ] Report is saved to a file for later reference
-- [ ] Script works on a fresh Ubuntu system
+- [ ] Script works on a fresh Debian/Ubuntu or RHEL-compatible system
 
 ## What to Commit
 
