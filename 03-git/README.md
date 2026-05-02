@@ -679,6 +679,24 @@ git bisect reset             # When done
 
 ---
 
+## Practical Checkpoint
+
+Before moving on, you should be able to:
+
+- Create branches, make commits, resolve conflicts, and explain the history with `git log`.
+- Use pull requests as a review and collaboration workflow.
+- Recover from common mistakes such as committing to the wrong branch or needing to inspect an older version.
+
+Portfolio evidence to keep:
+
+- A sample repository with a clean commit history.
+- Conflict-resolution notes.
+- A short PR workflow explanation with screenshots or copied command output where useful.
+
+Suggested project: [Branching Workflow with Conflict Resolution](./projects/project-01-branching-conflict-workflow.md)
+
+---
+
 ## ➡️ What's Next?
 
 With Git mastered, you're ready to automate tasks with scripting — the bridge between manual operations and full automation.

@@ -798,6 +798,24 @@ permissions:
 
 ---
 
+## Practical Checkpoint
+
+Before moving on, you should be able to:
+
+- Build a pipeline that runs on pull requests and blocks unsafe changes.
+- Separate lint, test, build, scan, and deploy stages with clear failure output.
+- Debug pipeline failures by reading logs, reproducing locally, and narrowing the failing stage.
+
+Portfolio evidence to keep:
+
+- Workflow or Jenkinsfile definitions.
+- Passing and failing pipeline run notes.
+- A short explanation of what each pipeline stage protects.
+
+Suggested project: [Pull Request CI Pipeline](./projects/project-01-pull-request-pipeline.md)
+
+---
+
 ## ➡️ What's Next?
 
 With CI/CD mastered, you can now build the observability stack needed to monitor what your pipelines deploy.

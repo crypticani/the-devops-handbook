@@ -126,6 +126,8 @@ We use a **specific, industry-relevant** stack throughout this handbook. No tool
 
 ## 🚀 How to Use This Repository
 
+For a hands-on workflow, read [Practical Learning Guide](./PRACTICAL-LEARNING.md). For the improvement roadmap, see [Existing Modules Enhancement Plan](./EXISTING-MODULES-ENHANCEMENT-PLAN.md), which focuses on Modules 00-13 first.
+
 ### Option 1: Sequential Learning (Recommended)
 
 Follow the modules in order, 00 → 16. Each module's README explains concepts, then the `labs/` directory provides hands-on practice.
@@ -340,4 +342,3 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 ⭐ If this helped you, consider starring the repo!
 
 </div>
-

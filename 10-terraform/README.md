@@ -683,6 +683,24 @@ terraform plan fails?
 
 ---
 
+## Practical Checkpoint
+
+Before moving on, you should be able to:
+
+- Write Terraform configuration using providers, resources, variables, outputs, and state.
+- Use `terraform plan` to explain what will change before applying it.
+- Safely destroy lab infrastructure and understand what state is tracking.
+
+Portfolio evidence to keep:
+
+- Terraform code and variable examples.
+- `plan`, `apply`, and validation notes.
+- Destroy proof and a short state-management explanation.
+
+Suggested project: [Reproducible Infrastructure with Terraform](./projects/project-01-reproducible-infrastructure.md)
+
+---
+
 ## ➡️ What's Next?
 
 Terraform provisions infrastructure. Ansible configures it — installing packages, managing configs, and ensuring desired state on running systems.

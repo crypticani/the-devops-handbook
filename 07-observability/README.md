@@ -708,6 +708,24 @@ Alert fires!
 
 ---
 
+## Practical Checkpoint
+
+Before moving on, you should be able to:
+
+- Explain the difference between metrics, dashboards, and alerts.
+- Run Prometheus and Grafana, scrape a target, and build a basic operational dashboard.
+- Investigate a service issue using symptoms, metrics, and alert context.
+
+Portfolio evidence to keep:
+
+- Prometheus scrape configuration.
+- Grafana dashboard notes or exported JSON.
+- One alert test with the trigger, observed signal, and response.
+
+Suggested project: [Metrics Dashboard and Alert](./projects/project-01-dashboard-alert.md)
+
+---
+
 ## ➡️ What's Next?
 
 With observability in place, you can now see your systems. Next, you'll learn to capture and analyze the detailed event data — logs.

@@ -625,6 +625,24 @@ docker stats container-name
 
 ---
 
+## Practical Checkpoint
+
+Before moving on, you should be able to:
+
+- Build, run, inspect, and debug containers and images.
+- Write a Dockerfile that uses caching effectively, runs as non-root, and exposes the right ports.
+- Use Docker Compose to run a small multi-container app with health checks and logs.
+
+Portfolio evidence to keep:
+
+- Dockerfile and Compose files.
+- Image build and container validation output.
+- Notes from debugging a failed container start, bad port mapping, or unhealthy service.
+
+Suggested project: [Containerized App with Compose and Healthcheck](./projects/project-01-compose-healthcheck-app.md)
+
+---
+
 ## ➡️ What's Next?
 
 With Docker mastered, you can now build CI/CD pipelines that build, test, and deploy containers automatically.

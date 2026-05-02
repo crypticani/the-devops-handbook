@@ -632,6 +632,24 @@ INCIDENT DETECTED!
 
 ---
 
+## Practical Checkpoint
+
+Before moving on, you should be able to:
+
+- Scan code, dependencies, containers, and infrastructure for common security issues.
+- Explain severity, exploitability, and practical remediation instead of only pasting scan output.
+- Handle a leaked secret by rotating it, removing exposure, and preventing recurrence.
+
+Portfolio evidence to keep:
+
+- Security scan output with a short triage summary.
+- Fix notes for at least one finding.
+- A residual-risk note for anything intentionally accepted.
+
+Suggested project: [Security Scan and Triage Report](./projects/project-01-security-scan-triage.md)
+
+---
+
 ## ➡️ What's Next?
 
 With security practices consolidated, you're ready to think at the system level — designing scalable, reliable architectures.

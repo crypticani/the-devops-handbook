@@ -13,6 +13,19 @@ Master multi-stage builds, image optimization, Docker networking internals, and 
 
 ---
 
+## 📦 Deliverables and Evidence
+
+By the end of this lab, keep the following evidence in your notes or portfolio repo:
+
+- Commands you ran and the important output you used for validation
+- Any files, scripts, configs, manifests, or workflows you created
+- A short failure note describing one thing that broke, how you diagnosed it, and how you fixed it
+- Cleanup commands or confirmation that no long-running resources remain
+
+Treat the validation section as the minimum proof that the lab worked.
+
+---
+
 ## 🔬 Exercise 1: Multi-Stage Build
 
 ### Build a Go App (Extreme Size Reduction)

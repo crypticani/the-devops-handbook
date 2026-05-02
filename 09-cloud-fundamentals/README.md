@@ -528,6 +528,24 @@ GOOD: Use IAM roles for EC2/Lambda/ECS — no credentials to manage
 
 ---
 
+## Practical Checkpoint
+
+Before moving on, you should be able to:
+
+- Explain core cloud building blocks: compute, networking, IAM, storage, and regions.
+- Create a small environment and validate reachability, access, and security boundaries.
+- Clean up resources and reason about cost before leaving a lab.
+
+Portfolio evidence to keep:
+
+- Architecture notes for the cloud lab.
+- Validation output for network and instance access.
+- Cleanup proof and cost notes.
+
+Suggested project: [Small Cloud Environment Walkthrough](./projects/project-01-small-cloud-environment.md)
+
+---
+
 ## ➡️ What's Next?
 
 With cloud fundamentals understood, you're ready to automate cloud infrastructure using code — Infrastructure as Code with Terraform.

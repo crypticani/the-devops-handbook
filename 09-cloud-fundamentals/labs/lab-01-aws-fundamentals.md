@@ -17,6 +17,19 @@ Get hands-on with the four foundational AWS services. You'll launch an EC2 insta
 
 ---
 
+## 📦 Deliverables and Evidence
+
+By the end of this lab, keep the following evidence in your notes or portfolio repo:
+
+- Commands you ran and the important output you used for validation
+- Any files, scripts, configs, manifests, or workflows you created
+- A short failure note describing one thing that broke, how you diagnosed it, and how you fixed it
+- Cleanup commands or confirmation that no long-running resources remain
+
+Treat the validation section as the minimum proof that the lab worked.
+
+---
+
 ## 🔬 Exercise 1: Create a VPC with Public and Private Subnets
 
 ### Step 1: Create the VPC

@@ -14,6 +14,19 @@ Assess your current knowledge level and set up the foundational environment you'
 
 ---
 
+## 📦 Deliverables and Evidence
+
+By the end of this lab, keep the following evidence in your notes or portfolio repo:
+
+- Commands you ran and the important output you used for validation
+- Any files, scripts, configs, manifests, or workflows you created
+- A short failure note describing one thing that broke, how you diagnosed it, and how you fixed it
+- Cleanup commands or confirmation that no long-running resources remain
+
+Treat the validation section as the minimum proof that the lab worked.
+
+---
+
 ## 🔬 Exercise 1: Skills Self-Assessment
 
 Rate yourself 1-5 on each skill. Be honest — this is for you, not anyone else.

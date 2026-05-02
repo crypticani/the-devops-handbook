@@ -617,6 +617,24 @@ Playbook failed?
 
 ---
 
+## Practical Checkpoint
+
+Before moving on, you should be able to:
+
+- Write an inventory and playbook that configure a host repeatably.
+- Use variables, handlers, templates, and idempotent tasks.
+- Validate a configuration change and roll back or fix a broken service.
+
+Portfolio evidence to keep:
+
+- Inventory, playbook, and template files.
+- Before/after validation output.
+- Notes from one failed playbook run and the fix.
+
+Suggested project: [Idempotent Service Configuration](./projects/project-01-idempotent-service-config.md)
+
+---
+
 ## ➡️ What's Next?
 
 With Terraform provisioning infrastructure and Ansible configuring it, you're ready for the most powerful orchestration tool — Kubernetes.

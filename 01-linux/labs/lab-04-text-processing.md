@@ -90,6 +90,19 @@ wc -l access.log app_errors.log
 
 ---
 
+## 📦 Deliverables and Evidence
+
+By the end of this lab, keep the following evidence in your notes or portfolio repo:
+
+- Commands you ran and the important output you used for validation
+- Any files, scripts, configs, manifests, or workflows you created
+- A short failure note describing one thing that broke, how you diagnosed it, and how you fixed it
+- Cleanup commands or confirmation that no long-running resources remain
+
+Treat the validation section as the minimum proof that the lab worked.
+
+---
+
 ## 🔬 Exercise 1: grep — Pattern Matching
 
 ### Step 1: Basic Searches

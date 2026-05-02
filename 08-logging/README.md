@@ -577,6 +577,24 @@ Alert fires: "High error rate on order-service"
 
 ---
 
+## Practical Checkpoint
+
+Before moving on, you should be able to:
+
+- Collect logs from an application or container into a central logging stack.
+- Query logs to answer who, what, when, where, and why during an incident.
+- Distinguish useful structured logs from noisy or missing log data.
+
+Portfolio evidence to keep:
+
+- Logging stack configuration.
+- Example queries and results.
+- A short investigation report based on log evidence.
+
+Suggested project: [Centralized Logging Investigation](./projects/project-01-log-investigation.md)
+
+---
+
 ## ➡️ What's Next?
 
 With observability (metrics) and logging in place, you can now see and debug your systems. Next, you'll learn cloud fundamentals before automating infrastructure.

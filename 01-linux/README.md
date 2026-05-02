@@ -1144,6 +1144,24 @@ sudo ufw default allow outgoing
 
 ---
 
+## Practical Checkpoint
+
+Before moving on, you should be able to:
+
+- Navigate the filesystem, inspect logs, manage permissions, and investigate processes without a GUI.
+- Explain how to check service health with `systemctl`, logs, ports, and process state.
+- Recover from a common Linux issue such as a permission error, failed service, or full disk.
+
+Portfolio evidence to keep:
+
+- Command notes from the Linux labs.
+- A server health report script or runbook.
+- Debug notes showing symptoms, commands used, root cause, and fix.
+
+Suggested project: [Linux Server Health Report Generator](./projects/project-01-health-report.md)
+
+---
+
 ## ➡️ What's Next?
 
 You now have solid Linux fundamentals. Next, we tackle the network layer — understanding how machines talk to each other is essential for debugging and securing infrastructure.
@@ -1159,4 +1177,3 @@ You now have solid Linux fundamentals. Next, we tackle the network layer — und
 [← Back to Foundations](../00-foundations/) | [Next: Networking →](../02-networking/)
 
 </div>
-

@@ -718,6 +718,24 @@ Can't reach my service?
 
 ---
 
+## Practical Checkpoint
+
+Before moving on, you should be able to:
+
+- Deploy workloads with Deployments, Services, ConfigMaps, Secrets, probes, and resource limits.
+- Use `kubectl get`, `describe`, `logs`, `events`, and rollout commands to debug failures.
+- Perform a rolling update and rollback while preserving service availability.
+
+Portfolio evidence to keep:
+
+- Kubernetes manifests.
+- Rollout and rollback command output.
+- Debug notes for one failed pod, bad image, or readiness problem.
+
+Suggested project: [Kubernetes Rollout and Rollback](./projects/project-01-rollout-rollback.md)
+
+---
+
 ## ➡️ What's Next?
 
 With Kubernetes mastered, you've completed the core production skills. Next, you'll consolidate security practices across the entire stack.

@@ -19,6 +19,19 @@ sudo apt install -y nginx netcat-openbsd curl net-tools nmap traceroute
 
 ---
 
+## 📦 Deliverables and Evidence
+
+By the end of this lab, keep the following evidence in your notes or portfolio repo:
+
+- Commands you ran and the important output you used for validation
+- Any files, scripts, configs, manifests, or workflows you created
+- A short failure note describing one thing that broke, how you diagnosed it, and how you fixed it
+- Cleanup commands or confirmation that no long-running resources remain
+
+Treat the validation section as the minimum proof that the lab worked.
+
+---
+
 ## 🔬 Exercise 1: Understanding Ports and Listening Services
 
 ### Step 1: See What's Listening on Your System

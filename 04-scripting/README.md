@@ -906,6 +906,24 @@ fi
 
 ---
 
+## Practical Checkpoint
+
+Before moving on, you should be able to:
+
+- Write Bash scripts with arguments, validation, logging, and safe failure behavior.
+- Use Python for automation tasks that need structured data, APIs, or clearer error handling.
+- Debug a script by checking inputs, exit codes, logs, and intermediate output.
+
+Portfolio evidence to keep:
+
+- At least one Bash automation script.
+- At least one Python automation script.
+- Sample inputs, outputs, and notes for one script failure you diagnosed.
+
+Suggested project: [Log Parser Automation](./projects/project-01-log-parser.md)
+
+---
+
 ## ➡️ What's Next?
 
 You can now automate tasks. Next, we containerize applications with Docker — the foundation of modern deployment.

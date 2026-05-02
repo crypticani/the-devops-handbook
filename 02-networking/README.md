@@ -968,6 +968,24 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
 ---
 
+## Practical Checkpoint
+
+Before moving on, you should be able to:
+
+- Trace a request through DNS, TCP, HTTP, ports, firewalls, and a reverse proxy.
+- Use tools such as `dig`, `curl`, `ss`, `tcpdump`, and Nginx logs to isolate connectivity issues.
+- Explain whether a failure is caused by name resolution, routing, listening services, firewall rules, or application behavior.
+
+Portfolio evidence to keep:
+
+- DNS and HTTP troubleshooting notes.
+- A working reverse proxy configuration.
+- One broken-connectivity investigation with validation commands and recovery steps.
+
+Suggested project: [DNS and HTTP Troubleshooting Runbook](./projects/project-01-network-troubleshooting-runbook.md)
+
+---
+
 ## ➡️ What's Next?
 
 You now understand how data moves across networks and how to debug connectivity issues. Next, we learn **Git** — the version control system that tracks every change across your entire DevOps workflow.
@@ -983,4 +1001,3 @@ You now understand how data moves across networks and how to debug connectivity 
 [← Back to Linux](../01-linux/) | [Next: Git →](../03-git/)
 
 </div>
-

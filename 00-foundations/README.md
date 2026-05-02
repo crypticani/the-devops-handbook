@@ -483,6 +483,24 @@ Writing Terraform like a shell script (procedural, no state management).
 
 ---
 
+## Practical Checkpoint
+
+Before moving on, you should be able to:
+
+- Map a software delivery process from idea to production.
+- Identify manual handoffs, slow feedback loops, and common failure points.
+- Explain one improvement using DevOps principles such as automation, observability, or smaller releases.
+
+Portfolio evidence to keep:
+
+- A delivery pipeline map.
+- A short improvement proposal with one metric you would track.
+- Notes from one real or imagined deployment failure and how the process should change.
+
+Suggested project: [Delivery Pipeline Map and Improvement Proposal](./projects/project-01-delivery-pipeline-map.md)
+
+---
+
 ## ➡️ What's Next?
 
 You now understand **why** DevOps exists and its core principles. Next, we dive into the first practical skill every DevOps engineer needs:
@@ -500,4 +518,3 @@ Linux is the backbone of DevOps. Almost every server, container, and CI/CD runne
 [← Back to Main README](../README.md) | [Next: Linux →](../01-linux/)
 
 </div>
-

@@ -12,6 +12,13 @@ health_report.sh  →  Collects metrics  →  Generates report.txt
                   →  Flags warnings for any metric above threshold
 ```
 
+## Deliverables
+
+- `health_report.sh`
+- Generated report file from a real run
+- Validation notes showing each report section exists
+- Failure notes for at least one warning or unavailable service
+
 ## 🔧 Implementation
 
 Create `health_report.sh`:
@@ -243,6 +250,13 @@ A clean report showing system status with warnings highlights:
 - [ ] Report is saved to a file for later reference
 - [ ] Script works on a fresh Ubuntu system
 
+## What to Commit
+
+- Script source
+- Example report output
+- Validation notes
+- Debugging or warning scenario notes
+
 ## 🚀 Extensions
 
 - Add email notification for warnings
@@ -253,4 +267,3 @@ A clean report showing system status with warnings highlights:
 ---
 
 [← Back to Module README](../README.md)
-

@@ -17,6 +17,14 @@ Thank you for your interest in contributing! This project aims to be the most co
 - Include expected output for every command
 - Add at least one "Break It" scenario
 - Test all steps on a fresh Ubuntu 22.04+ system
+- Use the rubric in [Practical Learning Guide](./PRACTICAL-LEARNING.md) to include evidence, validation, debugging, and cleanup expectations for completed modules
+
+#### New Projects
+- Include a problem statement, setup steps, validation commands, failure scenario, cleanup steps, and tradeoffs
+- Keep deliverables reproducible: source code, configs, scripts, manifests, dashboards, and infrastructure code should be committed
+- Do not rely on screenshots as the primary proof that a project works
+- Include cloud cost notes and destroy/cleanup proof when a project provisions paid resources
+- Prioritize projects for Modules 00-13 before adding capstones for Modules 14-16
 
 #### New Resources
 - Add to the relevant module's `resources.md`
@@ -57,4 +65,3 @@ Be respectful, constructive, and focused on helping learners succeed.
 ## Questions?
 
 Open an issue with the `question` label if you're unsure about anything.
-
