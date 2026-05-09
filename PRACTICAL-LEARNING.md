@@ -2,8 +2,6 @@
 
 This repository already has strong topic coverage in Modules 00-13. To turn those modules into job-ready practice, use each module as a build-and-debug loop instead of a reading checklist.
 
-For the implementation order, see [Existing Modules Enhancement Plan](./EXISTING-MODULES-ENHANCEMENT-PLAN.md).
-
 ## Learning Loop
 
 For each completed module, complete the work in this order:

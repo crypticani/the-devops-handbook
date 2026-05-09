@@ -126,7 +126,7 @@ We use a **specific, industry-relevant** stack throughout this handbook. No tool
 
 ## 🚀 How to Use This Repository
 
-For a hands-on workflow, read [Practical Learning Guide](./PRACTICAL-LEARNING.md). For the improvement roadmap, see [Existing Modules Enhancement Plan](./EXISTING-MODULES-ENHANCEMENT-PLAN.md), which focuses on Modules 00-13 first.
+For a hands-on workflow, read [Practical Learning Guide](./PRACTICAL-LEARNING.md).
 
 ### Option 1: Sequential Learning (Recommended)
 
