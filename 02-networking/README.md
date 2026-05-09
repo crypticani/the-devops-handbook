@@ -131,25 +131,81 @@ An IPv4 address: 192.168.1.100
 ```
 CIDR     Subnet Mask       Usable Hosts    Common Use
 /32      255.255.255.255   1               Single host
+/28      255.255.255.240   14              Small subnet (e.g. DMZ)
 /24      255.255.255.0     254             Small network, typical for subnets
+/20      255.255.240.0     4,094           Medium subnet in cloud VPCs
 /16      255.255.0.0       65,534          Medium network
 /8       255.0.0.0         16,777,214      Large network
+```
+
+### How to Calculate CIDR — The Simple Way
+
+```
+The number after the / tells you how many bits are used for the NETWORK.
+The remaining bits are for HOSTS.
+
+IPv4 = 32 bits total
+Host bits = 32 - CIDR prefix
+Total addresses = 2^(host bits)
+Usable addresses = Total - 2 (network address + broadcast address)
+
+EXAMPLES:
+  /24 → 32-24 = 8 host bits → 2^8 = 256 total → 254 usable
+  /28 → 32-28 = 4 host bits → 2^4 = 16 total  → 14 usable
+  /20 → 32-20 = 12 host bits → 2^12 = 4096 total → 4094 usable
+  /16 → 32-16 = 16 host bits → 2^16 = 65536 total → 65534 usable
+```
+
+### Calculating the IP Range from a CIDR Block
+
+```
+Given: 192.168.1.0/24
+
+  Network address:   192.168.1.0     (first IP — identifies the network)
+  Gateway address:   192.168.1.1     (usually the first usable IP — the router)
+  First usable host: 192.168.1.2     (first IP you can assign to a device)
+  Last usable host:  192.168.1.254   (last IP you can assign)
+  Broadcast address: 192.168.1.255   (last IP — sends to all hosts)
+  Total usable:      253 addresses   (254 minus the gateway)
+
+Given: 10.0.0.0/20
+
+  Network address:   10.0.0.0
+  Gateway address:   10.0.0.1
+  First usable host: 10.0.0.2
+  Last usable host:  10.0.15.254
+  Broadcast address: 10.0.15.255
+  Total usable:      4093 addresses
+
+  How to find the last IP:
+    /20 = 2^(32-20) = 4096 addresses
+    Start: 10.0.0.0
+    End:   10.0.0.0 + 4095 = 10.0.15.255
+    (0.0 + 4095 → 15.255, because 4095 = 15×256 + 255)
+
+  ⚠️ In AWS, the gateway, DNS, and a reserved IP reduce usable
+     hosts by 5 per subnet (AWS reserves .0, .1, .2, .3, and broadcast)
 ```
 
 **CIDR in practice:**
 ```bash
 # A /24 network: 192.168.1.0/24
-# Network: 192.168.1.0
-# First usable: 192.168.1.1
-# Last usable: 192.168.1.254
+# Network:   192.168.1.0
+# Gateway:   192.168.1.1    (router — your default route points here)
+# Usable:    192.168.1.2 to 192.168.1.254
 # Broadcast: 192.168.1.255
-# Total usable: 254 addresses
+# Total usable: 253 addresses (254 minus gateway)
 
 # In AWS: You create a VPC with 10.0.0.0/16 (65k addresses)
 # Then create subnets like:
-#   10.0.1.0/24  (public subnet - 254 hosts)
-#   10.0.2.0/24  (private subnet - 254 hosts)
-#   10.0.3.0/24  (database subnet - 254 hosts)
+#   10.0.1.0/24  (public subnet - 251 usable hosts after AWS reserves)
+#   10.0.2.0/24  (private subnet - 251 usable hosts)
+#   10.0.3.0/24  (database subnet - 251 usable hosts)
+
+# Quick mental math for common sizes:
+#   /24 = 256 IPs (254 usable)  — "a small subnet"
+#   /20 = 4096 IPs              — "a medium VPC subnet"
+#   /16 = 65536 IPs             — "a whole VPC"
 ```
 
 ### Check Your IP Information
@@ -451,6 +507,96 @@ SERVER RESPONSE:
 | **HEAD** | Get headers only | Yes | Health checks |
 | **OPTIONS** | Get allowed methods | Yes | CORS preflight |
 
+### CORS — Cross-Origin Resource Sharing
+
+CORS errors are one of the most common issues when debugging frontend-to-API communication. Understanding CORS saves hours of frustration.
+
+```
+THE PROBLEM — In Simple Terms:
+
+  Your frontend is served from:     https://myapp.com
+  Your API is running on:           https://api.myapp.com
+
+  The browser says: "These are DIFFERENT origins (different subdomain).
+  I won't let the frontend talk to the API unless the API explicitly
+  says it's OK."
+
+  This is a BROWSER security feature. It does NOT affect curl, Postman,
+  or server-to-server calls. Only browsers enforce CORS.
+
+REAL-WORLD ANALOGY:
+
+  Imagine a building (browser) with a strict receptionist (CORS policy).
+  Your app (frontend) lives on Floor 3. It wants to call the kitchen
+  (API) on Floor 7.
+
+  Receptionist: "Floor 7, do you allow requests from Floor 3?"
+  Kitchen: "Yes, Floor 3 is allowed." → Request goes through.
+  Kitchen: (silence or "No.") → Request BLOCKED.
+
+  The receptionist (browser) enforces the rule, but it's the kitchen
+  (API server) that sets the policy via response headers.
+
+HOW IT WORKS:
+
+  1. Browser sends a PREFLIGHT request (OPTIONS) before the actual request:
+     OPTIONS /api/data
+     Origin: https://myapp.com
+     Access-Control-Request-Method: POST
+
+  2. Server responds with CORS headers:
+     Access-Control-Allow-Origin: https://myapp.com
+     Access-Control-Allow-Methods: GET, POST, PUT
+     Access-Control-Allow-Headers: Content-Type, Authorization
+
+  3. If headers match → browser sends the real request.
+     If headers missing/wrong → browser blocks it. You see:
+     "Access to fetch at 'https://api.myapp.com/data' from origin
+      'https://myapp.com' has been blocked by CORS policy"
+```
+
+```bash
+# Debug CORS: check what headers the server returns
+curl -v -X OPTIONS https://api.myapp.com/data \
+  -H "Origin: https://myapp.com" \
+  -H "Access-Control-Request-Method: POST" 2>&1 | grep -i 'access-control'
+
+# You should see:
+# Access-Control-Allow-Origin: https://myapp.com
+# Access-Control-Allow-Methods: GET, POST, PUT
+# If these headers are MISSING → that's your CORS issue
+```
+
+```nginx
+# Fix CORS in Nginx (add to your server or location block)
+add_header 'Access-Control-Allow-Origin' 'https://myapp.com' always;
+add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization' always;
+
+# Handle preflight OPTIONS requests
+if ($request_method = 'OPTIONS') {
+    add_header 'Access-Control-Allow-Origin' 'https://myapp.com';
+    add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS';
+    add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization';
+    add_header 'Access-Control-Max-Age' 86400;  # Cache preflight for 24h
+    return 204;
+}
+```
+
+```
+CORS DEBUGGING CHECKLIST:
+  ❌ Error only in the browser, works in curl/Postman?
+     → It's definitely a CORS issue (browsers enforce it, tools don't)
+  ❌ Missing Access-Control-Allow-Origin header in response?
+     → Server needs to add CORS headers
+  ❌ Origin mismatch (http vs https, www vs non-www)?
+     → Origins must match exactly, including protocol and subdomain
+  ❌ Custom headers (Authorization) being blocked?
+     → Server must list them in Access-Control-Allow-Headers
+  ❌ Using Access-Control-Allow-Origin: * with credentials?
+     → Wildcard * doesn't work with cookies/auth; must specify exact origin
+```
+
 ### HTTP Status Codes (Memorize These!)
 
 ```
@@ -472,6 +618,7 @@ SERVER RESPONSE:
   404 Not Found             — Resource doesn't exist
   405 Method Not Allowed    — Wrong HTTP method
   408 Request Timeout       — Client took too long
+  413 Payload Too Large     — Request body exceeds server limit (file upload, large JSON)
   429 Too Many Requests     — Rate limited
 
 5xx — Server Error (SERVER's fault)
@@ -498,11 +645,26 @@ curl -X POST http://httpbin.org/post \
   -H "Content-Type: application/json" \
   -d '{"name": "DevOps", "type": "handbook"}'
 
-# Just get the response headers
+# Just get the response headers (HEAD request)
 curl -I http://httpbin.org/get
+# -I sends a HEAD request — returns only headers, no body
+# Quick way to check status code, content-type, cache headers, CORS headers
+# Example output:
+#   HTTP/1.1 200 OK
+#   Content-Type: application/json
+#   Content-Length: 256
 
-# Get just the status code
+# Get just the status code (useful in scripts and health checks)
 curl -s -o /dev/null -w "%{http_code}" http://httpbin.org/get
+# Output: 200
+
+# Combine -I with -s for clean status code checks
+curl -s -I http://httpbin.org/get | head -1
+# Output: HTTP/1.1 200 OK
+
+# Check status code of a redirect without following it
+curl -s -I http://httpbin.org/redirect/1 | head -1
+# Output: HTTP/1.1 302 FOUND
 
 # Follow redirects
 curl -L http://httpbin.org/redirect/3
