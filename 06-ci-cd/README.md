@@ -759,6 +759,7 @@ act --secret-file .env.secrets  # With secrets
 - **Secrets management** — Never commit secrets. Use GitHub encrypted secrets or external vaults (HashiCorp Vault, AWS Secrets Manager)
 - **Least-privilege tokens** — Use `permissions` in workflows to restrict `GITHUB_TOKEN` scope
 - **Pin action versions** — Use `@v4` or SHA, not `@main` (supply chain attack vector)
+- **Build provenance** — Attest what your pipeline built and how, to prove artifact integrity
 - **Dependency scanning** — Run `dependabot`, `snyk`, or `trivy` in CI
 - **Branch protection** — Require CI to pass before merging to main
 - **Signed commits** — Verify code authenticity with GPG/SSH signatures
@@ -772,6 +773,18 @@ permissions:
 
 # GOOD: Pin action to specific SHA (not tag that can be moved)
 - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
+
+# GOOD: Attest build provenance (supply chain security)
+# After building and pushing a Docker image:
+- name: Attest build provenance
+  uses: actions/attest-build-provenance@v2
+  with:
+    subject-name: ghcr.io/${{ github.repository }}
+    subject-digest: ${{ steps.push.outputs.digest }}
+    push-to-registry: true
+# This creates a signed, verifiable record of WHAT was built,
+# WHERE (which repo/workflow), and WHO triggered it.
+# Consumers can verify: gh attestation verify <image>
 ```
 
 ---

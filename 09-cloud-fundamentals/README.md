@@ -74,8 +74,9 @@ Cloud Computing:
 ┌──────────────────────────────────────────────┐
 │  AWS          ████████████████████  ~31%      │
 │  Azure        ████████████████     ~25%      │
-│  Google Cloud ████████████         ~11%      │
-│  Others       ████████████████████████ ~33%  │
+│  Google Cloud ████████████         ~12%      │
+│  Alibaba      ██████               ~4%      │
+│  Others       ██████████████████   ~28%      │
 └──────────────────────────────────────────────┘
 ```
 
@@ -433,6 +434,38 @@ MANAGED (RDS for MySQL):
 | Jenkins on EC2 | CodePipeline | No CI/CD server to maintain |
 
 > 💡 **DevOps principle:** Use managed services when possible. Your job is to deliver value, not babysit databases.
+
+### Serverless — When DevOps Engineers Encounter Lambda
+
+Serverless (AWS Lambda, Azure Functions, GCP Cloud Functions) runs code **without any server to manage** — no OS, no patching, no scaling configuration. You pay only when your code executes.
+
+```
+WHEN DEVOPS ENGINEERS USE LAMBDA:
+  ✅ Scheduled tasks       — rotate secrets, clean up old snapshots, run reports
+  ✅ Webhook handlers      — receive GitHub/Slack webhooks, trigger pipelines
+  ✅ Event-driven ops      — process S3 upload → resize image → store result
+  ✅ Custom CI/CD steps    — Lambda-backed custom actions or post-deploy hooks
+  ✅ CloudWatch alarms     — trigger Lambda to auto-remediate (restart service, scale)
+  ✅ Lightweight APIs      — internal tooling endpoints (status page, health aggregator)
+
+WHEN TO USE CONTAINERS INSTEAD:
+  ❌ Long-running processes (Lambda timeout: 15 min max)
+  ❌ Consistent, high-traffic workloads (containers are cheaper at scale)
+  ❌ Complex multi-service applications (use ECS/EKS)
+  ❌ Workloads needing persistent connections (WebSockets, databases)
+```
+
+```
+Lambda mental model for DevOps:
+  Traditional:  Server always running → you pay 24/7 → you patch it
+  Lambda:       Code runs on trigger → you pay per invocation → AWS patches it
+
+  EXAMPLE: S3 backup cleanup
+    EventBridge (cron: daily) → Lambda → delete S3 objects older than 90 days
+    Cost: ~$0.01/month vs running an EC2 instance 24/7
+```
+
+> 💡 **You don't need to be a Lambda developer**, but you need to understand when serverless is the right tool for operational automation tasks. Many DevOps teams use Lambda for "glue" code between services.
 
 ---
 

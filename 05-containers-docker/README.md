@@ -604,6 +604,33 @@ docker stats container-name
 - **Set resource limits** — prevent container from consuming all host resources
 - **Keep images updated** — rebuild with latest base images regularly
 
+### Modern Docker CLI Tools
+
+Docker's CLI has evolved beyond just `build` and `run`. Two tools worth knowing:
+
+```bash
+# docker init — Scaffolds Dockerfile, Compose, and .dockerignore for your project
+# Run inside your project directory:
+docker init
+# Interactively generates:
+#   • Dockerfile (with multi-stage build, non-root user)
+#   • compose.yaml
+#   • .dockerignore
+# Great for bootstrapping — then customize the output.
+
+# docker scout — Built-in vulnerability scanning (no external tools needed)
+docker scout cves myapp:latest              # List CVEs in an image
+docker scout quickview myapp:latest         # Summary view
+docker scout recommendations myapp:latest   # Suggested base image upgrades
+
+# Real-world workflow: scan before pushing to registry
+docker build -t myapp:v1.2.3 .
+docker scout cves myapp:v1.2.3
+# Fix critical CVEs → rebuild → rescan → push
+```
+
+> 💡 `docker scout` integrates into CI/CD pipelines. Use it alongside Trivy for defense-in-depth scanning.
+
 ---
 
 ## 15. Interview Insights

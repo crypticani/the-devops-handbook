@@ -467,6 +467,56 @@ DOCUMENT YOUR DECISIONS:
   - Status: Proposed / Accepted / Superseded
 ```
 
+### GitOps — Declarative Deployment Architecture
+
+GitOps is a deployment pattern where **Git is the single source of truth** for both application code and infrastructure. Instead of CI/CD pushing changes to clusters, a GitOps operator **pulls** the desired state from Git and reconciles it continuously.
+
+```
+TRADITIONAL (Push-based CI/CD):
+  Developer → push → CI pipeline → build → test → push image → deploy to K8s
+  The pipeline HAS credentials to the cluster.
+
+GITOPS (Pull-based):
+  Developer → push → CI pipeline → build → test → push image → update Git manifest
+  ArgoCD/Flux WATCHES Git → detects change → applies to K8s
+  The cluster pulls its own state. CI never touches the cluster directly.
+
+  ┌──────────┐    ┌──────────┐    ┌─────────────┐    ┌─────────────┐
+  │Developer │───▶│CI Pipeline│───▶│ Git (manifests)│◀───│ ArgoCD/Flux │
+  │          │    │build+test │    │ (desired state)│    │ (reconciles)│
+  └──────────┘    └──────────┘    └─────────────┘    └──────┬──────┘
+                                                            │
+                                                    ┌───────▼──────┐
+                                                    │  Kubernetes   │
+                                                    │  (actual state)│
+                                                    └──────────────┘
+```
+
+```
+GITOPS BENEFITS:
+  ✅ Auditable — every change is a Git commit (who, what, when, why)
+  ✅ Rollback = git revert (instant, tested, safe)
+  ✅ Drift detection — ArgoCD alerts if cluster state ≠ Git state
+  ✅ Security — CI/CD pipeline doesn't need cluster credentials
+  ✅ Self-healing — if someone manually changes the cluster, ArgoCD reverts it
+
+WHEN TO USE GITOPS:
+  ✅ Kubernetes-based infrastructure (primary use case)
+  ✅ Multiple environments managed from Git branches or directories
+  ✅ Teams that want strong audit trails and compliance
+
+WHEN GITOPS IS OVERKILL:
+  ❌ Single-server deployments (Docker Compose on one host)
+  ❌ Very small teams (1-3 people) with simple deployment needs
+  ❌ Non-Kubernetes workloads (GitOps tooling is K8s-native)
+
+KEY TOOLS:
+  ArgoCD — UI-driven, popular, CNCF graduated project
+  Flux    — CLI-driven, lightweight, CNCF graduated project
+```
+
+> 💡 **GitOps is increasingly common in interviews.** Know the pull vs push model distinction and when GitOps makes sense versus traditional CI/CD.
+
 ### Capacity Planning
 
 ```

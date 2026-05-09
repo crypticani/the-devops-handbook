@@ -344,9 +344,58 @@ terraform state rm aws_instance.web
 # Move/rename a resource in state
 terraform state mv aws_instance.old aws_instance.new
 
-# Import existing infrastructure into state
+# Import existing infrastructure into state (CLI method)
 terraform import aws_instance.web i-0abc123def456
 ```
+
+### Modern Import and Refactoring (Terraform 1.5+)
+
+The CLI `terraform import` command works, but has limitations — it doesn't generate configuration and can't be reviewed in a PR. Terraform 1.5+ introduced **declarative import** and **moved** blocks that are safer and version-controlled.
+
+**Import Block** — Import existing resources via config (not just CLI):
+
+```hcl
+# import.tf — bring an existing EC2 instance under Terraform management
+import {
+  to = aws_instance.web
+  id = "i-0abc123def456"
+}
+
+# 1. Add the import block
+# 2. Write the matching resource block
+# 3. Run: terraform plan (shows what will be imported, no changes)
+# 4. Run: terraform apply (imports into state)
+# 5. Remove the import block (it's a one-time operation)
+
+# Why this is better than CLI import:
+#   ✅ Reviewable in PRs (the import is in code, not a CLI command)
+#   ✅ Can generate config: terraform plan -generate-config-out=generated.tf
+#   ✅ Safe — plan shows exactly what will happen before you apply
+```
+
+**Moved Block** — Safely rename or refactor resources without destroy/recreate:
+
+```hcl
+# You renamed a resource from "old" to "new" in your code.
+# Without moved block: Terraform destroys "old" and creates "new" (DOWNTIME!)
+# With moved block: Terraform updates state only (no infrastructure change)
+
+moved {
+  from = aws_instance.old
+  to   = aws_instance.new
+}
+
+# Also works when moving resources into or out of modules:
+moved {
+  from = aws_instance.web
+  to   = module.compute.aws_instance.web
+}
+
+# Run terraform plan → shows "moved" instead of destroy+create
+# After successful apply, you can remove the moved block
+```
+
+> 💡 **Use `import` and `moved` blocks instead of CLI state commands whenever possible** — they're reviewable, auditable, and safer for team workflows.
 
 ---
 

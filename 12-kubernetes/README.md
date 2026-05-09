@@ -694,6 +694,41 @@ Can't reach my service?
 └─ 6. Endpoints exist?    → kubectl get endpoints myservice
 ```
 
+### `kubectl debug` — Debugging Minimal and Distroless Images
+
+`kubectl exec` only works if the container has a shell. Modern production images (distroless, scratch, Alpine-based) often have **no shell, no curl, no tools at all**. `kubectl debug` (GA since Kubernetes 1.25) solves this by attaching an **ephemeral debug container** to a running pod.
+
+```bash
+# Problem: Your production pod uses a distroless image — no shell inside
+kubectl exec -it my-pod -- /bin/sh
+# Error: OCI runtime exec failed: exec failed: unable to start container process
+
+# Solution: Attach a debug container with tools to the running pod
+kubectl debug -it my-pod --image=busybox:latest --target=my-container
+# --image     = the debug image (busybox, nicolaka/netshoot, ubuntu)
+# --target    = the container to share process namespace with (see its processes)
+# You're now inside a debug container with tools, alongside your running app
+
+# Inside the debug container, you can:
+#   ps aux              → see processes in the target container
+#   cat /proc/1/environ → read environment variables of the app process
+#   wget localhost:8080  → test the app internally
+#   nslookup myservice   → test DNS resolution
+
+# For network debugging, use nicolaka/netshoot (has curl, dig, tcpdump, etc.)
+kubectl debug -it my-pod --image=nicolaka/netshoot --target=my-container
+
+# Debug a node (creates a privileged pod on the node)
+kubectl debug node/my-node -it --image=ubuntu
+# Useful for: checking node disk, checking kubelet logs, host networking
+
+# Create a copy of the pod with a different command (for crash loops)
+kubectl debug my-pod -it --copy-to=my-pod-debug --container=my-container -- /bin/sh
+# This creates a copy of the pod where you can override the entrypoint
+```
+
+> 💡 **In production, `kubectl debug` is often the ONLY way to troubleshoot** distroless images (common in Go/Java microservices). Learn to reach for it when `exec` fails.
+
 ---
 
 ## 12. Interview Insights
