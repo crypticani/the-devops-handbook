@@ -413,3 +413,15 @@ You've completed this lab when you can:
 ---
 
 [← Previous Lab](./lab-01-filesystem-mastery.md) | [Next Lab: Process Management & Services →](./lab-03-processes-services.md)
+
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Permission audit script or one-liner you created
+- User and group setup commands with explanation
+- Permission debugging notes from the Break It section
+- Your sudo configuration example with least-privilege rules
+
+---

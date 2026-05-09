@@ -256,6 +256,16 @@ rm -rf trivy-lab secret-test iac-scan
 - [ ] Build a secure Dockerfile (non-root, slim base, pinned version)
 - [ ] Describe how to integrate security scanning into a CI/CD pipeline
 
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Trivy scan output comparing insecure vs secure images
+- gitleaks scan results showing detected secrets
+- IaC scan output showing misconfigurations found
+- Notes on remediation steps for each finding
+
 ---
 
 [← Back to Module README](../README.md)

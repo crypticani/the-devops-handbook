@@ -524,3 +524,15 @@ pkill -f worker.sh 2>/dev/null
 ---
 
 [← Previous Lab](./lab-02-permissions-users.md) | [Next Lab: Text Processing & Log Analysis →](./lab-04-text-processing.md)
+
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Service unit file you created or modified
+- Process investigation commands and output
+- Failure and recovery notes from Exercise 4
+- Break It debugging log with diagnosis and fix
+
+---

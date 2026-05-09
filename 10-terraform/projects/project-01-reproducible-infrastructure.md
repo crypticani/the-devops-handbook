@@ -33,3 +33,18 @@ Introduce an invalid variable value or missing required argument. Document the T
 - Example variable file without secrets
 - Validation notes
 - Destroy proof
+
+## Review Rubric
+
+Use this rubric to self-assess your work or have a peer review it.
+
+| Criteria | What to Look For | Score (1-5) |
+|----------|-----------------|-------------|
+| **Reproducibility** | `terraform init && terraform apply` works from a clean state | |
+| **Correctness** | Infrastructure matches the declared configuration; outputs are verified | |
+| **Debugging quality** | At least one drift or error scenario diagnosed with `terraform plan` | |
+| **Security basics** | No secrets in .tf files; state file is not committed to git | |
+| **Cleanup quality** | `terraform destroy` removes all resources; confirmation output included | |
+| **Explanation clarity** | Module structure, variable usage, and state management are documented | |
+
+**Scoring**: 1 = Not attempted, 2 = Partial, 3 = Meets expectations, 4 = Exceeds expectations, 5 = Production quality

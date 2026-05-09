@@ -336,3 +336,15 @@ docker network rm appnet
 ---
 
 [← Previous Lab](./lab-01-docker-fundamentals.md) | [Back to Module README](../README.md)
+
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Multi-stage Dockerfile with size comparison
+- Docker network inspection output and diagram
+- Volume persistence test results
+- Image security scan output from Exercise 4
+
+---

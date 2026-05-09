@@ -373,6 +373,16 @@ cd .. && rm -rf observability-lab
 - [ ] Explain the difference between a counter and a gauge
 - [ ] Write a PromQL query for memory usage percentage from memory
 
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Docker Compose file for the monitoring stack
+- Prometheus configuration (prometheus.yml) and alert rules
+- Screenshot or JSON export of your Grafana dashboard
+- PromQL queries you wrote with explanations
+
 ---
 
 [← Back to Module README](../README.md) | [Next Lab: Application Monitoring →](./lab-02-application-monitoring.md)

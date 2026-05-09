@@ -28,3 +28,18 @@ Stop any local services you started and remove temporary test configs.
 - `network-runbook.md`
 - `healthy-output.md`
 - `failure-investigation.md`
+
+## Review Rubric
+
+Use this rubric to self-assess your work or have a peer review it.
+
+| Criteria | What to Look For | Score (1-5) |
+|----------|-----------------|-------------|
+| **Reproducibility** | Runbook commands work on standard Linux systems without custom tooling | |
+| **Correctness** | Diagnostic steps follow a logical order (DNS → connectivity → application) | |
+| **Debugging quality** | Each step includes expected vs failure output and next actions | |
+| **Security basics** | Runbook notes firewall and ACL checks; no credentials in examples | |
+| **Cleanup quality** | Any test services or temporary firewall rules are cleaned up | |
+| **Explanation clarity** | A junior engineer could follow the runbook without prior context | |
+
+**Scoring**: 1 = Not attempted, 2 = Partial, 3 = Meets expectations, 4 = Exceeds expectations, 5 = Production quality

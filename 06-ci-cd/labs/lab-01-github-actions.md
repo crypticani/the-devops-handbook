@@ -396,6 +396,15 @@ Watch the pipeline fail at the Test stage. Read the logs — find the assertion 
 - [ ] Debug a failing workflow by reading logs
 - [ ] Explain the difference between `push` and `pull_request` triggers
 
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- GitHub Actions workflow YAML files you created
+- Screenshot or link to passing and failing pipeline runs
+- Debug notes from the Break It workflow failures
+
 ---
 
 [← Back to Module README](../README.md) | [Next Lab: Jenkins Pipeline →](./lab-02-jenkins-pipeline.md)

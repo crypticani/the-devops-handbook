@@ -276,3 +276,18 @@ A clean report showing system status with warnings highlights:
 ---
 
 [← Back to Module README](../README.md)
+
+## Review Rubric
+
+Use this rubric to self-assess your work or have a peer review it.
+
+| Criteria | What to Look For | Score (1-5) |
+|----------|-----------------|-------------|
+| **Reproducibility** | Script runs on a fresh Linux system without manual setup | |
+| **Correctness** | Metrics (CPU, memory, disk, services) are accurate and well-formatted | |
+| **Debugging quality** | Script handles missing commands, empty output, and edge cases | |
+| **Security basics** | Script does not require root unless necessary; no hardcoded credentials | |
+| **Cleanup quality** | Temporary files are removed; no lingering processes after execution | |
+| **Explanation clarity** | Output is human-readable with clear labels and thresholds | |
+
+**Scoring**: 1 = Not attempted, 2 = Partial, 3 = Meets expectations, 4 = Exceeds expectations, 5 = Production quality

@@ -255,3 +255,14 @@ git reflog
 ---
 
 [← Previous Lab](./lab-01-git-core-workflow.md) | [Back to Module README](../README.md)
+
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Example PR with description, review comments, and merge
+- Your .gitignore audit results and fixes
+- Recovery scenario notes from the Break It section
+
+---

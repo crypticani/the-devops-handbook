@@ -35,3 +35,18 @@ Run `docker compose down --volumes` if volumes were created.
 - `Dockerfile`
 - `compose.yml`
 - Validation and failure notes
+
+## Review Rubric
+
+Use this rubric to self-assess your work or have a peer review it.
+
+| Criteria | What to Look For | Score (1-5) |
+|----------|-----------------|-------------|
+| **Reproducibility** | `docker compose up` brings the full stack up without manual steps | |
+| **Correctness** | Healthchecks pass; services restart on failure as configured | |
+| **Debugging quality** | Logs show healthcheck failures and recovery; failure is tested | |
+| **Security basics** | Images use non-root users; no secrets in Dockerfiles or Compose | |
+| **Cleanup quality** | `docker compose down -v` removes all containers, networks, and volumes | |
+| **Explanation clarity** | README explains architecture, healthcheck logic, and how to test failure | |
+
+**Scoring**: 1 = Not attempted, 2 = Partial, 3 = Meets expectations, 4 = Exceeds expectations, 5 = Production quality

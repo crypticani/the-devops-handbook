@@ -390,3 +390,14 @@ chmod +x env-check.sh
 ---
 
 [← Previous Lab](./lab-01-mapping-delivery-pipeline.md) | [Back to Module README](../README.md)
+
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Completed self-assessment matrix with honest skill ratings
+- Personal learning roadmap based on your gaps
+- Notes on which modules to prioritize and why
+
+---

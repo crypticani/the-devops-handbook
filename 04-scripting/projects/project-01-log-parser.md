@@ -26,3 +26,18 @@ Use a malformed log line or empty log file. Document how the script behaves and 
 - Sample input log
 - Example output
 - Failure notes
+
+## Review Rubric
+
+Use this rubric to self-assess your work or have a peer review it.
+
+| Criteria | What to Look For | Score (1-5) |
+|----------|-----------------|-------------|
+| **Reproducibility** | Script runs with sample data included in the repo | |
+| **Correctness** | Parsing output matches expected results for the given log format | |
+| **Debugging quality** | Handles malformed lines, missing fields, and empty files gracefully | |
+| **Security basics** | No shell injection risks; inputs are sanitized or quoted properly | |
+| **Cleanup quality** | Temporary files are removed; script exits cleanly on errors | |
+| **Explanation clarity** | Usage instructions, input format, and output format are documented | |
+
+**Scoring**: 1 = Not attempted, 2 = Partial, 3 = Meets expectations, 4 = Exceeds expectations, 5 = Production quality

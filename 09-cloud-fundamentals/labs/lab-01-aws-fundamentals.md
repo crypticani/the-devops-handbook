@@ -320,6 +320,16 @@ echo "All resources cleaned up!"
 - [ ] Clean up all resources to avoid charges
 - [ ] Explain the difference between public and private subnets
 
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- AWS CLI commands you used with output summaries
+- VPC and subnet architecture diagram or notes
+- IAM role policy document you created
+- Cleanup confirmation showing all resources terminated
+
 ---
 
 [← Back to Module README](../README.md)

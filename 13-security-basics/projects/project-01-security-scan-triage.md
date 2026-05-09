@@ -26,3 +26,18 @@ Include one leaked dummy secret, vulnerable dependency, or insecure config in a 
 - Triage report
 - Fix evidence
 - CI/prevention recommendation
+
+## Review Rubric
+
+Use this rubric to self-assess your work or have a peer review it.
+
+| Criteria | What to Look For | Score (1-5) |
+|----------|-----------------|-------------|
+| **Reproducibility** | Scan commands and tool versions are documented for reproducibility | |
+| **Correctness** | Triage accurately assesses severity, exploitability, and impact | |
+| **Debugging quality** | At least one finding is fixed with before/after evidence | |
+| **Security basics** | Scan covers code, dependencies, images, and infrastructure configs | |
+| **Cleanup quality** | Test repos and dummy secrets are removed after the exercise | |
+| **Explanation clarity** | Triage report clearly explains each finding, decision, and rationale | |
+
+**Scoring**: 1 = Not attempted, 2 = Partial, 3 = Meets expectations, 4 = Exceeds expectations, 5 = Production quality

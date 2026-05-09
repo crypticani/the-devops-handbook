@@ -376,4 +376,15 @@ docker compose down -v
 
 ---
 
-[← Previous Lab: GitHub Actions](./lab-01-github-actions.md) | [← Back to Module README](../README.md)
+[← Previous Lab: GitHub Actions](./lab-01-github-actions.md) | 
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Jenkinsfile with multi-stage declarative pipeline
+- Docker Compose file for the Jenkins setup
+- Pipeline debug notes from the Break It section
+
+---
+
+[← Back to Module README](../README.md)

@@ -304,6 +304,16 @@ You've completed this lab when you can:
 4. `dig` is your primary DNS debugging tool
 5. Always test with a known-good DNS server (8.8.8.8) to isolate problems
 
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- DNS resolution trace output (dig +trace)
+- Your `/etc/hosts` override test and results
+- DNS troubleshooting notes from the debugging challenge
+- Summary of DNS record types you investigated
+
 ---
 
 [← Back to Module README](../README.md) | [Next Lab: TCP, Ports & Connectivity →](./lab-02-tcp-ports-connectivity.md)

@@ -385,6 +385,15 @@ git diff HEAD~2..HEAD -- config/settings.yaml
 - [ ] Use `git blame` and `git log` to investigate changes
 - [ ] Explain when to use merge vs rebase
 
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Git command cheat sheet with your own annotations
+- Merge conflict resolution example with before/after
+- Break It debugging log showing recovery commands used
+
 ---
 
 [← Back to Module README](../README.md) | [Next Lab: GitHub Workflows & PRs →](./lab-02-github-workflows.md)

@@ -34,3 +34,18 @@ Stop containers or services used for the monitoring stack.
 - Dashboard export or dashboard notes
 - Alert rule
 - Incident note
+
+## Review Rubric
+
+Use this rubric to self-assess your work or have a peer review it.
+
+| Criteria | What to Look For | Score (1-5) |
+|----------|-----------------|-------------|
+| **Reproducibility** | Dashboard JSON and alert rules can be imported into a fresh Grafana instance | |
+| **Correctness** | Metrics are accurate; alert fires on the documented threshold condition | |
+| **Debugging quality** | Dashboard includes panels that help diagnose root cause, not just symptoms | |
+| **Security basics** | No credentials in Prometheus configs; Grafana uses non-default password | |
+| **Cleanup quality** | Docker Compose stack tears down cleanly with no orphan volumes | |
+| **Explanation clarity** | Each dashboard panel has a title and description explaining its purpose | |
+
+**Scoring**: 1 = Not attempted, 2 = Partial, 3 = Meets expectations, 4 = Exceeds expectations, 5 = Production quality

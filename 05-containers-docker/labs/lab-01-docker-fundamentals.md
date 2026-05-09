@@ -412,6 +412,16 @@ docker rm -f first second
 - [ ] Debug a container that exits immediately
 - [ ] Run containers as non-root users
 
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Dockerfile you built for your application
+- Docker Compose file for the multi-container setup
+- Build output comparison (before and after optimization)
+- Break It debugging notes with container logs
+
 ---
 
 [← Back to Module README](../README.md) | [Next Lab: Advanced Docker Patterns →](./lab-02-advanced-docker.md)

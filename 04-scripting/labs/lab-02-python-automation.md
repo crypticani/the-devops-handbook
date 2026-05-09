@@ -266,3 +266,15 @@ fi
 ---
 
 [← Previous Lab](./lab-01-bash-scripting.md) | [Back to Module README](../README.md)
+
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Multi-service health checker script
+- Log analyzer script with sample output
+- Requirements file for dependencies used
+- Notes on error handling and edge cases you encountered
+
+---

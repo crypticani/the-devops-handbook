@@ -263,6 +263,16 @@ chmod +x health_monitor.sh
 - [ ] All scripts use `set -euo pipefail`
 - [ ] All scripts include cleanup traps
 
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Deployment script with argument validation and locking
+- Health monitor script with multi-service checks
+- ShellCheck output showing clean results
+- Notes on error handling patterns you used (traps, set -euo pipefail)
+
 ---
 
 [← Back to Module README](../README.md) | [Next Lab: Python Automation →](./lab-02-python-automation.md)

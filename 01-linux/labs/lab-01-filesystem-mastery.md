@@ -368,6 +368,16 @@ You've completed this lab successfully when you can:
 4. Hard links share data; soft links point to paths — different use cases
 5. **Always back up config files before editing them**
 
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Your filesystem exploration notes with command output
+- The `find` command cheat sheet you built from exercises
+- Config backup and restore procedure you documented
+- Hard link vs soft link comparison with test output
+
 ---
 
 [← Back to Module README](../README.md) | [Next Lab: Permissions & Users →](./lab-02-permissions-users.md)

@@ -456,3 +456,15 @@ You've completed this lab when you can:
 ---
 
 [← Previous Lab](./lab-03-processes-services.md) | [Back to Module README](../README.md)
+
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Log analysis one-liner(s) from Exercise 5
+- Your grep/awk/sed cheat sheet with real examples
+- Sample log data and the queries you ran against it
+- Break It notes on edge cases and how you handled them
+
+---

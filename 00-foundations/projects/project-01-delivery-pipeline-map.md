@@ -30,3 +30,18 @@ Assume a deployment fails after approval but before production verification. Doc
 - `pipeline-map.md`
 - `improvement-proposal.md`
 - `failure-scenario.md`
+
+## Review Rubric
+
+Use this rubric to self-assess your work or have a peer review it.
+
+| Criteria | What to Look For | Score (1-5) |
+|----------|-----------------|-------------|
+| **Reproducibility** | Pipeline map is clear enough for someone else to recreate the analysis | |
+| **Correctness** | Manual vs DevOps comparison is accurate and uses realistic metrics | |
+| **Debugging quality** | Bottlenecks are identified with root cause, not just symptoms | |
+| **Security basics** | Security gates (code review, scanning) appear in the DevOps pipeline | |
+| **Cleanup quality** | N/A for this conceptual project | |
+| **Explanation clarity** | Diagrams and text explain the why, not just the what | |
+
+**Scoring**: 1 = Not attempted, 2 = Partial, 3 = Meets expectations, 4 = Exceeds expectations, 5 = Production quality

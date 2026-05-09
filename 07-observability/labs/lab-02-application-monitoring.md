@@ -481,6 +481,16 @@ cd .. && rm -rf app-monitoring-lab
 - [ ] Describe what high-cardinality labels are and why they're dangerous
 - [ ] Debug a "target down" scenario using Prometheus
 
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Instrumented application code with metrics endpoints
+- Docker Compose file for the full stack
+- Grafana dashboard JSON export
+- Alert trigger and resolution evidence
+
 ---
 
 [← Back to Module README](../README.md) | [← Lab 01: Prometheus + Grafana](./lab-01-prometheus-grafana.md)

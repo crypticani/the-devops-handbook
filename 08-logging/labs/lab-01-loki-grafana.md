@@ -336,6 +336,16 @@ cd .. && rm -rf logging-lab
 - [ ] Explain why structured logging matters for production systems
 - [ ] Use `count_over_time()` to aggregate log patterns
 
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Docker Compose file for the Loki + Grafana stack
+- LogQL queries you wrote with sample output
+- Screenshot or JSON export of your log dashboard
+- Notes on log label design decisions
+
 ---
 
 [← Back to Module README](../README.md) | [Next Lab: ELK Stack →](./lab-02-elk-stack.md)

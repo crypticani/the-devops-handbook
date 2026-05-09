@@ -26,3 +26,18 @@ Intentionally break a test or lint rule. Document how the pipeline reports the f
 - Minimal app or script under test
 - Passing and failing run notes
 - Local reproduction command
+
+## Review Rubric
+
+Use this rubric to self-assess your work or have a peer review it.
+
+| Criteria | What to Look For | Score (1-5) |
+|----------|-----------------|-------------|
+| **Reproducibility** | Pipeline runs on a fresh fork without manual secret setup | |
+| **Correctness** | Lint, test, and build stages pass on good code and fail on bad code | |
+| **Debugging quality** | At least one intentional failure with clear diagnosis in the workflow log | |
+| **Security basics** | Secrets use GitHub Secrets; workflow uses minimal permissions | |
+| **Cleanup quality** | No leftover artifacts, containers, or cloud resources after pipeline runs | |
+| **Explanation clarity** | Pipeline stages are documented with purpose and expected outcomes | |
+
+**Scoring**: 1 = Not attempted, 2 = Partial, 3 = Meets expectations, 4 = Exceeds expectations, 5 = Production quality

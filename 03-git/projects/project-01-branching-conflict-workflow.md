@@ -29,3 +29,18 @@ Simulate committing to the wrong branch. Document how you detect it and recover 
 - Sample repo files
 - `conflict-resolution.md`
 - `recovery-notes.md`
+
+## Review Rubric
+
+Use this rubric to self-assess your work or have a peer review it.
+
+| Criteria | What to Look For | Score (1-5) |
+|----------|-----------------|-------------|
+| **Reproducibility** | Workflow can be replayed from the documented commands | |
+| **Correctness** | Branch strategy is sound; merge conflicts are resolved correctly | |
+| **Debugging quality** | At least one realistic conflict scenario with resolution explanation | |
+| **Security basics** | .gitignore prevents secrets and build artifacts from being committed | |
+| **Cleanup quality** | Feature branches are deleted after merge; repo is in a clean state | |
+| **Explanation clarity** | Branching diagram or description shows the workflow clearly | |
+
+**Scoring**: 1 = Not attempted, 2 = Partial, 3 = Meets expectations, 4 = Exceeds expectations, 5 = Production quality

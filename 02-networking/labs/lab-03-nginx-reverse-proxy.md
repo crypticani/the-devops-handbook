@@ -417,3 +417,15 @@ You've completed this lab when you can:
 ---
 
 [← Previous Lab](./lab-02-tcp-ports-connectivity.md) | [Back to Module README](../README.md)
+
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Nginx reverse proxy configuration file
+- Docker Compose file for the proxy + backend setup
+- Proxy header debugging notes from Exercise 2
+- Production issue simulation write-up and fix
+
+---

@@ -330,6 +330,16 @@ minikube stop    # or: minikube delete
 - [ ] Debug ImagePullBackOff, OOMKilled, and selector mismatch issues
 - [ ] Explain the difference between Deployment and Pod
 
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Kubernetes manifests (Deployment, Service, ConfigMap, Secret)
+- Rolling update and rollback command output
+- Scale-up observation notes with pod status
+- Break It debugging log with kubectl commands used
+
 ---
 
 [← Back to Module README](../README.md)

@@ -233,6 +233,16 @@ You've completed this lab successfully when you can:
 3. Blameless postmortems fix systems, not people
 4. The business case for DevOps is measurable and compelling
 
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Your delivery pipeline diagram (manual vs DevOps version)
+- Business impact analysis with calculated metrics
+- Blameless postmortem document from Exercise 4
+- Notes on bottlenecks identified and proposed improvements
+
 ---
 
 [← Back to Module README](../README.md) | [Next Lab: DevOps Self-Assessment →](./lab-02-devops-self-assessment.md)

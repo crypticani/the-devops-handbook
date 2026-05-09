@@ -330,6 +330,16 @@ cd .. && rm -rf elk-lab
 - [ ] Explain the role of each ELK component
 - [ ] Compare ELK vs Loki — when to use each
 
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Docker Compose file for the ELK stack
+- Logstash pipeline configuration
+- Kibana visualization screenshots or saved objects
+- Search queries and filter examples with results
+
 ---
 
 [← Back to Module README](../README.md) | [← Lab 01: Loki + Grafana](./lab-01-loki-grafana.md)

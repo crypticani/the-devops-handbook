@@ -343,6 +343,16 @@ cd .. && rm -rf ansible-lab
 - [ ] Explain why handlers only run when notified
 - [ ] Explain the difference between Ansible and Terraform
 
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Inventory file and ansible.cfg
+- Playbook YAML files from Exercise 3
+- Role directory structure from Exercise 4
+- Idempotency proof — output from running the playbook twice
+
 ---
 
 [← Back to Module README](../README.md)

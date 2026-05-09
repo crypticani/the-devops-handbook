@@ -258,6 +258,16 @@ terraform state list
 - [ ] Destroy all resources cleanly
 - [ ] Explain what the state file does and why it matters
 
+
+## 📝 What to Commit
+
+Add these to your portfolio repo as evidence of completed work:
+
+- Terraform configuration files (main.tf, variables.tf, outputs.tf)
+- Plan output showing create, modify, and destroy operations
+- State file summary (do NOT commit actual state with secrets)
+- Destroy confirmation output proving clean teardown
+
 ---
 
 [← Back to Module README](../README.md)
