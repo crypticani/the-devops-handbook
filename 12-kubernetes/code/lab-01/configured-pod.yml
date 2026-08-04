@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: configured-app
+spec:
+  containers:
+    - name: app
+      image: busybox
+      command: ["sh", "-c", "env | sort && sleep 3600"]
+      envFrom:
+        - configMapRef:
+            name: app-config
+      env:
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-creds
+              key: DB_USER
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: db-creds
+              key: DB_PASS

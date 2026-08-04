@@ -1,0 +1,11 @@
+services:
+  logger:
+    build:
+      context: .
+      dockerfile: Dockerfile.disk
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    tmpfs:
+      - /app/logs:size=5M

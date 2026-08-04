@@ -1,0 +1,27 @@
+2024-01-15 08:15:30 ERROR [database] Connection timeout to postgresql://db:5432/myapp after 30s
+2024-01-15 08:15:31 WARN [api] Retry attempt 1/3 for database connection
+2024-01-15 08:15:32 WARN [api] Retry attempt 2/3 for database connection
+2024-01-15 08:15:33 ERROR [api] All retry attempts failed for database connection
+2024-01-15 08:15:33 ERROR [api] Request failed: GET /api/v1/users - 500 Internal Server Error
+2024-01-15 09:00:00 INFO [scheduler] Running daily cleanup job
+2024-01-15 09:00:05 INFO [scheduler] Cleanup complete: removed 142 expired sessions
+2024-01-15 10:30:15 ERROR [auth] Invalid JWT token from IP 203.0.113.50
+2024-01-15 10:30:16 ERROR [auth] Invalid JWT token from IP 203.0.113.50
+2024-01-15 10:30:17 WARN [auth] Rate limit threshold reached for IP 203.0.113.50
+2024-01-15 10:30:18 ERROR [auth] Invalid JWT token from IP 203.0.113.50
+2024-01-15 10:30:18 ERROR [auth] Blocked IP 203.0.113.50 - exceeded rate limit
+2024-01-15 11:00:00 INFO [deploy] Deployment started: v2.3.1
+2024-01-15 11:00:30 INFO [deploy] Health check passed
+2024-01-15 11:00:31 INFO [deploy] Deployment complete: v2.3.1
+2024-01-15 14:22:10 ERROR [payment] Stripe API timeout for order #98712
+2024-01-15 14:22:11 WARN [payment] Retrying Stripe API call for order #98712
+2024-01-15 14:22:15 INFO [payment] Stripe API call succeeded on retry for order #98712
+2024-01-15 16:45:00 ERROR [memory] Application memory usage at 92% (threshold: 85%)
+2024-01-15 16:45:01 WARN [memory] Triggering garbage collection
+2024-01-15 16:45:05 INFO [memory] Memory usage reduced to 67% after GC
+2024-01-15 18:00:00 CRITICAL [disk] Disk usage at 95% on /var/log
+2024-01-15 18:00:01 CRITICAL [disk] ALERT: Immediate action required - disk nearly full
+2024-01-15 19:30:00 ERROR [database] Slow query detected: 15.3s for SELECT * FROM orders WHERE created_at > ...
+2024-01-15 19:30:01 WARN [database] Query optimization recommended for orders table
+2024-01-15 22:00:00 INFO [backup] Nightly backup started
+2024-01-15 22:05:00 INFO [backup] Nightly backup completed: 2.3GB compressed

@@ -1,0 +1,8 @@
+---
+- name: Deploy using roles
+  hosts: webservers
+  roles:
+    - role: webserver
+      vars:
+        app_name: "DevOps Handbook Lab"
+        server_name: "devops-lab.local"

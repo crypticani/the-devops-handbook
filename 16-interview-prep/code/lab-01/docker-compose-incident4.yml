@@ -1,0 +1,15 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.crash
+    command: ["python3", "-u", "dns_app.py"]
+    networks:
+      - frontend
+  datastore:
+    image: redis:7-alpine
+    networks:
+      - backend
+networks:
+  frontend:
+  backend:

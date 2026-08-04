@@ -1,0 +1,74 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME = 'my-app'
+        APP_VERSION = '1.0.0'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo "Building ${APP_NAME} v${APP_VERSION}"
+            }
+        }
+
+        stage('Lint') {
+            steps {
+                echo '🔍 Linting...'
+                sh '''
+                    if command -v flake8 > /dev/null 2>&1; then
+                        flake8 *.py --max-line-length=120 || true
+                    else
+                        echo "flake8 not installed, skipping lint"
+                    fi
+                '''
+            }
+        }
+
+        stage('Test') {
+            steps {
+                echo '🧪 Testing...'
+                sh '''
+                    pip install pytest --quiet 2>/dev/null || pip3 install pytest --quiet 2>/dev/null
+                    python -m pytest test_app.py -v 2>/dev/null || python3 -m pytest test_app.py -v 2>/dev/null || echo "No tests found"
+                '''
+            }
+        }
+
+        stage('Deploy to Staging') {
+            when {
+                branch 'main'
+            }
+            steps {
+                echo '🚀 Deploying to staging...'
+                echo "Would deploy ${APP_NAME}:${APP_VERSION}"
+            }
+        }
+
+        stage('Deploy to Production') {
+            when {
+                branch 'main'
+            }
+            input {
+                message 'Deploy to production?'
+                ok 'Yes, deploy!'
+                submitter 'admin'
+            }
+            steps {
+                echo '🚀 Deploying to production...'
+                echo "Deployed ${APP_NAME}:${APP_VERSION} to production"
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ ${APP_NAME} pipeline succeeded"
+        }
+        failure {
+            echo "❌ ${APP_NAME} pipeline failed"
+        }
+    }
+}

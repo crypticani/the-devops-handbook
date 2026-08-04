@@ -42,6 +42,13 @@ Thank you for your interest in contributing! This project aims to be the most co
 - Quote node labels that contain punctuation: `A["text: with, punctuation"]`. Avoid `"` inside labels — use `<code>` and `<br/>` for formatting
 - Validate before you push. Paste into [mermaid.live](https://mermaid.live), or run the parser locally
 
+#### Lab Code
+- Every file a lab creates must **also exist as a real file** under `<module>/code/lab-XX/`. The lab still shows it inline — learners type it out the first time — but the canonical copy is the one CI validates
+- Keep the two in sync. If you change a listing in a lab, change the file, and vice versa
+- Deliberately broken artifacts from Break It sections stay **inline only** — don't extract them
+- Add a line to `<module>/code/README.md` describing what the new files are for
+- Run `./scripts/validate.sh` before you push
+
 #### Cheat Sheets
 - Modules 01–13 have a `cheatsheet.md`. Additions should be **commands you have actually run**, not copied from documentation
 - Group by task ("Find things", "Debug a crash loop"), not alphabetically
@@ -77,27 +84,27 @@ Thank you for your interest in contributing! This project aims to be the most co
 
 ### 5. Before You Open a PR
 
+Run the validator. It's the same script CI runs:
+
 ```bash
-# No broken internal links
-python3 - <<'EOF'
-import os, re, glob
-bad = []
-for f in glob.glob('**/*.md', recursive=True):
-    d = os.path.dirname(f)
-    for m in re.finditer(r'\]\((?!https?:|#|mailto:)([^)#]+)', open(f).read()):
-        p = os.path.normpath(os.path.join(d, m.group(1).strip()))
-        if not os.path.exists(p):
-            bad.append((f, m.group(1)))
-print("broken links:", len(bad))
-[print(" ", *b) for b in bad]
-EOF
-
-# Every Mermaid diagram parses (needs node)
-npx -y @mermaid-js/mermaid-cli -i yourfile.md -o /dev/null   # or paste into mermaid.live
-
-# Shell snippets are sane
-shellcheck path/to/script.sh
+./scripts/validate.sh              # everything it has tools for
+./scripts/validate.sh links yaml   # or just the checks you care about
 ```
+
+Available checks: `links` · `mermaid` · `yaml` · `json` · `python` · `bash` · `compose` · `terraform` · `go` · `labs`
+
+Checks whose tool isn't installed are **skipped, not failed**, so a partial local
+environment still gives you useful signal. To run everything locally:
+
+```bash
+npm install --no-save mermaid jsdom      # mermaid
+pip install pyyaml ruff                   # yaml, python
+sudo apt-get install shellcheck           # bash
+# terraform, docker, and go you probably already have
+```
+
+The `labs` check enforces two rules automatically: every lab has a Break It section,
+and every `code/lab-XX/` directory has a matching lab file.
 
 ### 6. Content Quality Standards
 

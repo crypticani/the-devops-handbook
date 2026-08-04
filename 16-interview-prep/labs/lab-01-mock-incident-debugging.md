@@ -26,6 +26,22 @@ By the end of this lab, keep the following evidence in your notes or portfolio r
 
 ---
 
+## 📂 Lab Files
+
+Every file this lab creates also exists as a real, CI-validated file in
+[`../code/lab-01/`](../code/lab-01/) (11 files).
+
+```bash
+# Option A — type them out yourself (recommended the first time; that's the learning)
+# Option B — start from the reference copies
+cp -r /path/to/the-devops-handbook/16-interview-prep/code/lab-01/. .
+```
+
+Use Option B when you're comparing against a known-good version, or when something
+won't start and you need to rule out a typo. See [`../code/README.md`](../code/README.md).
+
+---
+
 ## 🔬 Incident 1: The Crash-Looping Container
 
 ### Setup

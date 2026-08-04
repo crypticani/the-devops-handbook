@@ -1,0 +1,24 @@
+---
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: true
+
+- name: Deploy Nginx config
+  template:
+    src: default.conf.j2
+    dest: /etc/nginx/sites-available/default
+  notify: Restart Nginx
+
+- name: Deploy index page
+  template:
+    src: index.html.j2
+    dest: /var/www/html/index.html
+    mode: "0644"
+
+- name: Ensure Nginx is running
+  service:
+    name: nginx
+    state: started
+    enabled: true

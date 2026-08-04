@@ -1,0 +1,11 @@
+# Database config
+DB_HOST = "db.example.com"
+DB_USER = "admin"
+DB_PASS = "SuperSecret123!"
+
+# AWS credentials
+AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"
+AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+
+# API token
+GITHUB_TOKEN = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"

@@ -13,6 +13,22 @@ Master the Linux text processing pipeline — the combination of `grep`, `awk`, 
 
 ---
 
+## 📂 Lab Files
+
+Every file this lab creates also exists as a real, CI-validated file in
+[`../code/lab-04/`](../code/lab-04/) (2 files).
+
+```bash
+# Option A — type them out yourself (recommended the first time; that's the learning)
+# Option B — start from the reference copies
+cp -r /path/to/the-devops-handbook/01-linux/code/lab-04/. .
+```
+
+Use Option B when you're comparing against a known-good version, or when something
+won't start and you need to rule out a typo. See [`../code/README.md`](../code/README.md).
+
+---
+
 ## 🔬 Setup: Generate Realistic Log Data
 
 ```bash

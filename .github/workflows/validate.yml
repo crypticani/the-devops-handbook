@@ -1,0 +1,102 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly — catches external links rotting and tool versions drifting
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  content:
+    name: Links, diagrams, and lab contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install the Mermaid parser
+        run: npm install --no-save --no-audit --no-fund mermaid jsdom
+
+      - name: Internal links
+        run: ./scripts/validate.sh links
+
+      - name: Mermaid diagrams
+        run: ./scripts/validate.sh mermaid
+
+      - name: Lab contract
+        run: ./scripts/validate.sh labs
+
+      - name: Markdown lint
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        continue-on-error: true
+        with:
+          globs: '**/*.md'
+
+  code:
+    name: Lab code
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: false
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Install linters
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq shellcheck
+          pip install --quiet pyyaml ruff
+
+      - name: Validate everything under */code
+        run: ./scripts/validate.sh yaml json python bash compose terraform go
+
+  external-links:
+    name: External links
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Third-party sites go down for reasons that are not our problem —
+    # report, don't block the build.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --max-concurrency 8
+            --timeout 20
+            --retry-wait-time 4
+            --max-retries 2
+            --accept 200,206,429
+            --exclude-path .remember
+            --exclude 'example\.com'
+            --exclude 'localhost'
+            --exclude '127\.0\.0\.1'
+            --exclude 'myorg|myapp|my-bucket|my-tf-state'
+            './**/*.md'
+          fail: false

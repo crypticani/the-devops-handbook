@@ -85,31 +85,33 @@ flowchart LR
 
 ## 📁 Module Hierarchy
 
-Every module has a `README.md` (concepts), `labs/` (hands-on), `projects/` (portfolio work), and `resources.md` (curated links). Modules 01–13 also ship a **`cheatsheet.md`** — the command reference you'll keep coming back to long after you've read the theory.
+Every module has a `README.md` (concepts), `labs/` (hands-on), `projects/` (portfolio work), and `resources.md` (curated links). Modules 01–13 also ship a **`cheatsheet.md`** — the command reference you'll keep coming back to long after you've read the theory — and most ship a **`code/`** directory holding the real, runnable files from each lab: Dockerfiles, Compose stacks, Terraform configs, Ansible roles, Kubernetes manifests, Prometheus rules, and workflows.
 
-| # | Module | Focus | Est. Time | Cheat Sheet |
-|---|--------|-------|-----------|-------------|
-| **Phase 1: Fundamentals** ||||
-| 00 | [Foundations](./00-foundations/) | DevOps culture, SDLC, Agile, tooling overview | 1 week | — |
-| 01 | [Linux](./01-linux/) | Debian/Ubuntu and RHEL-family Linux, filesystem, processes, permissions, systemd | 2 weeks | [📋](./01-linux/cheatsheet.md) |
-| 02 | [Networking](./02-networking/) | TCP/IP, DNS, HTTP, firewalls, troubleshooting | 1.5 weeks | [📋](./02-networking/cheatsheet.md) |
-| 03 | [Git](./03-git/) | Version control, branching, PRs, Git workflows | 1 week | [📋](./03-git/cheatsheet.md) |
-| 04 | [Scripting](./04-scripting/) | Bash scripting, Python basics for automation | 2 weeks | [📋](./04-scripting/cheatsheet.md) |
-| **Phase 2: Core Tools** ||||
-| 05 | [Containers & Docker](./05-containers-docker/) | Images, containers, Compose, registries | 2 weeks | [📋](./05-containers-docker/cheatsheet.md) |
-| 06 | [CI/CD](./06-ci-cd/) | GitHub Actions, Jenkins, pipelines, testing | 2 weeks | [📋](./06-ci-cd/cheatsheet.md) |
-| 07 | [Observability](./07-observability/) | Prometheus, Grafana, metrics, alerting | 2 weeks | [📋](./07-observability/cheatsheet.md) |
-| 08 | [Logging](./08-logging/) | ELK stack, Loki, centralized logging, debugging | 1.5 weeks | [📋](./08-logging/cheatsheet.md) |
-| **Phase 3: Production Skills** ||||
-| 09 | [Cloud Fundamentals](./09-cloud-fundamentals/) | Cloud-agnostic concepts, then AWS specifics | 2 weeks | [📋](./09-cloud-fundamentals/cheatsheet.md) |
-| 10 | [Terraform](./10-terraform/) | Infrastructure as Code, state, modules | 2 weeks | [📋](./10-terraform/cheatsheet.md) |
-| 11 | [Ansible](./11-ansible/) | Configuration management, playbooks, roles | 1 week | [📋](./11-ansible/cheatsheet.md) |
-| 12 | [Kubernetes](./12-kubernetes/) | Pods, Services, Deployments, Helm, debugging | 3 weeks | [📋](./12-kubernetes/cheatsheet.md) |
-| **Phase 4: Mastery** ||||
-| 13 | [Security Basics](./13-security-basics/) | Secrets, RBAC, container security, secure CI/CD | 1.5 weeks | [📋](./13-security-basics/cheatsheet.md) |
-| 14 | [System Design](./14-system-design-devops/) | Architecture, scaling, HA, load balancing | 1 week | — |
-| 15 | [Projects](./15-projects/) | Beginner → Advanced real-world projects | 3-4 weeks | — |
-| 16 | [Interview Prep](./16-interview-prep/) | FAQs, scenarios, debugging questions | 1-2 weeks | — |
+Everything under `code/` is checked on every commit by [`scripts/validate.sh`](./scripts/validate.sh) — YAML parses, Terraform validates, Compose files resolve, Python compiles, Go is `gofmt`-clean, and every internal link and Mermaid diagram is verified. If a tool changes under us, CI says so before you hit it in a lab.
+
+| # | Module | Focus | Est. Time | Cheat Sheet | Lab Code |
+|---|--------|-------|-----------|-------------|----------|
+| **Phase 1: Fundamentals** |||||
+| 00 | [Foundations](./00-foundations/) | DevOps culture, SDLC, Agile, tooling overview | 1 week | — | — |
+| 01 | [Linux](./01-linux/) | Debian/Ubuntu and RHEL-family Linux, filesystem, processes, permissions, systemd | 2 weeks | [📋](./01-linux/cheatsheet.md) | [📁](./01-linux/code/) |
+| 02 | [Networking](./02-networking/) | TCP/IP, DNS, HTTP, firewalls, troubleshooting | 1.5 weeks | [📋](./02-networking/cheatsheet.md) | [📁](./02-networking/code/) |
+| 03 | [Git](./03-git/) | Version control, branching, PRs, Git workflows | 1 week | [📋](./03-git/cheatsheet.md) | — |
+| 04 | [Scripting](./04-scripting/) | Bash scripting, Python basics for automation | 2 weeks | [📋](./04-scripting/cheatsheet.md) | [📁](./04-scripting/code/) |
+| **Phase 2: Core Tools** |||||
+| 05 | [Containers & Docker](./05-containers-docker/) | Images, containers, Compose, registries | 2 weeks | [📋](./05-containers-docker/cheatsheet.md) | [📁](./05-containers-docker/code/) |
+| 06 | [CI/CD](./06-ci-cd/) | GitHub Actions, Jenkins, pipelines, testing | 2 weeks | [📋](./06-ci-cd/cheatsheet.md) | [📁](./06-ci-cd/code/) |
+| 07 | [Observability](./07-observability/) | Prometheus, Grafana, metrics, alerting | 2 weeks | [📋](./07-observability/cheatsheet.md) | [📁](./07-observability/code/) |
+| 08 | [Logging](./08-logging/) | ELK stack, Loki, centralized logging, debugging | 1.5 weeks | [📋](./08-logging/cheatsheet.md) | [📁](./08-logging/code/) |
+| **Phase 3: Production Skills** |||||
+| 09 | [Cloud Fundamentals](./09-cloud-fundamentals/) | Cloud-agnostic concepts, then AWS specifics | 2 weeks | [📋](./09-cloud-fundamentals/cheatsheet.md) | [📁](./09-cloud-fundamentals/code/) |
+| 10 | [Terraform](./10-terraform/) | Infrastructure as Code, state, modules | 2 weeks | [📋](./10-terraform/cheatsheet.md) | [📁](./10-terraform/code/) |
+| 11 | [Ansible](./11-ansible/) | Configuration management, playbooks, roles | 1 week | [📋](./11-ansible/cheatsheet.md) | [📁](./11-ansible/code/) |
+| 12 | [Kubernetes](./12-kubernetes/) | Pods, Services, Deployments, Helm, debugging | 3 weeks | [📋](./12-kubernetes/cheatsheet.md) | [📁](./12-kubernetes/code/) |
+| **Phase 4: Mastery** |||||
+| 13 | [Security Basics](./13-security-basics/) | Secrets, RBAC, container security, secure CI/CD | 1.5 weeks | [📋](./13-security-basics/cheatsheet.md) | [📁](./13-security-basics/code/) |
+| 14 | [System Design](./14-system-design-devops/) | Architecture, scaling, HA, load balancing | 1 week | — | [📁](./14-system-design-devops/code/) |
+| 15 | [Projects](./15-projects/) | Beginner → Advanced real-world projects | 3-4 weeks | — | — |
+| 16 | [Interview Prep](./16-interview-prep/) | FAQs, scenarios, debugging questions | 1-2 weeks | — | [📁](./16-interview-prep/code/) |
 
 **Total Estimated Duration**: 24-28 weeks (6-7 months) at ~10-15 hours/week
 
@@ -166,8 +168,8 @@ If you already have Linux/Git experience, you can start from Module 04 or 05, bu
 
 1. **Read** `README.md` — understand the concepts and why they matter
 2. **Study** the commands and tools — don't just memorize, understand
-3. **Do** every lab in `labs/` — hands-on is non-negotiable
-4. **Break things** — intentional failure scenarios teach debugging
+3. **Do** every lab in `labs/` — hands-on is non-negotiable. Type the files out the first time; `code/` holds reference copies for when you're stuck or comparing
+4. **Break things** — every lab ends with a **🧨 Break It** section. These are not optional. Real skill is knowing what a system looks like when it's wrong
 5. **Build** mini-projects in `projects/` — apply what you learned
 6. **Keep** `cheatsheet.md` open while you work — recall comes from repetition, not memorisation
 7. **Check** `resources.md` — deepen your knowledge

@@ -1,0 +1,6 @@
+FROM ubuntu:latest
+RUN apt-get update && apt-get install -y python3 curl wget vim
+COPY app.py /app/
+ENV API_KEY=sk-secret-12345
+USER root
+CMD ["python3", "/app/app.py"]

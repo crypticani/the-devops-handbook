@@ -1,0 +1,6 @@
+services:
+  webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile.crash
+    restart: always
