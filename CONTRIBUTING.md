@@ -43,9 +43,11 @@ Thank you for your interest in contributing! This project aims to be the most co
 - Validate before you push. Paste into [mermaid.live](https://mermaid.live), or run the parser locally
 
 #### Lab Code
-- Every file a lab creates must **also exist as a real file** under `<module>/code/lab-XX/`. The lab still shows it inline — learners type it out the first time — but the canonical copy is the one CI validates
-- Keep the two in sync. If you change a listing in a lab, change the file, and vice versa
-- Deliberately broken artifacts from Break It sections stay **inline only** — don't extract them
+- Every file a lab creates must **also exist as a real file** under `<module>/code/lab-XX/`. The lab still shows it inline — learners type it out the first time — but the copy under `code/` is the one CI actually validates
+- **These are maintained by hand, in the same PR.** Change a listing in a lab → change the file. Change the file → change the listing. There is deliberately no auto-generator: a heredoc scraper cannot model `cd`, shell interpolation, or files built up across several steps, and a wrong one silently ships broken code
+- Mirror the lab's directory structure. If the lab does `cd environments/dev` before writing `main.tf`, the file belongs at `code/lab-XX/environments/dev/main.tf`
+- Deliberately broken artifacts from Break It sections stay **inline only** — don't add them to `code/`
+- Anything that needs a real account ID, bucket name, or resource ID ships as `<name>.example` with an obvious placeholder. Never commit a value derived from your own account
 - Add a line to `<module>/code/README.md` describing what the new files are for
 - Run `./scripts/validate.sh` before you push
 

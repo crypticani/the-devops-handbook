@@ -15,3 +15,7 @@ def divide(a: int, b: int) -> float:
 def is_even(n: int) -> bool:
     """Check if a number is even."""
     return n % 2 == 0
+
+def subtract(a: int, b: int) -> int:
+    """Subtract b from a."""
+    return a - b

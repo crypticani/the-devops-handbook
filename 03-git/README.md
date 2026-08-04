@@ -886,7 +886,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 **Portfolio project:**
 
-- [Project: Branching Workflow with Conflict Resolution](./projects/project-01-branching-conflict-workflow.md) — Build a small repository that demonstrates a realistic Git workflow: feature branches, pull request review, merge conflict, conflict resolution,…
+- [Project: Branching Workflow with Conflict Resolution](./projects/project-01-branching-conflict-workflow.md) — Build a small repository that demonstrates a realistic Git workflow: feature branches, pull request review, merge conflict, conflict resolution, and…
 
 ---
 ## Practical Checkpoint

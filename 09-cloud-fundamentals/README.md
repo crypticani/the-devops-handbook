@@ -577,7 +577,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 **Portfolio project:**
 
-- [Project: Small Cloud Environment Walkthrough](./projects/project-01-small-cloud-environment.md) — Create a minimal cloud environment and document the core building blocks: network, compute, access control, security boundary, validation, cost,…
+- [Project: Small Cloud Environment Walkthrough](./projects/project-01-small-cloud-environment.md) — Create a minimal cloud environment and document the core building blocks: network, compute, access control, security boundary, validation, cost, and…
 
 **Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 

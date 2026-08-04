@@ -40,6 +40,9 @@ jobs:
       - name: Lab contract
         run: ./scripts/validate.sh labs
 
+      - name: Module lab indexes are current
+        run: python3 scripts/update-lab-index.py --check
+
       - name: Markdown lint
         uses: DavidAnson/markdownlint-cli2-action@v16
         continue-on-error: true
@@ -49,7 +52,9 @@ jobs:
   code:
     name: Lab code
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
+    env:
+      TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.tf-plugin-cache
     steps:
       - uses: actions/checkout@v4
 
@@ -66,14 +71,28 @@ jobs:
         with:
           terraform_wrapper: false
 
+      # Terraform providers are hundreds of MB and every config downloads the
+      # same ones. Without this the terraform check dominates the whole run.
+      - name: Cache Terraform providers
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: tf-providers-${{ runner.os }}-${{ hashFiles('**/code/**/*.tf') }}
+          restore-keys: tf-providers-${{ runner.os }}-
+
       - name: Install linters
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq shellcheck
           pip install --quiet pyyaml ruff
 
-      - name: Validate everything under */code
-        run: ./scripts/validate.sh yaml json python bash compose terraform go
+      - name: Fast checks
+        run: ./scripts/validate.sh yaml json python bash compose go
+
+      - name: Terraform
+        run: |
+          mkdir -p "$TF_PLUGIN_CACHE_DIR"
+          ./scripts/validate.sh terraform
 
   external-links:
     name: External links

@@ -150,11 +150,22 @@ if want terraform; then
   if command -v terraform >/dev/null 2>&1; then
     terraform fmt -check -recursive ./*/code >/dev/null 2>&1 \
       && pass "terraform fmt clean" || fail "terraform fmt — run: terraform fmt -recursive"
+
+    # ⭐ Share one provider download across every config, or this takes minutes
+    # per directory and times out in CI.
+    export TF_PLUGIN_CACHE_DIR="${TF_PLUGIN_CACHE_DIR:-${TMPDIR:-/tmp}/tf-plugin-cache}"
+    mkdir -p "$TF_PLUGIN_CACHE_DIR"
+
     ok=1
     while IFS= read -r d; do
-      ( cd "$d" \
-        && terraform init -backend=false -input=false -no-color >/dev/null 2>&1 \
-        && terraform validate -no-color >/dev/null 2>&1 ) || { fail "terraform validate: $d"; ok=0; }
+      out=$( cd "$d" \
+        && terraform init -backend=false -input=false -no-color 2>&1 \
+        && terraform validate -no-color 2>&1 )
+      if grep -q 'Success!' <<<"$out"; then :; else
+        fail "terraform validate: $d"
+        printf '     %s\n' "$(tail -6 <<<"$out")"
+        ok=0
+      fi
       rm -rf "$d/.terraform" "$d/.terraform.lock.hcl"
     done < <(find ./*/code -name '*.tf' -exec dirname {} \; 2>/dev/null | sort -u)
     [[ $ok -eq 1 ]] && pass "terraform validate clean"

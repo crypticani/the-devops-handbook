@@ -3,4 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.crash
+    environment:
+      - CONFIG_PATH=/etc/app/config.yml
+    volumes:
+      - ./config/config.yml:/etc/app/config.yml:ro
     restart: always

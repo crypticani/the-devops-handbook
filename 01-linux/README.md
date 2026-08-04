@@ -1195,7 +1195,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 |---|-----|----------------|
 | 1 | **[Linux Filesystem Mastery](./labs/lab-01-filesystem-mastery.md)** | Navigate the Linux filesystem with confidence, understand the hierarchy, manage files and directories, and develop the muscle memory for commands… |
 | 2 | **[Permissions, Users, and Security](./labs/lab-02-permissions-users.md)** | Master Linux permissions, user management, and security fundamentals. |
-| 3 | **[Process Management & Systemd Services](./labs/lab-03-processes-services.md)** | Master process management and systemd — the skills you'll use to monitor running applications, debug slow servers, manage services, and create… |
+| 3 | **[Process Management & Systemd Services](./labs/lab-03-processes-services.md)** | Master process management and systemd — the skills you'll use to monitor running applications, debug slow servers, manage services, and create your… |
 | 4 | **[Text Processing & Log Analysis](./labs/lab-04-text-processing.md)** | Master the Linux text processing pipeline — the combination of `grep`, `awk`, `sed`, `sort`, `uniq`, and pipes that lets you analyze logs, extract… |
 
 **Portfolio project:**

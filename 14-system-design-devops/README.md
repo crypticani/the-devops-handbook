@@ -600,7 +600,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 | # | Lab | What you'll do |
 |---|-----|----------------|
-| 1 | **[High Availability and Load Balancing](./labs/lab-01-ha-load-balancing.md)** | Build a load-balanced, highly available web application using Nginx as a reverse proxy with health checks, and simulate real-world failure… |
+| 1 | **[High Availability and Load Balancing](./labs/lab-01-ha-load-balancing.md)** | Build a load-balanced, highly available web application using Nginx as a reverse proxy with health checks, and simulate real-world failure scenarios… |
 
 **Portfolio project:**
 

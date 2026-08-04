@@ -26,3 +26,10 @@ def test_is_even():
     assert is_even(4) is True
     assert is_even(3) is False
     assert is_even(0) is True
+
+from app import subtract
+
+def test_subtract():
+    assert subtract(5, 3) == 2
+    assert subtract(0, 5) == -5
+    assert subtract(-3, -3) == 0
