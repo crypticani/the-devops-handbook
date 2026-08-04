@@ -10,7 +10,12 @@ learning happens. Use these when you want to skip the transcription, when you're
 your version against a reference, or when something isn't working and you need a known-good
 starting point.
 
-> ⚠️ **These environments are intentionally broken.** Each one fails in a specific, diagnosable way. Don't read the Compose files before attempting the incident — that's the answer key.
+> ⚠️ **These environments are intentionally broken, and these files are the STARTING
+> state, not the fixed one.** Each fails in a specific, diagnosable way. The fixes live
+> in the lab's "Expected Fix" sections — don't read those, or these files, before
+> attempting the incident. That's the answer key.
+>
+> **These environments are intentionally broken.** Each one fails in a specific, diagnosable way. Don't read the Compose files before attempting the incident — that's the answer key.
 
 ---
 

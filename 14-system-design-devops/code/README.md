@@ -23,8 +23,13 @@ lab-01/
 ├── Dockerfile
 ├── app.py
 ├── docker-compose.yml
-└── nginx/nginx.conf
+├── nginx/nginx.conf
+├── nginx/nginx.least-conn.conf
+└── nginx/nginx.weighted.conf
 ```
+
+`nginx.conf` is the round-robin config from Exercise 1. The two variants are the
+Exercise 4 algorithms — copy one over `nginx.conf` to compare their behaviour.
 
 ---
 
