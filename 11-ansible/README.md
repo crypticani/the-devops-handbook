@@ -632,6 +632,21 @@ Playbook failed?
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[Ansible Basics](./labs/lab-01-ansible-basics.md)** | Write and run Ansible playbooks against Docker containers as managed nodes. |
+
+**Portfolio project:**
+
+- [Project: Idempotent Service Configuration](./projects/project-01-idempotent-service-config.md) — Use Ansible to configure a service on a local VM, container, or remote host in a repeatable way.
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

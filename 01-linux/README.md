@@ -1187,6 +1187,24 @@ sudo firewall-cmd --list-all
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[Linux Filesystem Mastery](./labs/lab-01-filesystem-mastery.md)** | Navigate the Linux filesystem with confidence, understand the hierarchy, manage files and directories, and develop the muscle memory for commands… |
+| 2 | **[Permissions, Users, and Security](./labs/lab-02-permissions-users.md)** | Master Linux permissions, user management, and security fundamentals. |
+| 3 | **[Process Management & Systemd Services](./labs/lab-03-processes-services.md)** | Master process management and systemd — the skills you'll use to monitor running applications, debug slow servers, manage services, and create… |
+| 4 | **[Text Processing & Log Analysis](./labs/lab-04-text-processing.md)** | Master the Linux text processing pipeline — the combination of `grep`, `awk`, `sed`, `sort`, `uniq`, and pipes that lets you analyze logs, extract… |
+
+**Portfolio project:**
+
+- [Project: Linux Server Health Report Generator](./projects/project-01-health-report.md)
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

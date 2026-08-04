@@ -594,6 +594,21 @@ GOOD: Metrics, logging, and tracing are part of the architecture
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[High Availability and Load Balancing](./labs/lab-01-ha-load-balancing.md)** | Build a load-balanced, highly available web application using Nginx as a reverse proxy with health checks, and simulate real-world failure… |
+
+**Portfolio project:**
+
+- [Project: Architecture Design Document](./projects/project-01-architecture-design-doc.md) — Design a production-ready architecture for a web application that must handle growing traffic, survive component failures, and be operationally…
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

@@ -912,6 +912,22 @@ fi
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[Bash Scripting for DevOps](./labs/lab-01-bash-scripting.md)** | Write production-grade Bash scripts for real DevOps tasks — deployment, health checking, log rotation, and system monitoring. |
+| 2 | **[Python Automation for DevOps](./labs/lab-02-python-automation.md)** | Build practical Python tools for DevOps automation — API health checkers, system inventory scripts, and log analyzers. |
+
+**Portfolio project:**
+
+- [Project: Log Parser Automation](./projects/project-01-log-parser.md) — Write a Bash or Python script that analyzes an application or web server log and produces a short operational report.
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

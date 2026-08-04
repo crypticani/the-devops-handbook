@@ -851,6 +851,22 @@ docker scout cves myapp:v1.2.3
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[Docker Fundamentals](./labs/lab-01-docker-fundamentals.md)** | Get hands-on with Docker's core operations — pull images, run containers, publish ports, manage logs, and build your first custom image. |
+| 2 | **[Advanced Docker Patterns](./labs/lab-02-advanced-docker.md)** | Master multi-stage builds, image optimization, Docker networking internals, and production-grade container patterns. |
+
+**Portfolio project:**
+
+- [Project: Containerized App with Compose and Healthcheck](./projects/project-01-compose-healthcheck-app.md) — Containerize a small web application and run it locally with Docker Compose.
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

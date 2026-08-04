@@ -1220,6 +1220,23 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[DNS Deep Dive](./labs/lab-01-dns-deep-dive.md)** | Master DNS resolution, understand how domain names work in practice, and learn to diagnose the most common networking issue in DevOps: DNS failures. |
+| 2 | **[TCP, Ports & Connectivity Testing](./labs/lab-02-tcp-ports-connectivity.md)** | Master TCP connectivity testing, port scanning, and the debugging techniques you'll use daily to diagnose "I can't connect to X" issues in production. |
+| 3 | **[Nginx Reverse Proxy Setup](./labs/lab-03-nginx-reverse-proxy.md)** | Set up Nginx as a reverse proxy — the standard production pattern used in nearly every web deployment. |
+
+**Portfolio project:**
+
+- [Project: DNS and HTTP Troubleshooting Runbook](./projects/project-01-network-troubleshooting-runbook.md) — Create a practical runbook for diagnosing why a user cannot reach a web service.
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

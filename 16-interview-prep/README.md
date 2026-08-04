@@ -344,6 +344,21 @@ GOOD: "First I'd check if the issue is isolated to one server
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[Mock Incident Debugging](./labs/lab-01-mock-incident-debugging.md)** | Practice diagnosing and resolving simulated production incidents using Docker. |
+
+**Portfolio project:**
+
+- [Project: Interview Portfolio](./projects/project-01-interview-portfolio.md) — Compile your DevOps learning journey into an interview-ready portfolio.
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
 ## Practical Checkpoint
 
 Before considering yourself interview-ready, you should be able to:

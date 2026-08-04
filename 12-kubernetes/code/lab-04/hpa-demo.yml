@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: hpa-demo}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: hpa-demo}}
+  template:
+    metadata: {labels: {app: hpa-demo}}
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/hpa-example      # burns CPU on every request
+          ports: [{containerPort: 80}]
+          resources:
+            requests: {cpu: 100m, memory: 64Mi}   # ⭐ HPA percentages are relative to REQUESTS
+            limits:   {cpu: 500m, memory: 128Mi}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: hpa-demo}
+spec:
+  selector: {app: hpa-demo}
+  ports: [{port: 80}]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: {name: hpa-demo}
+spec:
+  scaleTargetRef: {apiVersion: apps/v1, kind: Deployment, name: hpa-demo}
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: {type: Utilization, averageUtilization: 50}   # 50% of the 100m REQUEST
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0      # react immediately
+      policies: [{type: Percent, value: 100, periodSeconds: 15}]
+    scaleDown:
+      stabilizationWindowSeconds: 120    # ⭐ wait 2 min before shrinking — avoids flapping
+      policies: [{type: Percent, value: 50, periodSeconds: 60}]

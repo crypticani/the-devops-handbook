@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: pdb-demo}
+spec:
+  replicas: 3
+  selector: {matchLabels: {app: pdb-demo}}
+  template:
+    metadata: {labels: {app: pdb-demo}}
+    spec:
+      containers:
+        - name: app
+          image: nginx:1.27-alpine
+          resources:
+            requests: {cpu: 25m, memory: 32Mi}
+            limits:   {memory: 64Mi}

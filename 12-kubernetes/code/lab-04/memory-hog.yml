@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: memory-hog}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: memory-hog}}
+  template:
+    metadata: {labels: {app: memory-hog}}
+    spec:
+      containers:
+        - name: hog
+          image: python:3.12-alpine
+          command: ["python3","-u","-c"]
+          args:
+            - |
+              import time
+              chunks = []
+              mb = 0
+              while True:
+                  chunks.append(bytearray(10 * 1024 * 1024))   # 10 MiB
+                  mb += 10
+                  print(f"allocated {mb} MiB", flush=True)
+                  time.sleep(0.4)
+          resources:
+            requests: {cpu: 50m, memory: 32Mi}
+            limits:   {memory: 128Mi}      # ⭐ the ceiling it will hit

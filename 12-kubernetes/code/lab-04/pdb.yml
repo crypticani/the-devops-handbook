@@ -1,0 +1,6 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: pdb-demo}
+spec:
+  minAvailable: 2                    # ⭐ never fewer than 2 running
+  selector: {matchLabels: {app: pdb-demo}}

@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Pod
+metadata: {name: qos-guaranteed}
+spec:
+  containers:
+    - name: app
+      image: registry.k8s.io/pause:3.9
+      resources:                      # ⭐ limits == requests, for BOTH cpu and memory
+        requests: {cpu: 100m, memory: 64Mi}
+        limits:   {cpu: 100m, memory: 64Mi}
+---
+apiVersion: v1
+kind: Pod
+metadata: {name: qos-burstable}
+spec:
+  containers:
+    - name: app
+      image: registry.k8s.io/pause:3.9
+      resources:
+        requests: {cpu: 50m, memory: 32Mi}
+        limits:   {memory: 128Mi}     # requests < limits
+---
+apiVersion: v1
+kind: Pod
+metadata: {name: qos-besteffort}
+spec:
+  containers:
+    - name: app
+      image: registry.k8s.io/pause:3.9   # ⭐ no resources block at all

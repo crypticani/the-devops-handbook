@@ -242,6 +242,17 @@ Production Infrastructure Platform
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+**Portfolio projects:**
+
+- [Static Site Pipeline (Beginner)](./projects/project-01-static-site-pipeline.md) — Build a containerized static website with an automated CI/CD pipeline that lints, builds, scans, and deploys on every push.
+- [Microservices Platform (Intermediate)](./projects/project-02-microservices-platform.md) — Deploy a multi-service application with a reverse proxy, centralized monitoring, and centralized logging.
+- [Production Infrastructure (Advanced)](./projects/project-03-production-infrastructure.md) — Design, provision, and manage a complete production-grade environment using Infrastructure as Code, container orchestration, configuration…
+
+---
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

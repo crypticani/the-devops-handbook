@@ -583,6 +583,22 @@ Alert fires: "High error rate on order-service"
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[Loki + Grafana](./labs/lab-01-loki-grafana.md)** | Set up a centralized logging stack using Grafana Loki, Promtail, and Grafana. |
+| 2 | **[ELK Stack](./labs/lab-02-elk-stack.md)** | Set up the ELK Stack (Elasticsearch, Logstash, Kibana) with Filebeat using Docker Compose. |
+
+**Portfolio project:**
+
+- [Project: Centralized Logging Investigation](./projects/project-01-log-investigation.md) — Collect application or container logs into a logging stack and use queries to investigate a realistic failure.
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

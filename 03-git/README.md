@@ -875,6 +875,20 @@ git bisect reset             # When done
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[Git Core Workflow Mastery](./labs/lab-01-git-core-workflow.md)** | Build complete fluency with Git's daily workflow — init, add, commit, branch, merge, and conflict resolution. |
+| 2 | **[GitHub Workflows & Pull Requests](./labs/lab-02-github-workflows.md)** | Practice the complete GitHub collaboration workflow — forking, branching, PRs, code review, and branch protection. |
+
+**Portfolio project:**
+
+- [Project: Branching Workflow with Conflict Resolution](./projects/project-01-branching-conflict-workflow.md) — Build a small repository that demonstrates a realistic Git workflow: feature branches, pull request review, merge conflict, conflict resolution,…
+
+---
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

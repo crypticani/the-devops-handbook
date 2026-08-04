@@ -656,6 +656,21 @@ INCIDENT DETECTED!
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[Security Scanning](./labs/lab-01-security-scanning.md)** | Integrate security scanning into your DevOps workflow. |
+
+**Portfolio project:**
+
+- [Project: Security Scan and Triage Report](./projects/project-01-security-scan-triage.md) — Run security scans against a small application, container image, or infrastructure config.
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
 ## Practical Checkpoint
 
 Before moving on, you should be able to:
