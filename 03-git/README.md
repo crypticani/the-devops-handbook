@@ -4,6 +4,12 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 **Git is the single most important tool in DevOps.** Every piece of code, every configuration file, every pipeline definition, every infrastructure template — all of it lives in Git. Your ability to use Git fluently determines how effectively you collaborate, track changes, and recover from mistakes.
@@ -41,18 +47,33 @@
 
 Git is a **distributed version control system** — every developer has a complete copy of the repository, including its full history. This means you can work offline, branch freely, and recover from almost any mistake.
 
-### The Three Areas of Git
+### The Three Areas of Git (Plus the Remote)
 
+Almost every confusing Git moment comes from not knowing **which of these four places** your change currently lives in. Learn this map and half of Git stops being mysterious.
+
+```mermaid
+flowchart LR
+    WD["<b>Working Directory</b><br/>Your files on disk<br/><i>modified</i>"]
+    IDX["<b>Staging Area</b><br/>Index<br/><i>staged</i>"]
+    REPO["<b>Local Repository</b><br/>.git<br/><i>committed</i>"]
+    REM["<b>Remote</b><br/>GitHub / origin<br/><i>pushed</i>"]
+
+    WD -->|"git add"| IDX
+    IDX -->|"git commit"| REPO
+    REPO -->|"git push"| REM
+
+    IDX -.->|"git restore --staged<br/>(unstage, keep changes)"| WD
+    REPO -.->|"git restore &lt;file&gt;<br/>(discard local changes)"| WD
+    REM -.->|"git fetch"| REPO
+    REM -.->|"git pull = fetch + merge"| WD
+
+    style WD fill:#fff4e0,stroke:#cc8800
+    style IDX fill:#e8f0ff,stroke:#3366cc
+    style REPO fill:#e8ffe8,stroke:#22aa22
+    style REM fill:#f0e8ff,stroke:#8844cc
 ```
-Working Directory          Staging Area (Index)         Repository (.git)
-┌──────────────┐          ┌──────────────┐            ┌──────────────┐
-│              │  git add  │              │ git commit  │              │
-│  Your files  │─────────▶│  Prepared    │────────────▶│  Permanent   │
-│  (modified)  │          │  changes     │            │  history     │
-│              │◀─────────│              │            │              │
-│              │ git restore│             │            │              │
-└──────────────┘          └──────────────┘            └──────────────┘
-```
+
+> **💡 The mental check**: before you run any recovery command, ask *"where is my work right now?"* If it's only in the working directory, `git checkout`/`git restore` will destroy it permanently. If it reached a commit — even on a deleted branch — `git reflog` can get it back. **Committing is what makes work recoverable.** Commit early, tidy up later.
 
 ### Key Concepts
 
@@ -177,6 +198,27 @@ Branches let you work on features, fixes, or experiments **without affecting the
 - Pipeline updates (CI/CD config changes)
 - Config modifications (Kubernetes manifests)
 
+A branch is not a copy of your files — it is just a **movable pointer to a commit**. That is why creating one is instant and free.
+
+```mermaid
+gitGraph
+    commit id: "init"
+    commit id: "add nginx config"
+    branch feature/add-monitoring
+    checkout feature/add-monitoring
+    commit id: "add prometheus.yml"
+    commit id: "add grafana dashboard"
+    checkout main
+    commit id: "hotfix: TLS cert path"
+    checkout feature/add-monitoring
+    commit id: "add alert rules"
+    checkout main
+    merge feature/add-monitoring id: "merge monitoring"
+    commit id: "bump version"
+```
+
+Notice that `main` kept moving while the feature branch was in progress — that's the normal case, and it's exactly why merges and rebases exist.
+
 ### Branch Operations
 
 ```bash
@@ -218,6 +260,55 @@ git merge feature/add-monitoring
 git merge --squash feature/add-monitoring
 git commit -m "feat: add Prometheus monitoring stack"
 ```
+
+#### The three merge shapes, side by side
+
+**1. Fast-forward** — `main` hasn't moved since you branched, so Git just slides the pointer forward. No merge commit, perfectly linear history.
+
+```mermaid
+gitGraph
+    commit id: "A"
+    commit id: "B"
+    branch feature
+    checkout feature
+    commit id: "C"
+    commit id: "D"
+    checkout main
+    merge feature id: "fast-forward"
+```
+
+**2. Merge commit (recursive)** — both branches moved, so Git creates a new commit with **two parents**. History is truthful but shows the branch topology.
+
+```mermaid
+gitGraph
+    commit id: "A"
+    commit id: "B"
+    branch feature
+    checkout feature
+    commit id: "C"
+    commit id: "D"
+    checkout main
+    commit id: "E (someone else)"
+    merge feature id: "M: merge commit"
+```
+
+**3. Squash merge** — all feature commits are flattened into **one new commit** on `main`. The feature branch's individual commits never enter `main`'s history.
+
+```mermaid
+gitGraph
+    commit id: "A"
+    commit id: "B"
+    commit id: "E (someone else)"
+    commit id: "S: squashed C+D" type: HIGHLIGHT
+```
+
+| Strategy | History | Use when |
+|----------|---------|----------|
+| **Fast-forward** | Linear, no extra commit | Solo work, trivial changes, `main` hasn't moved |
+| **Merge commit** | Preserves branch shape | You want to see *when* and *what* was integrated; release branches |
+| **Squash** | One commit per PR | Trunk-based development — the default for most teams, keeps `main` readable and easy to revert |
+
+> **💡 DevOps Impact**: Squash merges make `git revert` on `main` a single-commit operation. When a bad deploy needs rolling back at 2 AM, reverting one commit beats untangling nine. This is why most teams enable "Squash and merge" as the only allowed option in GitHub branch protection.
 
 ### Handling Merge Conflicts
 
@@ -299,16 +390,35 @@ git push origin main
 
 ### The PR Workflow (Industry Standard)
 
+```mermaid
+flowchart TD
+    A["1. Create a branch<br/><code>git switch -c fix/database-timeout</code>"] --> B["2. Make changes<br/>edit, <code>git add</code>, <code>git commit</code>"]
+    B --> C["3. Push the branch<br/><code>git push -u origin fix/database-timeout</code>"]
+    C --> D["4. Open a Pull Request<br/>GitHub UI or <code>gh pr create</code>"]
+
+    D --> CI["6. CI checks run<br/>tests · lint · build · security scan"]
+    D --> RV["5. Code review<br/>teammates comment"]
+
+    CI -->|"❌ red"| FIX["Push a fix commit<br/>— CI re-runs automatically"]
+    RV -->|"changes requested"| FIX
+    FIX --> CI
+    FIX --> RV
+
+    CI -->|"✅ green"| GATE
+    RV -->|"approved"| GATE
+
+    GATE{"Branch protection:<br/>all required checks green<br/>+ required approvals?"}
+    GATE -->|"no"| BLOCK["🔒 Merge button disabled"]
+    BLOCK --> FIX
+    GATE -->|"yes"| M["7. Squash merge into main"]
+    M --> DEL["8. Delete the branch"]
+    DEL --> DEPLOY["main is deployable —<br/>CD picks it up (Module 06)"]
+
+    style GATE fill:#fff4e0,stroke:#cc8800
+    style DEPLOY fill:#e0ffe0,stroke:#0a0
 ```
-1. Create a branch      →  git checkout -b fix/database-timeout
-2. Make changes          →  edit files, commit
-3. Push the branch       →  git push -u origin fix/database-timeout
-4. Open a Pull Request   →  GitHub UI or CLI
-5. Code review           →  Team reviews, comments, approves
-6. CI checks pass        →  Automated tests, linting, security scans
-7. Merge                 →  Squash merge into main
-8. Delete branch         →  Clean up
-```
+
+The two paths — **review** and **CI** — run in parallel and both must go green. Branch protection is what makes that a rule instead of a suggestion; without it, the whole diagram is optional.
 
 ### GitHub CLI (gh)
 
@@ -349,38 +459,83 @@ When reviewing infrastructure PRs, check:
 
 ### Trunk-Based Development (Recommended for DevOps)
 
+One long-lived branch. Everything else is measured in hours.
+
+```mermaid
+gitGraph
+    commit id: "main"
+    branch fix/timeout
+    checkout fix/timeout
+    commit id: "fix timeout"
+    checkout main
+    merge fix/timeout
+    branch feat/metrics
+    checkout feat/metrics
+    commit id: "add metrics"
+    checkout main
+    merge feat/metrics
+    branch fix/logging
+    checkout fix/logging
+    commit id: "fix log level"
+    checkout main
+    merge fix/logging
+    commit id: "deploy → prod"
 ```
-main ─────●─────●─────●─────●─────●────▶
-           \   /       \   /
-            ● ●         ● ●
-         (short-lived feature branches)
-         
-Rules:
-- Branches live for hours/days, NOT weeks
-- Everyone merges to main frequently (at least daily)
-- Feature flags for incomplete work
-- CI runs on every push
-```
+
+**Rules:**
+- Branches live for **hours or days, not weeks**
+- Everyone merges to `main` frequently (at least daily)
+- Feature flags for incomplete work — ship the code dark, enable it later
+- CI runs on every push; `main` is always deployable
 
 ### GitFlow (More Structured)
 
-```
-main     ────────●─────────────────●──────▶
-                 ▲                 ▲
-release  ────────┤─────●───────●───┤
-                 ▲     ▲           │
-develop  ────●───●─────●───●───●───┤
-              \       / \     /
-feature/A      ●─────●   ●───●
-feature/B                      feature/C
+Two long-lived branches (`main` + `develop`) plus three supporting branch types. More ceremony, slower flow — but it fits scheduled releases and versioned software.
 
-Branches:
-- main: Production-ready code
-- develop: Integration branch
-- feature/*: New features
-- release/*: Release preparation
-- hotfix/*: Production fixes
+```mermaid
+gitGraph
+    commit id: "v1.0" tag: "v1.0"
+    branch develop
+    checkout develop
+    commit id: "dev base"
+    branch feature/A
+    checkout feature/A
+    commit id: "feature A"
+    checkout develop
+    merge feature/A
+    branch feature/B
+    checkout feature/B
+    commit id: "feature B"
+    checkout develop
+    merge feature/B
+    branch release/1.1
+    checkout release/1.1
+    commit id: "bugfix in RC"
+    checkout main
+    merge release/1.1 tag: "v1.1"
+    checkout develop
+    merge release/1.1
+    checkout main
+    branch hotfix/1.1.1
+    checkout hotfix/1.1.1
+    commit id: "prod hotfix"
+    checkout main
+    merge hotfix/1.1.1 tag: "v1.1.1"
+    checkout develop
+    merge hotfix/1.1.1
 ```
+
+**Branches:**
+
+| Branch | Lifetime | Purpose |
+|--------|----------|---------|
+| `main` | Permanent | Production-ready code only; every commit is a release |
+| `develop` | Permanent | Integration branch — where features land first |
+| `feature/*` | Days–weeks | New features, branched from and merged to `develop` |
+| `release/*` | Days | Release stabilisation; merges to **both** `main` and `develop` |
+| `hotfix/*` | Hours | Emergency production fixes, branched from `main`, merged to **both** |
+
+> **💡 The tradeoff**: notice that every `release/*` and `hotfix/*` in GitFlow has to be merged back into **two** places. Forgetting the second merge is the classic GitFlow bug — the hotfix ships to production and then silently regresses on the next release. Trunk-based has no such trap, which is why continuous-delivery teams prefer it.
 
 ### Which Workflow to Use?
 
@@ -468,6 +623,46 @@ git rebase -i HEAD~5
 # Merge: When merging PRs into main
 # NEVER rebase public/shared branches
 ```
+
+#### What rebase actually does
+
+Rebase does **not** move your commits. It *replays* them as brand-new commits with new hashes on top of a new base, then abandons the originals.
+
+**Before** — `feature` branched from `B`, and `main` has moved on to `E`:
+
+```mermaid
+gitGraph
+    commit id: "A"
+    commit id: "B"
+    branch feature
+    checkout feature
+    commit id: "C"
+    commit id: "D"
+    checkout main
+    commit id: "E"
+```
+
+**After `git rebase main`** — `C` and `D` are re-created as `C'` and `D'` on top of `E`. Same changes, **different commit hashes**, and the branch point is gone:
+
+```mermaid
+gitGraph
+    commit id: "A"
+    commit id: "B"
+    commit id: "E"
+    branch feature
+    checkout feature
+    commit id: "C'"
+    commit id: "D'"
+```
+
+> **⚠️ Why "never rebase a shared branch"**: `C'` is a *different commit* from `C`. Anyone who already pulled `C` now has history that no longer exists upstream. Their next `git pull` produces duplicated commits and conflicts they didn't cause. Rebase is a tool for **your own unpushed work** — or a branch only you are on, where you then `git push --force-with-lease` (never bare `--force`).
+
+| | Rebase | Merge |
+|---|---|---|
+| **History** | Linear, rewritten | Truthful, branched |
+| **Commit hashes** | Changed | Preserved |
+| **Safe on shared branches** | ❌ No | ✅ Yes |
+| **Use for** | Tidying your branch before opening a PR; pulling in `main` updates | Integrating a finished PR |
 
 ---
 
@@ -710,6 +905,6 @@ With Git mastered, you're ready to automate tasks with scripting — the bridge 
 
 **Module 03 Complete** ✅
 
-[← Back to Networking](../02-networking/) | [Next: Scripting →](../04-scripting/)
+[← Back to Networking](../02-networking/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: Scripting →](../04-scripting/)
 
 </div>

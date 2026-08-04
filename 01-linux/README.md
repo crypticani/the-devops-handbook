@@ -4,6 +4,12 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 **Linux runs the internet.** Over 96% of the world's top web servers run Linux. Every Docker container is Linux. Every CI/CD runner is Linux. Every Kubernetes node is Linux. AWS, GCP, and Azure all default to Linux instances.
@@ -1211,6 +1217,6 @@ You now have solid Linux fundamentals. Next, we tackle the network layer — und
 
 **Module 01 Complete** ✅
 
-[← Back to Foundations](../00-foundations/) | [Next: Networking →](../02-networking/)
+[← Back to Foundations](../00-foundations/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: Networking →](../02-networking/)
 
 </div>

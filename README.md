@@ -49,23 +49,34 @@ Every module follows a progression: **understand → practice → debug → buil
 
 This roadmap is **strictly ordered**. Do NOT skip ahead. Each module builds on the previous one.
 
-```
- PHASE 1: FUNDAMENTALS          PHASE 2: CORE TOOLS            PHASE 3: PRODUCTION SKILLS
- ┌─────────────────────┐        ┌─────────────────────┐        ┌─────────────────────┐
- │  00 Foundations      │        │  05 Docker           │        │  09 Cloud            │
- │  01 Linux            │───────▶│  06 CI/CD            │───────▶│  10 Terraform        │
- │  02 Networking       │        │  07 Observability    │        │  11 Ansible          │
- │  03 Git              │        │  08 Logging          │        │  12 Kubernetes       │
- │  04 Scripting        │        └─────────────────────┘        └─────────────────────┘
- └─────────────────────┘                                                 │
-                                                                         ▼
-                                 PHASE 4: MASTERY
-                                 ┌─────────────────────┐
-                                 │  13 Security         │
-                                 │  14 System Design    │
-                                 │  15 Projects         │
-                                 │  16 Interview Prep   │
-                                 └─────────────────────┘
+```mermaid
+flowchart LR
+    subgraph P1["PHASE 1 · Fundamentals"]
+        direction TB
+        M00["00 Foundations"] --> M01["01 Linux"] --> M02["02 Networking"] --> M03["03 Git"] --> M04["04 Scripting"]
+    end
+
+    subgraph P2["PHASE 2 · Core Tools"]
+        direction TB
+        M05["05 Docker"] --> M06["06 CI/CD"] --> M07["07 Observability"] --> M08["08 Logging"]
+    end
+
+    subgraph P3["PHASE 3 · Production Skills"]
+        direction TB
+        M09["09 Cloud"] --> M10["10 Terraform"] --> M11["11 Ansible"] --> M12["12 Kubernetes"]
+    end
+
+    subgraph P4["PHASE 4 · Mastery"]
+        direction TB
+        M13["13 Security"] --> M14["14 System Design"] --> M15["15 Projects"] --> M16["16 Interview Prep"]
+    end
+
+    P1 ==> P2 ==> P3 ==> P4
+
+    style P1 fill:#e8f0ff,stroke:#3366cc
+    style P2 fill:#e8ffe8,stroke:#22aa22
+    style P3 fill:#fff4e0,stroke:#cc8800
+    style P4 fill:#f5e8ff,stroke:#8844cc
 ```
 
 > **NOTE**: Observability & Logging are taught **before** Kubernetes, Terraform, and Ansible. You must understand how systems behave and how to debug failures **before** you automate or scale them.
@@ -74,31 +85,35 @@ This roadmap is **strictly ordered**. Do NOT skip ahead. Each module builds on t
 
 ## 📁 Module Hierarchy
 
-| # | Module | Focus | Est. Time |
-|---|--------|-------|-----------|
-| **Phase 1: Fundamentals** |||
-| 00 | [Foundations](./00-foundations/) | DevOps culture, SDLC, Agile, tooling overview | 1 week |
-| 01 | [Linux](./01-linux/) | Debian/Ubuntu and RHEL-family Linux, filesystem, processes, permissions, systemd | 2 weeks |
-| 02 | [Networking](./02-networking/) | TCP/IP, DNS, HTTP, firewalls, troubleshooting | 1.5 weeks |
-| 03 | [Git](./03-git/) | Version control, branching, PRs, Git workflows | 1 week |
-| 04 | [Scripting](./04-scripting/) | Bash scripting, Python basics for automation | 2 weeks |
-| **Phase 2: Core Tools** |||
-| 05 | [Containers & Docker](./05-containers-docker/) | Images, containers, Compose, registries | 2 weeks |
-| 06 | [CI/CD](./06-ci-cd/) | GitHub Actions, Jenkins, pipelines, testing | 2 weeks |
-| 07 | [Observability](./07-observability/) | Prometheus, Grafana, metrics, alerting | 2 weeks |
-| 08 | [Logging](./08-logging/) | ELK stack, Loki, centralized logging, debugging | 1.5 weeks |
-| **Phase 3: Production Skills** |||
-| 09 | [Cloud Fundamentals](./09-cloud-fundamentals/) | Cloud-agnostic concepts, then AWS specifics | 2 weeks |
-| 10 | [Terraform](./10-terraform/) | Infrastructure as Code, state, modules | 2 weeks |
-| 11 | [Ansible](./11-ansible/) | Configuration management, playbooks, roles | 1 week |
-| 12 | [Kubernetes](./12-kubernetes/) | Pods, Services, Deployments, Helm, debugging | 3 weeks |
-| **Phase 4: Mastery** |||
-| 13 | [Security Basics](./13-security-basics/) | Secrets, RBAC, container security, secure CI/CD | 1.5 weeks |
-| 14 | [System Design](./14-system-design-devops/) | Architecture, scaling, HA, load balancing | 1 week |
-| 15 | [Projects](./15-projects/) | Beginner → Advanced real-world projects | 3-4 weeks |
-| 16 | [Interview Prep](./16-interview-prep/) | FAQs, scenarios, debugging questions | 1-2 weeks |
+Every module has a `README.md` (concepts), `labs/` (hands-on), `projects/` (portfolio work), and `resources.md` (curated links). Modules 01–13 also ship a **`cheatsheet.md`** — the command reference you'll keep coming back to long after you've read the theory.
+
+| # | Module | Focus | Est. Time | Cheat Sheet |
+|---|--------|-------|-----------|-------------|
+| **Phase 1: Fundamentals** ||||
+| 00 | [Foundations](./00-foundations/) | DevOps culture, SDLC, Agile, tooling overview | 1 week | — |
+| 01 | [Linux](./01-linux/) | Debian/Ubuntu and RHEL-family Linux, filesystem, processes, permissions, systemd | 2 weeks | [📋](./01-linux/cheatsheet.md) |
+| 02 | [Networking](./02-networking/) | TCP/IP, DNS, HTTP, firewalls, troubleshooting | 1.5 weeks | [📋](./02-networking/cheatsheet.md) |
+| 03 | [Git](./03-git/) | Version control, branching, PRs, Git workflows | 1 week | [📋](./03-git/cheatsheet.md) |
+| 04 | [Scripting](./04-scripting/) | Bash scripting, Python basics for automation | 2 weeks | [📋](./04-scripting/cheatsheet.md) |
+| **Phase 2: Core Tools** ||||
+| 05 | [Containers & Docker](./05-containers-docker/) | Images, containers, Compose, registries | 2 weeks | [📋](./05-containers-docker/cheatsheet.md) |
+| 06 | [CI/CD](./06-ci-cd/) | GitHub Actions, Jenkins, pipelines, testing | 2 weeks | [📋](./06-ci-cd/cheatsheet.md) |
+| 07 | [Observability](./07-observability/) | Prometheus, Grafana, metrics, alerting | 2 weeks | [📋](./07-observability/cheatsheet.md) |
+| 08 | [Logging](./08-logging/) | ELK stack, Loki, centralized logging, debugging | 1.5 weeks | [📋](./08-logging/cheatsheet.md) |
+| **Phase 3: Production Skills** ||||
+| 09 | [Cloud Fundamentals](./09-cloud-fundamentals/) | Cloud-agnostic concepts, then AWS specifics | 2 weeks | [📋](./09-cloud-fundamentals/cheatsheet.md) |
+| 10 | [Terraform](./10-terraform/) | Infrastructure as Code, state, modules | 2 weeks | [📋](./10-terraform/cheatsheet.md) |
+| 11 | [Ansible](./11-ansible/) | Configuration management, playbooks, roles | 1 week | [📋](./11-ansible/cheatsheet.md) |
+| 12 | [Kubernetes](./12-kubernetes/) | Pods, Services, Deployments, Helm, debugging | 3 weeks | [📋](./12-kubernetes/cheatsheet.md) |
+| **Phase 4: Mastery** ||||
+| 13 | [Security Basics](./13-security-basics/) | Secrets, RBAC, container security, secure CI/CD | 1.5 weeks | [📋](./13-security-basics/cheatsheet.md) |
+| 14 | [System Design](./14-system-design-devops/) | Architecture, scaling, HA, load balancing | 1 week | — |
+| 15 | [Projects](./15-projects/) | Beginner → Advanced real-world projects | 3-4 weeks | — |
+| 16 | [Interview Prep](./16-interview-prep/) | FAQs, scenarios, debugging questions | 1-2 weeks | — |
 
 **Total Estimated Duration**: 24-28 weeks (6-7 months) at ~10-15 hours/week
+
+> ⚡ **In a hurry?** [**QUICK-REFERENCE.md**](./QUICK-REFERENCE.md) is the one page to keep open in a tab: the ~50 commands you type daily, 60-second triage runbooks for servers and clusters, and the lookup tables (exit codes, HTTP codes, ports, file modes, CIDR) you'll otherwise search for every week.
 
 ---
 
@@ -126,7 +141,8 @@ We use a **specific, industry-relevant** stack throughout this handbook. No tool
 
 ## 🚀 How to Use This Repository
 
-For a hands-on workflow, read [Practical Learning Guide](./PRACTICAL-LEARNING.md).
+For a hands-on workflow, read the [Practical Learning Guide](./PRACTICAL-LEARNING.md).
+For day-to-day command lookup, use the [Quick Reference](./QUICK-REFERENCE.md).
 
 ### Option 1: Sequential Learning (Recommended)
 
@@ -153,8 +169,9 @@ If you already have Linux/Git experience, you can start from Module 04 or 05, bu
 3. **Do** every lab in `labs/` — hands-on is non-negotiable
 4. **Break things** — intentional failure scenarios teach debugging
 5. **Build** mini-projects in `projects/` — apply what you learned
-6. **Check** `resources.md` — deepen your knowledge
-7. **Review** interview insights — prep continuously, not at the end
+6. **Keep** `cheatsheet.md` open while you work — recall comes from repetition, not memorisation
+7. **Check** `resources.md` — deepen your knowledge
+8. **Review** interview insights — prep continuously, not at the end
 
 ---
 

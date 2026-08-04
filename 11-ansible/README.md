@@ -4,6 +4,12 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 Terraform creates infrastructure (VMs, networks, databases). But who installs packages, configures Nginx, deploys your app, and manages config files? **Ansible** — the agentless configuration management tool that turns manual server setup into repeatable, version-controlled automation.
@@ -656,6 +662,6 @@ With Terraform provisioning infrastructure and Ansible configuring it, you're re
 
 **Module 11 Complete** ✅
 
-[← Back to Terraform](../10-terraform/) | [Next: Kubernetes →](../12-kubernetes/)
+[← Back to Terraform](../10-terraform/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: Kubernetes →](../12-kubernetes/)
 
 </div>

@@ -4,6 +4,12 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 Metrics (Module 07) tell you a service has a 5% error rate. Logs tell you **exactly which requests failed and why** — a stack trace, a malformed payload, a database timeout. Without centralized logging, debugging production issues means SSH-ing into individual servers and grep-ing through files — it doesn't scale.
@@ -607,6 +613,6 @@ With observability (metrics) and logging in place, you can now see and debug you
 
 **Module 08 Complete** ✅
 
-[← Back to Observability](../07-observability/) | [Next: Cloud Fundamentals →](../09-cloud-fundamentals/)
+[← Back to Observability](../07-observability/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: Cloud Fundamentals →](../09-cloud-fundamentals/)
 
 </div>

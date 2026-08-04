@@ -4,6 +4,12 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 Docker is the **most transformative tool in modern DevOps**. It solves the "works on my machine" problem by packaging applications with their entire runtime environment. Every CI/CD pipeline, every Kubernetes cluster, every microservice architecture — all built on containers.
@@ -77,32 +83,43 @@ Heavy: CPU + RAM overhead           Light: Near-native performance
 
 ## 2. Docker Architecture
 
+When you type `docker run`, the CLI does almost nothing — it sends a REST call to a daemon that does all the work. Understanding that split explains most Docker permission and connectivity errors.
+
+```mermaid
+flowchart TB
+    subgraph client["Your Terminal"]
+        CLI["<b>docker CLI</b><br/>docker build / run / ps"]
+    end
+
+    subgraph host["Docker Host"]
+        D["<b>Docker Daemon — dockerd</b><br/>manages images · containers · networks · volumes · builds"]
+        CD["<b>containerd</b><br/>container lifecycle supervisor"]
+        RC["<b>runc</b><br/>spawns the process"]
+
+        subgraph kernel["Linux Kernel — where isolation actually happens"]
+            NS["<b>Namespaces</b><br/>pid · net · mnt · uts · ipc · user<br/><i>what the container can see</i>"]
+            CG["<b>cgroups</b><br/>CPU · memory · I/O · pids<br/><i>what the container can use</i>"]
+            UFS["<b>OverlayFS</b><br/>union filesystem<br/><i>layered images + writable layer</i>"]
+        end
+    end
+
+    REG[("<b>Registry</b><br/>Docker Hub · ECR · GHCR")]
+
+    CLI -->|"REST API over<br/>/var/run/docker.sock"| D
+    D -->|"pull / push"| REG
+    D --> CD
+    CD --> RC
+    RC --> NS
+    RC --> CG
+    RC --> UFS
+
+    style kernel fill:#f6f6f6,stroke:#888
+    style D fill:#e8f0ff,stroke:#3366cc,stroke-width:2px
 ```
-┌─────────────────────────────────────────────┐
-│                Docker Client                 │
-│            (docker CLI commands)             │
-└────────────────┬────────────────────────────┘
-                 │  REST API
-┌────────────────▼────────────────────────────┐
-│              Docker Daemon (dockerd)         │
-│                                              │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
-│  │  Images   │  │Containers│  │ Networks  │  │
-│  └──────────┘  └──────────┘  └──────────┘  │
-│  ┌──────────┐  ┌──────────┐                 │
-│  │ Volumes   │  │  Build   │                 │
-│  └──────────┘  └──────────┘                 │
-└────────────────┬────────────────────────────┘
-                 │
-┌────────────────▼────────────────────────────┐
-│           Container Runtime (containerd)     │
-│                                              │
-│  Uses Linux kernel features:                 │
-│  • Namespaces (isolation)                    │
-│  • cgroups (resource limits)                 │
-│  • Union filesystems (layered images)        │
-└──────────────────────────────────────────────┘
-```
+
+> **💡 DevOps Impact**: Two things fall straight out of this diagram. **(1)** `permission denied while trying to connect to the Docker daemon socket` means your user isn't in the `docker` group — you're being refused at the socket, not by Docker itself. **(2)** Membership in the `docker` group is effectively **root on the host**, because you can ask the daemon to mount `/` into a privileged container. Treat it as a privilege grant, not a convenience.
+>
+> A container is **not a lightweight VM** — it's an ordinary Linux process that the kernel lies to about what it can see (namespaces) and limits in what it can consume (cgroups).
 
 ---
 
@@ -139,6 +156,61 @@ docker rmi nginx:1.25
 # Remove all unused images
 docker image prune -a
 ```
+
+### Images Are Stacks of Read-Only Layers
+
+Every instruction in a Dockerfile that changes the filesystem creates a **layer**. Layers are immutable, content-addressed, and shared between images. When you run a container, Docker adds one thin **writable layer** on top — that's the only part that isn't shared.
+
+```mermaid
+flowchart TB
+    subgraph C2["Container B (running)"]
+        W2["<b>Writable layer</b> — copy-on-write<br/><i>ephemeral: dies with the container</i>"]
+    end
+    subgraph C1["Container A (running)"]
+        W1["<b>Writable layer</b> — copy-on-write<br/><i>ephemeral: dies with the container</i>"]
+    end
+
+    subgraph IMG["myapp:v1 — read-only image layers"]
+        L5["<code>CMD node server.js</code> — metadata only, 0 B"]
+        L4["<code>COPY . .</code> — 2 MB"]
+        L3["<code>RUN npm ci</code> — 180 MB"]
+        L2["<code>COPY package*.json ./</code> — 4 KB"]
+        L1["<code>FROM node:20-slim</code> — 240 MB base"]
+    end
+
+    W1 --> L5
+    W2 --> L5
+    L5 --> L4 --> L3 --> L2 --> L1
+
+    style W1 fill:#fff4e0,stroke:#cc8800,stroke-dasharray: 4 3
+    style W2 fill:#fff4e0,stroke:#cc8800,stroke-dasharray: 4 3
+    style IMG fill:#f0f6ff,stroke:#3366cc
+```
+
+Two consequences you will rely on constantly:
+
+**1. Layer caching drives build speed.** Docker reuses a cached layer only if that instruction *and every instruction before it* is unchanged. This is why `COPY package*.json ./` + `RUN npm ci` comes **before** `COPY . .` — editing your source code invalidates the last layer only, not the 180 MB dependency install.
+
+```mermaid
+flowchart LR
+    subgraph bad["❌ COPY . . before install"]
+        B1["FROM"] --> B2["COPY . .<br/>🔴 invalidated by<br/>any code edit"] --> B3["RUN npm ci<br/>🔴 re-runs — 90s"]
+    end
+    subgraph good["✅ Dependencies first"]
+        G1["FROM"] --> G2["COPY package*.json<br/>🟢 cached"] --> G3["RUN npm ci<br/>🟢 cached — 0s"] --> G4["COPY . .<br/>🔴 rebuilt — 1s"]
+    end
+```
+
+**2. Deleting a file in a later layer does not shrink the image.** The earlier layer still contains it, and anyone can extract it. This is how secrets leak:
+
+```dockerfile
+# ❌ The key is permanently in layer 1 — `docker history` and
+#    `docker save | tar -x` will both reveal it.
+COPY id_rsa /tmp/id_rsa
+RUN git clone git@github.com:org/private.git && rm /tmp/id_rsa
+```
+
+Use multi-stage builds or BuildKit secret mounts instead (§6 and §14).
 
 ---
 
@@ -206,6 +278,55 @@ docker stats
 docker cp localfile.txt webserver:/usr/share/nginx/html/
 docker cp webserver:/etc/nginx/nginx.conf ./
 ```
+
+### Container Lifecycle
+
+`docker ps` shows only **running** containers. Most debugging confusion comes from containers sitting in a state you can't see by default — use `docker ps -a`.
+
+```mermaid
+stateDiagram-v2
+    [*] --> created: docker create
+    [*] --> running: docker run
+
+    created --> running: docker start
+
+    running --> paused: docker pause
+    paused --> running: docker unpause
+
+    running --> exited: process ends (exit 0)
+    running --> exited: docker stop<br/>(SIGTERM, then SIGKILL after 10s)
+    running --> dead: docker kill (SIGKILL)
+    running --> exited: ⚠️ OOMKilled → exit 137
+
+    exited --> running: docker start<br/>(same writable layer)
+    exited --> restarting: --restart policy
+    restarting --> running
+    restarting --> exited: keeps failing
+
+    exited --> [*]: docker rm<br/>(writable layer destroyed)
+    dead --> [*]: docker rm -f
+
+    note right of exited
+        Still on disk. Logs and the
+        writable layer survive until
+        you docker rm it.
+        docker logs still works here.
+    end note
+```
+
+**Exit codes you will actually see:**
+
+| Code | Meaning | First thing to check |
+|------|---------|----------------------|
+| `0` | Clean exit | The main process finished — is your CMD a long-running foreground process? |
+| `1` / `2` | Application error | `docker logs <name>` |
+| `125` | Docker itself failed | Bad `docker run` flags |
+| `126` | Command found but not executable | Missing `chmod +x` on an entrypoint script |
+| `127` | Command not found | Wrong path, or the binary isn't in your slim base image |
+| `137` | **SIGKILL — usually OOM** | `docker inspect --format '{{.State.OOMKilled}}' <name>`; raise `--memory` or fix the leak |
+| `143` | SIGTERM — graceful stop | Normal `docker stop` |
+
+> **💡 The #1 beginner bug**: a container that exits immediately with code `0`. Containers live exactly as long as their **PID 1** process. If your CMD starts a daemon that forks into the background, PID 1 returns instantly and Docker considers the job done. Always run the process in the **foreground** (`nginx -g 'daemon off;'`, `postgres` not `pg_ctl start`).
 
 ---
 
@@ -324,9 +445,87 @@ CMD ["nginx", "-g", "daemon off;"]
 #         Production image has only Nginx + static files (~25MB)
 ```
 
+### What Actually Gets Shipped
+
+Only the **final stage** becomes your image. Every earlier stage — compilers, dev dependencies, source code, build secrets — is discarded entirely. It isn't hidden in a lower layer; it never enters the image at all.
+
+```mermaid
+flowchart LR
+    subgraph S1["Stage 1: builder — DISCARDED"]
+        direction TB
+        A1["FROM node:20"]
+        A2["npm ci<br/>(incl. devDependencies)"]
+        A3["COPY src/"]
+        A4["npm run build → /app/dist"]
+        A1 --> A2 --> A3 --> A4
+    end
+
+    subgraph S2["Stage 2: runtime — SHIPPED ✅"]
+        direction TB
+        B1["FROM nginx:1.25-alpine"]
+        B2["COPY --from=builder /app/dist"]
+        B3["CMD nginx -g 'daemon off;'"]
+        B1 --> B2 --> B3
+    end
+
+    A4 -.->|"COPY --from=builder<br/><b>only the build output crosses</b>"| B2
+    S1 -.->|"🗑️ toolchain, node_modules,<br/>source, git history: gone"| X["not in the final image"]
+
+    S2 --> OUT["<b>myapp:v1</b><br/>~25 MB"]
+
+    style S1 fill:#ffeeee,stroke:#cc4444,stroke-dasharray: 5 5
+    style S2 fill:#eeffee,stroke:#22aa22,stroke-width:2px
+    style X fill:#f5f5f5,stroke:#999,stroke-dasharray: 3 3
+```
+
+**Why this matters beyond size:**
+
+| Benefit | Explanation |
+|---------|-------------|
+| **Smaller images** | 1 GB → 25 MB: faster pulls, faster pod starts, cheaper registry storage |
+| **Smaller attack surface** | No compiler, no `curl`, no shell package manager for an attacker to use |
+| **Fewer CVEs** | Most scanner findings come from build tooling you never needed at runtime |
+| **Secret safety** | A token used in the build stage cannot be extracted from the shipped image |
+
+> **💡 Debug tip**: you can build and inspect any intermediate stage directly — `docker build --target builder -t debug-build .` then `docker run -it debug-build sh`. This is how you diagnose "it built fine but the artifact is missing."
+
 ---
 
 ## 7. Docker Networking
+
+Containers on the **default bridge** can only reach each other by IP. Containers on a **user-defined bridge** get automatic DNS resolution by container name — which is the single most important reason to always create your own network (and what Compose does for you).
+
+```mermaid
+flowchart TB
+    INET(["Internet / your browser"])
+
+    subgraph HOST["Docker Host"]
+        P["Published port<br/><code>-p 8080:80</code><br/>host:8080 → container:80"]
+
+        subgraph NET["user-defined bridge: myapp-network"]
+            APP["<b>app</b><br/>172.18.0.3:80"]
+            DB[("<b>db</b><br/>172.18.0.2:5432")]
+            CACHE[("<b>redis</b><br/>172.18.0.4:6379")]
+        end
+
+        DNS["Embedded DNS 127.0.0.11<br/><i>resolves container names</i>"]
+
+        subgraph NET0["default bridge: docker0"]
+            ORPHAN["<b>legacy-container</b><br/>172.17.0.2<br/>❌ no name resolution"]
+        end
+    end
+
+    INET --> P --> APP
+    APP -->|"postgres://<b>db</b>:5432"| DB
+    APP -->|"redis://<b>redis</b>:6379"| CACHE
+    APP -.-> DNS
+    DB -.-> DNS
+
+    style NET fill:#e8f0ff,stroke:#3366cc
+    style NET0 fill:#f5f5f5,stroke:#999,stroke-dasharray: 4 3
+```
+
+> **💡 The rule that saves hours**: inside a container, `localhost` means **that container**, not the host and not a sibling. `DB_HOST=localhost` is the classic failure — it must be `DB_HOST=db`, the container name on a shared user-defined network. Ports published with `-p` are for traffic coming from **outside** Docker; containers talking to each other do **not** need published ports, they use the container port directly.
 
 ```bash
 # List networks
@@ -682,6 +881,6 @@ With Docker mastered, you can now build CI/CD pipelines that build, test, and de
 
 **Module 05 Complete** ✅
 
-[← Back to Scripting](../04-scripting/) | [Next: CI/CD →](../06-ci-cd/)
+[← Back to Scripting](../04-scripting/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: CI/CD →](../06-ci-cd/)
 
 </div>

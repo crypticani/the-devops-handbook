@@ -4,6 +4,12 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 Every DevOps role requires cloud knowledge. Whether it's AWS, GCP, or Azure, the **concepts are the same** — compute, storage, networking, IAM, and managed services. This module teaches cloud-agnostic fundamentals first, then maps them to AWS (the market leader).
@@ -591,6 +597,6 @@ With cloud fundamentals understood, you're ready to automate cloud infrastructur
 
 **Module 09 Complete** ✅
 
-[← Back to Logging](../08-logging/) | [Next: Terraform →](../10-terraform/)
+[← Back to Logging](../08-logging/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: Terraform →](../10-terraform/)
 
 </div>

@@ -4,6 +4,12 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 Clicking through the AWS console doesn't scale. When you manage 50 servers, 3 environments, and multiple regions, you need to **define infrastructure as code** — repeatable, reviewable, and automated. Terraform is the industry standard for this.
@@ -204,17 +210,25 @@ resource "aws_instance" "web" {
 
 ### The Three Commands
 
-```
-terraform init     →  Download providers and modules
-terraform plan     →  Preview what will change (dry run)
-terraform apply    →  Execute the changes
+```mermaid
+flowchart LR
+    W["✏️ Write / edit<br/><code>.tf</code> files"] --> I
 
-  ┌──────┐     ┌──────┐     ┌───────┐
-  │ init │────▶│ plan │────▶│ apply │
-  └──────┘     └──────┘     └───────┘
-   Download     Show what     Execute
-   plugins      WILL change   changes
+    I["<b>terraform init</b><br/>download providers + modules<br/>configure the backend"]
+    I --> F["<b>terraform fmt</b> + <b>validate</b><br/>syntax and formatting<br/><i>fast, offline</i>"]
+    F --> P["<b>terraform plan</b><br/>compare desired vs state vs real<br/><i>changes nothing</i>"]
+    P --> R{"Review the plan.<br/>Any <code>-/+</code> replacements?"}
+    R -->|"unexpected changes"| W
+    R -->|"looks right"| A["<b>terraform apply</b><br/>execute + update state"]
+    A --> LIVE(["☁️ Real infrastructure"])
+    LIVE -.->|"when you're done"| D["<b>terraform destroy</b><br/>tear everything down"]
+
+    style P fill:#fff4e0,stroke:#cc8800,stroke-width:2px
+    style A fill:#e8ffe8,stroke:#22aa22
+    style D fill:#ffe8e8,stroke:#cc3333
 ```
+
+> **💡 `plan` is the whole point of Terraform.** Every other IaC failure mode — the accidental database deletion, the surprise downtime, the resource replaced instead of updated — is a plan someone didn't read. In CI, run `terraform plan -out=tfplan` on the PR, post the output as a comment, and have `apply` consume **that exact saved plan file** so nobody applies something different from what was reviewed.
 
 ### What Each Command Does
 
@@ -288,32 +302,87 @@ SYMBOLS:
 
 ### What Is State?
 
-```
-STATE FILE (terraform.tfstate):
-  A JSON file that maps your .tf code to real cloud resources.
-  
-  Code says: resource "aws_instance" "web" { ... }
-  State says: "web" = i-0abc123def456 in us-east-1
+The state file is a JSON index that maps the names in your code to real resource IDs in the cloud. Without it, Terraform has no idea that `aws_instance.web` is `i-0abc123def456` — it would create a second one.
 
-  Without state, Terraform doesn't know what it already created.
+**Every Terraform operation is a comparison between three things:**
+
+```mermaid
+flowchart TD
+    CODE["<b>1. Your Configuration</b><br/><code>.tf</code> files<br/><i>what you WANT</i>"]
+    STATE[("<b>2. State</b><br/>terraform.tfstate<br/><i>what Terraform LAST SAW</i>")]
+    REAL["<b>3. Real Infrastructure</b><br/>AWS · Azure · GCP<br/><i>what actually EXISTS</i>"]
+
+    CODE <-->|"<b>plan</b> diffs these two<br/>→ + create / ~ update / - destroy"| STATE
+    STATE <-->|"<b>refresh</b> reconciles these two<br/>→ detects DRIFT"| REAL
+    CODE -.->|"apply makes reality<br/>match the config"| REAL
+
+    style CODE fill:#e8f0ff,stroke:#3366cc
+    style STATE fill:#fff4e0,stroke:#cc8800,stroke-width:2px
+    style REAL fill:#e8ffe8,stroke:#22aa22
 ```
+
+**Every state problem is one of these three getting out of sync** — and each has its own fix:
+
+| Symptom | What broke | Fix |
+|---------|-----------|-----|
+| Plan wants to **create** something that already exists | Real ✅, State ❌ — resource made outside Terraform | `import` block, then write matching config |
+| Plan wants to **destroy and recreate** after you renamed a resource | Code ✅, State has the old name | `moved` block — updates state only, no downtime |
+| Plan shows changes you didn't make | **Drift** — someone edited it in the console | Either revert manually, or update the config to match |
+| Plan wants to **destroy** something you want to keep | Code ❌, State ✅ — you deleted the block | `terraform state rm` to forget it without deleting it |
+| `Error: state lock` | Another apply is running (or crashed holding the lock) | Wait; if truly stale, `terraform force-unlock <ID>` |
+
+> **⚠️ State contains secrets in plaintext.** Database passwords, generated private keys, and any sensitive output land in `terraform.tfstate` unencrypted. Never commit it to Git; always use an encrypted remote backend; add `*.tfstate*` to `.gitignore` on day one.
 
 ### Local vs Remote State
 
-```
-LOCAL STATE (default):
-  terraform.tfstate on your machine
-  ❌ Can't collaborate (only one person has the file)
-  ❌ Risk of data loss (file on laptop)
-  ❌ No locking (two people can apply at once)
+**Local state** is a file on one laptop. The moment a second engineer runs `apply`, you have two divergent views of production and no lock to stop them colliding.
 
-REMOTE STATE (production):
-  Stored in S3 + DynamoDB (or Terraform Cloud)
-  ✅ Team collaboration
-  ✅ State locking (prevents concurrent modifications)
-  ✅ Versioning and backup
-  ✅ Encrypted at rest
+```mermaid
+flowchart TB
+    subgraph local["❌ Local State — breaks with 2+ people"]
+        E1["Engineer A"] --> F1[("terraform.tfstate<br/>on A's laptop")]
+        E2["Engineer B"] --> F2[("terraform.tfstate<br/>on B's laptop")]
+        F1 --> CLOUD1["☁️ AWS"]
+        F2 --> CLOUD1
+        CLOUD1 --> BAD["💥 Concurrent applies.<br/>Duplicated or destroyed resources.<br/>State lost when a laptop dies."]
+    end
+
+    style local fill:#fff0f0,stroke:#cc3333
+    style BAD fill:#ffdddd,stroke:#cc0000
 ```
+
+**Remote state** puts the file in shared, versioned, encrypted storage and adds a **lock** so only one apply can run at a time.
+
+```mermaid
+sequenceDiagram
+    participant A as Engineer A
+    participant B as Engineer B
+    participant DDB as DynamoDB<br/>(lock table)
+    participant S3 as S3 bucket<br/>(state, versioned + encrypted)
+    participant AWS as ☁️ AWS
+
+    A->>DDB: acquire lock
+    DDB-->>A: 🔒 acquired
+    A->>S3: read state
+    B->>DDB: acquire lock
+    DDB-->>B: ❌ Error: state locked by Engineer A
+    Note over B: B waits — cannot corrupt state
+    A->>AWS: apply changes
+    A->>S3: write new state (new version)
+    A->>DDB: release lock
+    B->>DDB: acquire lock
+    DDB-->>B: 🔒 acquired
+    B->>S3: read A's updated state
+    Note over B: B now plans against reality
+```
+
+| | Local | Remote (S3 + DynamoDB, or Terraform Cloud) |
+|---|-------|--------------------------------------------|
+| **Collaboration** | ❌ One person only | ✅ Whole team |
+| **Locking** | ❌ None | ✅ Concurrent applies blocked |
+| **Durability** | ❌ Dies with the laptop | ✅ Versioned, backed up |
+| **Encryption at rest** | ❌ Plaintext on disk | ✅ SSE-KMS |
+| **Use for** | Learning, throwaway experiments | Anything real |
 
 ### Remote State Backend (S3)
 
@@ -767,6 +836,6 @@ Terraform provisions infrastructure. Ansible configures it — installing packag
 
 **Module 10 Complete** ✅
 
-[← Back to Cloud Fundamentals](../09-cloud-fundamentals/) | [Next: Ansible →](../11-ansible/)
+[← Back to Cloud Fundamentals](../09-cloud-fundamentals/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: Ansible →](../11-ansible/)
 
 </div>

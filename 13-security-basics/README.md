@@ -4,6 +4,12 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 A single misconfigured S3 bucket, a leaked secret in git, or an unpatched container image can end careers and companies. Security in DevOps is **not a bolt-on** — it's embedded in every tool and workflow you've learned so far. This module consolidates security practices across the entire stack.
@@ -680,6 +686,6 @@ With security practices consolidated, you're ready to think at the system level 
 
 **Module 13 Complete** ✅
 
-[← Back to Kubernetes](../12-kubernetes/) | [Next: System Design →](../14-system-design-devops/)
+[← Back to Kubernetes](../12-kubernetes/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: System Design →](../14-system-design-devops/)
 
 </div>

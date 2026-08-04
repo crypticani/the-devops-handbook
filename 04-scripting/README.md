@@ -4,6 +4,12 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 Scripting is the **bridge between manual operations and full automation**. Before you learn Terraform, Ansible, or CI/CD pipelines, you need to be able to write scripts that automate repetitive tasks, process data, and glue systems together.
@@ -936,6 +942,6 @@ You can now automate tasks. Next, we containerize applications with Docker — t
 
 **Module 04 Complete** ✅
 
-[← Back to Git](../03-git/) | [Next: Docker →](../05-containers-docker/)
+[← Back to Git](../03-git/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: Docker →](../05-containers-docker/)
 
 </div>
