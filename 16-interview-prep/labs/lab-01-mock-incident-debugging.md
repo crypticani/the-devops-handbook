@@ -4,6 +4,8 @@
 
 Practice diagnosing and resolving simulated production incidents using Docker. Each scenario replicates a common real-world failure that DevOps engineers encounter. Your goal is to identify the root cause, fix the issue, and document your process — just like you would during an on-call shift or in an interview.
 
+> 🧨 **Note on structure**: every other lab in this handbook ends with a *Break It* section. This lab **is** the Break It section — all four incidents are deliberate failures with no working state to start from. That's the point: by Module 16 you should be able to walk into an unfamiliar broken system with no context and work it out. There is no happy path here.
+
 ---
 
 ## 📋 Prerequisites

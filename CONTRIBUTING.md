@@ -13,9 +13,13 @@ Thank you for your interest in contributing! This project aims to be the most co
 ### 2. Adding Content
 
 #### New Labs
-- Follow the existing lab format (Objective → Prerequisites → Steps → Validation → Cleanup)
+- Follow the existing lab format (Objective → Prerequisites → Steps → **Break It** → Validation → Cleanup)
 - Include expected output for every command
-- Add at least one "Break It" scenario
+- **Every lab needs a `## 🧨 Break It` section.** Structure each scenario as **Break it → Symptom → Investigate → Root cause → Fix**, with the real commands at each step. A scenario that only says "try breaking it" doesn't count
+  - Prefer failures that are **silent** — the ones that produce green output while something is wrong teach far more than an obvious crash
+  - Every scenario must be **safe and reversible**, and must restore state before the next one
+  - Finish with a summary table (failure → detection → prevention) and a prompt to write `failure-notes.md`
+  - The only exemption is a lab that is *entirely* failure scenarios (see `16-interview-prep/labs/lab-01`); say so explicitly in the objective rather than adding a redundant section
 - Test Linux-specific steps on a fresh Debian/Ubuntu system and a RHEL-compatible system when practical; otherwise clearly label the supported family
 - Use the rubric in [Practical Learning Guide](./PRACTICAL-LEARNING.md) to include evidence, validation, debugging, and cleanup expectations for completed modules
 
