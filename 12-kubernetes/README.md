@@ -920,6 +920,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 | 3 | **[Services, Ingress, and Network Policy](./labs/lab-03-networking-and-ingress.md)** | Understand how a packet actually reaches a pod. |
 | 4 | **[Scaling and Resource Tuning](./labs/lab-04-scaling-and-resources.md)** | Get resource requests and limits right — and learn what each kind of "wrong" looks like from the outside. |
 | 5 | **[RBAC and Pod Security](./labs/lab-05-rbac-and-security.md)** | Lock down a cluster the way a real one is locked down. |
+| 6 | **[GitOps with Argo CD](./labs/lab-06-gitops-argocd.md)** | Stop deploying with `kubectl` — put desired state in Git, let a controller reconcile it, and find out which parts of "the cluster matches Git" are only true when you configured them. |
 
 **Portfolio project:**
 

@@ -1,0 +1,23 @@
+# Exercise 1: a read-only first Application, pointing at Argo CD's own public example repo.
+# No Git setup needed — you can create this before you own a GitOps repo.
+#
+# Apply it to the CLUSTER (kubectl apply -f), not to your GitOps repo. Argo CD's own
+# Application objects living in Git too is the "app of apps" pattern — a later problem.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: guestbook
+  namespace: argocd # ⭐ Applications live in the Argo CD namespace, always
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/argoproj/argocd-example-apps.git
+    targetRevision: HEAD # a branch, tag, or commit SHA — see Break It scenario 4
+    path: guestbook # the directory inside the repo, not the repo root
+  destination:
+    server: https://kubernetes.default.svc # this cluster, from inside it
+    namespace: guestbook
+  syncPolicy:
+    # No `automated:` block — this app syncs only when a human says so.
+    syncOptions:
+      - CreateNamespace=true # otherwise the first sync fails on a missing namespace

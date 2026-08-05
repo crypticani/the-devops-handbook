@@ -17,6 +17,7 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 - **Alertmanager** — Prometheus companion that receives fired alerts and handles routing, grouping, silencing, and inhibition. Prometheus decides *whether*; Alertmanager decides *who and how*. [07]
 - **Ansible** — Agentless configuration management tool that pushes idempotent modules over SSH. [11]
 - **API server** — The Kubernetes control plane component that every request passes through and the only one that talks to etcd. [12]
+- **Argo CD** — Kubernetes GitOps controller: it watches a Git repository, reports whether live state matches it (`Synced` / `OutOfSync`), and applies the difference when configured to. `selfHeal` and `prune` both default to off. [12]
 - **Artifact** — The built output a pipeline produces and promotes: a container image, a binary, a package. Build it once, deploy that exact thing everywhere. [06]
 - **Autoscaling** — Adding and removing capacity automatically in response to a signal (CPU, queue depth, request rate). Requires stateless workloads to be useful. [09] [14]
 - **Availability Zone (AZ)** — An isolated datacenter within a cloud region. Spanning two AZs is the cheapest meaningful step up in availability. [09]

@@ -106,7 +106,7 @@ Everything under `code/` is automatically tested whenever it changes, so the fil
 | 09 | [Cloud Fundamentals](./09-cloud-fundamentals/) | Cloud-agnostic concepts, then AWS specifics | 2 weeks | [📋](./09-cloud-fundamentals/cheatsheet.md) | [📁](./09-cloud-fundamentals/code/) |
 | 10 | [Terraform](./10-terraform/) | Infrastructure as Code, state, modules | 2 weeks | [📋](./10-terraform/cheatsheet.md) | [📁](./10-terraform/code/) |
 | 11 | [Ansible](./11-ansible/) | Configuration management, playbooks, roles | 1 week | [📋](./11-ansible/cheatsheet.md) | [📁](./11-ansible/code/) |
-| 12 | [Kubernetes](./12-kubernetes/) | Pods, Services, Deployments, Helm, debugging | 3 weeks | [📋](./12-kubernetes/cheatsheet.md) | [📁](./12-kubernetes/code/) |
+| 12 | [Kubernetes](./12-kubernetes/) | Pods, Services, Deployments, Helm, GitOps, debugging | 3 weeks | [📋](./12-kubernetes/cheatsheet.md) | [📁](./12-kubernetes/code/) |
 | **Phase 4: Mastery** ||||||
 | 13 | [Security Basics](./13-security-basics/) | Secrets, RBAC, container security, secure CI/CD | 1.5 weeks | [📋](./13-security-basics/cheatsheet.md) | [📁](./13-security-basics/code/) |
 | 14 | [System Design](./14-system-design-devops/) | Architecture, scaling, HA, load balancing | 1 week | — | [📁](./14-system-design-devops/code/) |

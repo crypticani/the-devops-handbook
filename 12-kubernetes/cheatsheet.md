@@ -598,6 +598,57 @@ checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sh
 
 ---
 
+## GitOps (Argo CD)
+
+```bash
+argocd login localhost:8080 --username admin --insecure     # port-forwarded, self-signed cert
+kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath='{.data.password}' | base64 -d                # the install-time admin password
+argocd account update-password                               # ⭐ then delete that Secret
+
+argocd app list
+argocd app get web                                           # ⭐ Sync Status + Health Status
+argocd app get web --refresh                                 # compare against Git NOW, don't wait
+argocd app get web -o json | jq '.spec.syncPolicy'           # is prune/selfHeal actually on?
+argocd app diff web                                          # ⭐ what differs from Git, before syncing
+argocd app resources web                                     # what Argo CD believes it manages
+argocd app manifests web                                     # the rendered YAML it would apply
+
+argocd app sync web
+argocd app sync web --dry-run                                # ⭐ read this before enabling prune
+argocd app sync web --prune
+argocd app history web
+argocd app rollback web 3                                    # ⚠️ out-of-band — next sync undoes it
+
+argocd app set web --sync-policy automated --auto-prune=true --self-heal=true
+argocd app set web --revision main                           # ⭐ which revision it actually tracks
+argocd app set web --sync-policy none                        # back to manual
+
+argocd app logs web --follow                                 # app pod logs, via Argo CD
+argocd app wait web --health --timeout 300                   # ⭐ use this in a pipeline
+kubectl -n argocd logs deploy/argocd-repo-server             # Git clone / render failures
+kubectl -n argocd logs statefulset/argocd-application-controller   # sync + reconcile failures
+kubectl get applications -n argocd -o wide                   # no CLI? the CRD is right there
+```
+
+| Status pair | Means |
+|-------------|-------|
+| `Synced` + `Healthy` | Working as intended |
+| `Synced` + `Degraded` | ⭐ The cluster matches Git and **Git is wrong** — re-syncing cannot fix it. Revert |
+| `OutOfSync` + `Healthy` | Something is running that Git doesn't describe — drift, or a pending change |
+| `OutOfSync` + `Degraded` | A failed sync, usually a bad manifest — check the app's conditions |
+| `Missing` | Git describes it, nothing applied it yet |
+
+| Field | Default | Why it bites |
+|-------|---------|--------------|
+| `syncPolicy.automated` | absent | No automation at all — Argo CD is a diff tool until you set it |
+| `automated.selfHeal` | `false` | ⭐ Cluster-side drift is reported, never reverted |
+| `automated.prune` | `false` | ⭐ Deleting a manifest from Git deletes nothing. `Synced` stays green |
+| `targetRevision` | — | `HEAD`/a stale branch tracks the wrong thing while looking perfectly synced |
+| `ignoreDifferences` | absent | Without it, `selfHeal` fights the HPA over `spec.replicas` forever |
+
+---
+
 ## Manifest Templates
 
 ```yaml

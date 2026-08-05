@@ -530,6 +530,24 @@ Configure in GitHub: **Settings → Environments → production**:
 - ✅ Wait timer (e.g., 5 minutes after staging)
 - ✅ Deployment branch restrictions (only `main`)
 
+### The Other Model: Pull-Based Delivery (GitOps)
+
+Everything above is **push**: the pipeline holds production credentials and runs the deployment. That is still the common case, and for anything that isn't Kubernetes it is usually the only case.
+
+The alternative is **pull**: a controller running *inside* the target cluster watches a Git repository of manifests and reconciles the cluster toward it continuously. The pipeline's job stops at building an image and committing a manifest change — it never touches the cluster, and never needs a credential that could deploy to it.
+
+| | Push (this section) | Pull (GitOps) |
+|---|---|---|
+| Who deploys | The CI runner | A controller in the cluster |
+| Prod credentials live in | The CI system | Nowhere outside the cluster |
+| Deployment history | Pipeline run logs | `git log` on the manifests repo |
+| Drift from manual changes | Undetected until something breaks | Detected, and reverted if configured to |
+| Works for | Anything | Kubernetes, essentially |
+
+> **💡 DevOps Impact**: The security argument is the one that wins arguments — a compromised pipeline with no cluster credentials cannot deploy anything. The operational argument is drift detection: push-based delivery has no idea what the cluster looks like between deploys.
+
+Concepts and tradeoffs, including when GitOps is overkill: [Module 14 §9](../14-system-design-devops/README.md). Hands-on with Argo CD, once you know Kubernetes: [Module 12, Lab 06](../12-kubernetes/labs/lab-06-gitops-argocd.md).
+
 ---
 
 ## 6. Jenkins — Secondary Tool
