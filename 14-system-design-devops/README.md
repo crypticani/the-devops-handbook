@@ -9,6 +9,7 @@
 Every production outage, every scaling failure, and every "it works on my machine" moment traces back to a system design decision. As a DevOps engineer, you don't just run infrastructure — you **design, evaluate, and defend architectural choices** that keep systems reliable, scalable, and recoverable.
 
 **In real-world DevOps work**, you will:
+
 - Evaluate whether a system can handle 10x traffic growth
 - Design deployment architectures that survive component failures
 - Choose between scaling vertically or horizontally
@@ -609,6 +610,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 **Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 
 ---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

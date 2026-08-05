@@ -15,6 +15,7 @@
 Every DevOps role requires cloud knowledge. Whether it's AWS, GCP, or Azure, the **concepts are the same** — compute, storage, networking, IAM, and managed services. This module teaches cloud-agnostic fundamentals first, then maps them to AWS (the market leader).
 
 **In real-world DevOps work**, you will:
+
 - Provision virtual machines, networks, and storage in the cloud
 - Configure IAM roles, policies, and security groups
 - Deploy applications to cloud compute services
@@ -583,6 +584,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 **Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 
 ---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

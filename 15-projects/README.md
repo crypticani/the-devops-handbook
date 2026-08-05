@@ -49,6 +49,7 @@ BAD PORTFOLIO PROJECT:
 ### The "Explain It in an Interview" Test
 
 For every project, you should be able to answer:
+
 1. **What problem does this solve?** (Not "I wanted to learn X")
 2. **Why did you choose this architecture?** (Trade-offs, alternatives considered)
 3. **What would you do differently?** (Self-awareness, growth mindset)
@@ -141,6 +142,7 @@ How to tear down all resources.
 **Goal**: Build a containerized static website with a full CI/CD pipeline.
 
 **What this demonstrates to employers**:
+
 - You can containerize an application
 - You understand CI/CD fundamentals
 - You write proper Dockerfiles (non-root, slim images)
@@ -157,6 +159,7 @@ How to tear down all resources.
 **Goal**: Deploy a multi-service application with monitoring, logging, and load balancing.
 
 **What this demonstrates to employers**:
+
 - You can operate multi-service architectures
 - You instrument applications for observability
 - You can diagnose issues using metrics and logs
@@ -173,6 +176,7 @@ How to tear down all resources.
 **Goal**: Provision and manage a complete production environment using Infrastructure as Code, container orchestration, and full observability.
 
 **What this demonstrates to employers**:
+
 - You can design and provision cloud infrastructure
 - You manage Kubernetes workloads
 - You implement security at every layer
@@ -189,22 +193,26 @@ How to tear down all resources.
 Every project, regardless of difficulty level, must include:
 
 ### Security
+
 - No secrets in code or git history
 - Non-root containers
 - Minimal permissions (IAM, RBAC, file permissions)
 - Dependencies scanned for vulnerabilities
 
 ### Observability
+
 - Health check endpoints
 - At least basic metrics or logging
 - Evidence of using observability to debug an issue
 
 ### Documentation
+
 - Architecture diagram
 - Setup instructions that work on a fresh machine
 - Troubleshooting notes from real issues you hit
 
 ### Cleanup
+
 - Clear teardown instructions
 - All cloud resources, containers, and volumes removed
 - Confirmation output proving cleanup is complete
@@ -253,6 +261,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 - [Production Infrastructure (Advanced)](./projects/project-03-production-infrastructure.md) — Design, provision, and manage a complete production-grade environment using Infrastructure as Code, container orchestration, configuration…
 
 ---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

@@ -13,6 +13,7 @@ Thank you for your interest in contributing! This project aims to be the most co
 ### 2. Adding Content
 
 #### New Labs
+
 - Follow the existing lab format (Objective → Prerequisites → Steps → **Break It** → Validation → Cleanup)
 - Include expected output for every command
 - **Every lab needs a `## 🧨 Break It` section.** Structure each scenario as **Break it → Symptom → Investigate → Root cause → Fix**, with the real commands at each step. A scenario that only says "try breaking it" doesn't count
@@ -24,6 +25,7 @@ Thank you for your interest in contributing! This project aims to be the most co
 - Use the rubric in [Practical Learning Guide](./PRACTICAL-LEARNING.md) to include evidence, validation, debugging, and cleanup expectations for completed modules
 
 #### New Projects
+
 - Include a problem statement, setup steps, validation commands, failure scenario, cleanup steps, and tradeoffs
 - Keep deliverables reproducible: source code, configs, scripts, manifests, dashboards, and infrastructure code should be committed
 - Do not rely on screenshots as the primary proof that a project works
@@ -31,6 +33,7 @@ Thank you for your interest in contributing! This project aims to be the most co
 - Prioritize projects for Modules 00-13 before adding capstones for Modules 14-16
 
 #### Diagrams
+
 - **Use Mermaid**, not images. Every diagram must be a ` ```mermaid ` fenced block so it renders on GitHub, diffs in review, and stays editable. Do not commit PNG or SVG diagrams
 - Pick the diagram type that matches the content:
   - `flowchart` — architecture, decision trees, pipelines
@@ -43,6 +46,7 @@ Thank you for your interest in contributing! This project aims to be the most co
 - Validate before you push. Paste into [mermaid.live](https://mermaid.live), or run the parser locally
 
 #### Lab Code
+
 - Every file a lab creates must **also exist as a real file** under `<module>/code/lab-XX/`. The lab still shows it inline — learners type it out the first time — but the copy under `code/` is the one CI actually validates
 - **These are maintained by hand, in the same PR.** Change a listing in a lab → change the file. Change the file → change the listing. There is deliberately no auto-generator: a heredoc scraper cannot model `cd`, shell interpolation, or files built up across several steps, and a wrong one silently ships broken code
 - Mirror the lab's directory structure. If the lab does `cd environments/dev` before writing `main.tf`, the file belongs at `code/lab-XX/environments/dev/main.tf`
@@ -52,6 +56,7 @@ Thank you for your interest in contributing! This project aims to be the most co
 - Run `./scripts/validate.sh` before you push
 
 #### Cheat Sheets
+
 - Modules 01–13 have a `cheatsheet.md`. Additions should be **commands you have actually run**, not copied from documentation
 - Group by task ("Find things", "Debug a crash loop"), not alphabetically
 - Mark the handful of genuinely high-value entries with ⭐ — a cheat sheet where everything is highlighted highlights nothing
@@ -59,11 +64,13 @@ Thank you for your interest in contributing! This project aims to be the most co
 - Cross-module commands belong in the root [QUICK-REFERENCE.md](./QUICK-REFERENCE.md); module-specific depth belongs in the module's `cheatsheet.md`
 
 #### New Resources
+
 - Add to the relevant module's `resources.md`
 - Include: title, URL, type (video/article/docs), and difficulty level
 - Prefer free resources; mark paid ones clearly
 
 #### Corrections
+
 - Fix typos, improve clarity, update outdated commands
 - Reference the specific line numbers in your PR description
 
@@ -103,6 +110,7 @@ npm install --no-save mermaid jsdom      # mermaid
 pip install pyyaml ruff                   # yaml, python
 sudo apt-get install shellcheck           # bash
 pip install ansible-lint                  # ansible
+npx markdownlint-cli2                     # markdown (config: .markdownlint-cli2.yaml)
 # terraform, docker, and go you probably already have
 ```
 

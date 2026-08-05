@@ -15,6 +15,7 @@
 **Git is the single most important tool in DevOps.** Every piece of code, every configuration file, every pipeline definition, every infrastructure template — all of it lives in Git. Your ability to use Git fluently determines how effectively you collaborate, track changes, and recover from mistakes.
 
 **In real-world DevOps work**, you will:
+
 - Manage infrastructure code across multiple repositories
 - Review pull requests for Terraform, Ansible, and Kubernetes changes
 - Resolve merge conflicts in CI/CD pipeline configurations
@@ -194,6 +195,7 @@ git blame filename.txt
 ### Why Branches Matter
 
 Branches let you work on features, fixes, or experiments **without affecting the main codebase**. In DevOps, you'll use branches for:
+
 - Infrastructure changes (new Terraform modules)
 - Pipeline updates (CI/CD config changes)
 - Config modifications (Kubernetes manifests)
@@ -446,6 +448,7 @@ gh pr merge 42 --squash
 ### Code Review Best Practices (DevOps Perspective)
 
 When reviewing infrastructure PRs, check:
+
 - [ ] **Does it include a rollback plan?**
 - [ ] **Are secrets properly handled?** (Not hardcoded)
 - [ ] **Does the CI pipeline pass?**
@@ -483,6 +486,7 @@ gitGraph
 ```
 
 **Rules:**
+
 - Branches live for **hours or days, not weeks**
 - Everyone merges to `main` frequently (at least daily)
 - Feature flags for incomplete work — ship the code dark, enable it later
@@ -889,6 +893,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 - [Project: Branching Workflow with Conflict Resolution](./projects/project-01-branching-conflict-workflow.md) — Build a small repository that demonstrates a realistic Git workflow: feature branches, pull request review, merge conflict, conflict resolution, and…
 
 ---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

@@ -731,7 +731,7 @@ cat > test.sh <<'SH'
 #!/usr/bin/env bash
 # The gate every Ansible change should pass.
 set -uo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")"
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 FAIL=0
 step() { printf '\n── %s ──\n' "$1"; }
 

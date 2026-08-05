@@ -152,6 +152,7 @@ web    10.244.0.14:80,10.244.0.15:80   30s
 ```
 
 > ⭐ **Learn this reflex now.** `kubectl get endpoints <svc>` splits every service-connectivity problem in half:
+>
 > - **Empty (`<none>`)** → the problem is *above* the Service: label selector mismatch, pods not Ready, or wrong namespace
 > - **Populated** → the problem is *below* it: ports, the app's bind address, DNS, NetworkPolicy, or Ingress
 >
@@ -409,11 +410,13 @@ echo | openssl s_client -connect "$IP:443" -servername apps.local 2>/dev/null | 
 ## 🔬 Exercise 5: NetworkPolicy
 
 > ⚠️ NetworkPolicy is enforced by the **CNI plugin**, not by Kubernetes itself. minikube's default CNI ignores it silently. Enable a CNI that enforces:
+>
 > ```bash
 > minikube start --cni=calico        # a fresh cluster, or:
 > kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
 > kubectl -n kube-system rollout status ds/calico-node --timeout=300s
 > ```
+>
 > If you skip this, the policies below will apply cleanly and do **nothing** — which is itself worth seeing once.
 
 ### Step 1: Confirm Everything Is Open by Default

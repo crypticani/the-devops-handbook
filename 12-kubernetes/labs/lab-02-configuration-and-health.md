@@ -282,12 +282,14 @@ kubectl exec "$POD" -- printenv LOG_LEVEL          # ✅ "debug"
 ```
 
 > ⭐ **The production pattern**: annotate the pod template with a **hash of the config**, so any config change automatically changes the pod spec and triggers a rollout:
+>
 > ```yaml
 > template:
 >   metadata:
 >     annotations:
 >       checksum/config: "<sha256 of the ConfigMap contents>"
 > ```
+>
 > Helm does this with `{{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}`. Kustomize does it automatically with `configMapGenerator`, which appends a content hash to the ConfigMap *name*. Without one of these, config changes silently don't apply and you spend an afternoon wondering why.
 
 ---

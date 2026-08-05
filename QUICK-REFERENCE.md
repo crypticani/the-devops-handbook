@@ -369,6 +369,6 @@ Special: setuid 4000 · setgid 2000 · sticky 1000
 
 <div align="center">
 
-**[← Back to the Handbook](./README.md)** · [All cheat sheets](#quick-reference) · [Practical Learning Guide](./PRACTICAL-LEARNING.md)
+**[← Back to the Handbook](./README.md)** · [Per-module cheat sheets](#-quick-reference) · [Practical Learning Guide](./PRACTICAL-LEARNING.md)
 
 </div>

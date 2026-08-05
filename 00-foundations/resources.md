@@ -51,10 +51,10 @@ Curated learning resources, organized by type and difficulty.
 ## 🎯 What to Focus On
 
 For this module, prioritize:
+
 1. **The Phoenix Project** (or at least a summary) — essential context
 2. **AWS "What is DevOps?"** article — solid foundational overview
 3. **DevOps Roadmap** — to see where you're headed
 4. The Google **SRE Book Chapter 1** — understand SRE vs DevOps relationship
 
 Don't try to consume everything at once. Come back to these resources as you progress through later modules.
-

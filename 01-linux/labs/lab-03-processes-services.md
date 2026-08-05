@@ -525,7 +525,6 @@ pkill -f worker.sh 2>/dev/null
 
 [← Previous Lab](./lab-02-permissions-users.md) | [Next Lab: Text Processing & Log Analysis →](./lab-04-text-processing.md)
 
-
 ## 📝 What to Commit
 
 Add these to your portfolio repo as evidence of completed work:

@@ -1,0 +1,31 @@
+# Markdown lint config for a prose- and table-heavy handbook.
+#
+# Philosophy: keep the rules that catch things which RENDER WRONG on GitHub,
+# disable the ones that are purely stylistic for this kind of document. A linter
+# reporting thousands of findings is one nobody reads — and one nobody reads is
+# worse than none, because it trains people to ignore CI annotations.
+config:
+  # ── Disabled: stylistic, and wrong for this repo ──
+  MD013: false   # line-length — prose and wide tables; hard wrapping ruins diffs
+  MD060: false   # table-column-style — cosmetic alignment only
+  MD033: false   # no-inline-html — <div align>, <br/>, <details>, <code> are deliberate
+  MD036: false   # no-emphasis-as-heading — **Bold:** is a sub-label, not a heading
+  MD024: false   # no-duplicate-heading — labs legitimately repeat "Step 1", "Break it"
+  MD025: false   # single-title — the root README wraps its h1 in a <div>
+  MD041: false   # first-line-heading — same reason
+  MD001: false   # heading-increment — "# Title" + "### subtitle" is the centred-header
+                 #   pattern used in README and QUICK-REFERENCE; h2 would be too large
+  MD029: false   # ol-prefix — module TOCs number continuously to MATCH section numbers
+                 #   (…8, 9, 10 across sub-lists). Restarting at 1 would break the mapping
+  MD040: false   # fenced-code-language — GitHub renders an unlabelled fence as plain
+                 #   preformatted text, which is exactly right for ASCII diagrams and
+                 #   command output. It does not guess a language, so there is nothing to fix
+
+  # ── Enabled, with tuning ──
+  MD010:
+    code_blocks: false   # hard tabs are correct inside Go code blocks
+
+globs:
+  - "**/*.md"
+  - "!node_modules"
+  - "!.remember"

@@ -15,6 +15,7 @@
 CI/CD is the **backbone of modern software delivery**. Without it, every deployment is a manual, error-prone, stressful event. With it, you ship code multiple times a day with confidence.
 
 **In real-world DevOps work**, you will:
+
 - Build CI pipelines that automatically test every code change
 - Create CD pipelines that deploy to staging and production
 - Configure deployment strategies (rolling, blue-green, canary)
@@ -154,6 +155,7 @@ flowchart TD
 ```
 
 **Key Principles:**
+
 - **Fail fast** — cheapest checks (linting) run first, and in parallel
 - **Immutable artifacts** — build once, deploy the same artifact everywhere. If you rebuild between staging and prod, you tested a different thing than you shipped
 - **Environment parity** — staging mirrors production
@@ -523,6 +525,7 @@ jobs:
 ### Environment Protection Rules
 
 Configure in GitHub: **Settings → Environments → production**:
+
 - ✅ Required reviewers (team lead must approve)
 - ✅ Wait timer (e.g., 5 minutes after staging)
 - ✅ Deployment branch restrictions (only `main`)
@@ -853,6 +856,7 @@ on:
 ### ❌ No Rollback Strategy
 
 Always plan for failure:
+
 - Keep the previous Docker image tagged and available
 - Use blue-green or canary deployments
 - Have a one-command rollback script
@@ -954,6 +958,7 @@ permissions:
 > Never in code or environment files committed to git. Use the platform's secret store (GitHub Secrets, Jenkins Credentials, Vault). Rotate regularly. Use OIDC for cloud providers instead of static keys. Audit access logs.
 
 **Q: A deployment failed in production. What do you do?**
+>
 > 1. Rollback immediately (don't debug in production). 2. Verify rollback with health checks. 3. Check deployment logs for the root cause. 4. Reproduce in staging. 5. Fix, test, and redeploy. Always have a rollback plan *before* you deploy.
 
 **Q: What are the benefits of pipeline-as-code?**
@@ -980,6 +985,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 **Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 
 ---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

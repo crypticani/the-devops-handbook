@@ -15,6 +15,7 @@
 Terraform creates infrastructure (VMs, networks, databases). But who installs packages, configures Nginx, deploys your app, and manages config files? **Ansible** — the agentless configuration management tool that turns manual server setup into repeatable, version-controlled automation.
 
 **In real-world DevOps work**, you will:
+
 - Write playbooks to configure servers consistently
 - Manage fleets of servers from a single control node
 - Build reusable roles for common patterns (web server, database, monitoring)
@@ -648,6 +649,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 **Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 
 ---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

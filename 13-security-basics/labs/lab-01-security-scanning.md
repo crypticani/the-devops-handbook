@@ -82,6 +82,7 @@ trivy image nginx:1.25-alpine
 ```
 
 **Questions to consider:**
+
 - How many HIGH/CRITICAL CVEs does `nginx:latest` have vs `nginx:1.25-alpine`?
 - Why do minimal base images have fewer vulnerabilities?
 
@@ -576,7 +577,6 @@ rm -rf trivy-lab secret-test iac-scan
 - [ ] Explain why secrets in old git commits are still a risk
 - [ ] Build a secure Dockerfile (non-root, slim base, pinned version)
 - [ ] Describe how to integrate security scanning into a CI/CD pipeline
-
 
 ## 📝 What to Commit
 

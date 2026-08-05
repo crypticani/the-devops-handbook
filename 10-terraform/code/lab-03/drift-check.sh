@@ -2,7 +2,7 @@
 # Run on a schedule. Alerts when reality has diverged from code.
 # Exit 0 = all clean, 1 = drift or error in at least one environment.
 set -uo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")"
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 STATUS=0
 for env in environments/*/; do
   name=$(basename "$env")

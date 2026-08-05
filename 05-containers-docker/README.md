@@ -15,6 +15,7 @@
 Docker is the **most transformative tool in modern DevOps**. It solves the "works on my machine" problem by packaging applications with their entire runtime environment. Every CI/CD pipeline, every Kubernetes cluster, every microservice architecture — all built on containers.
 
 **In real-world DevOps work**, you will:
+
 - Containerize applications for consistent deployment
 - Build multi-stage Docker images for production
 - Manage multi-container applications with Docker Compose
@@ -847,6 +848,7 @@ docker scout cves myapp:v1.2.3
 > A Dockerfile with multiple FROM statements. Build-time dependencies (compilers, test tools) stay in the build stage. Only the final artifact is copied to the production stage, resulting in much smaller images.
 
 **Q: How do you debug a container that keeps restarting?**
+>
 > 1. `docker logs container-name` — read the logs. 2. `docker inspect container-name` — check the exit code and state. 3. `docker run -it image bash` — override the CMD and get a shell to investigate. 4. Check health check configuration if using HEALTHCHECK.
 
 ---
@@ -867,6 +869,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 **Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 
 ---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

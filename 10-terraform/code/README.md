@@ -14,7 +14,7 @@ starting point.
 > ⚠️ **`*.example` files need editing before use.** `backend.hcl.example` and
 > `import.tf.example` contain placeholders (`<ACCOUNT_ID>`, `REPLACE-WITH-…`) because the real
 > values are specific to your account. Copy them to the real filename and fill them in.
-
+>
 > 💰 **These create real AWS resources.** Everything is free-tier eligible, but run
 > `terraform destroy` when you're done. The prod module in lab-03 sets `force_destroy = false`
 > on purpose — its bucket survives `destroy`, which is the safety feature working.

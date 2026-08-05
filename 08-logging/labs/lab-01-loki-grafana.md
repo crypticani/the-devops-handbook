@@ -254,7 +254,7 @@ COMPOSE
 docker compose up -d --build
 ```
 
-**✅ Checkpoint:** All services running. http://localhost:8080/health returns OK.
+**✅ Checkpoint:** All services running. <http://localhost:8080/health> returns OK.
 
 ---
 
@@ -273,7 +273,7 @@ done
 
 ### Step 2: Add Loki Data Source in Grafana
 
-1. Go to http://localhost:3000 (admin/admin)
+1. Go to <http://localhost:3000> (admin/admin)
 2. **Connections** → **Data Sources** → **Add** → **Loki**
 3. URL: `http://loki:3100`
 4. **Save & Test**
@@ -313,16 +313,20 @@ count_over_time({container="demo-app"} |= "ERROR" [1m])
 ### Create a Dashboard with These Panels
 
 **Panel 1: Log Volume Over Time (Time Series)**
+
 - Query: `sum(count_over_time({container="demo-app"} [1m])) by (container)`
 
 **Panel 2: Error Count Over Time (Time Series)**
+
 - Query: `count_over_time({container="demo-app"} |= "ERROR" [1m])`
 
 **Panel 3: Logs Panel (Logs visualization)**
+
 - Query: `{container="demo-app"} | json`
 - Visualization type: **Logs**
 
 **Panel 4: Error Percentage (Stat)**
+
 - Query A: `count_over_time({container="demo-app"} |= "ERROR" [5m])`
 - Query B: `count_over_time({container="demo-app"} [5m])`
 - Use math: A/B * 100
@@ -630,7 +634,6 @@ cd .. && rm -rf logging-lab
 - [ ] Explain the difference between ELK and Loki
 - [ ] Explain why structured logging matters for production systems
 - [ ] Use `count_over_time()` to aggregate log patterns
-
 
 ## 📝 What to Commit
 

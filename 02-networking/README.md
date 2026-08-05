@@ -17,6 +17,7 @@
 When a service is "down," when containers can't talk to each other, when a deployment fails, when latency spikes, when a database connection times out — the first thing you investigate is the network.
 
 **In real-world DevOps work**, you will:
+
 - Debug "connection refused" and "connection timed out" errors
 - Configure DNS records for domain management
 - Set up reverse proxies (Nginx) to route traffic
@@ -194,6 +195,7 @@ Given: 10.0.0.0/20
 ```
 
 **CIDR in practice:**
+
 ```bash
 # A /24 network: 192.168.1.0/24
 # Network:   192.168.1.0
@@ -1181,6 +1183,7 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 ### Frequently Asked Questions
 
 **Q: What happens when you type `google.com` in your browser?**
+>
 > 1. Browser checks its DNS cache
 > 2. OS checks `/etc/hosts`, then DNS resolver cache
 > 3. DNS query to configured nameserver (recursive resolution)
@@ -1207,6 +1210,7 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 ### Scenario-Based Questions
 
 **Q: Users report the website is slow for the past hour. How do you investigate?**
+>
 > 1. Check monitoring dashboards for latency/error spikes
 > 2. Use curl timing to pinpoint where latency is (DNS? TCP? TLS? Server?)
 > 3. Check server resources (CPU, memory, disk, network)
@@ -1237,6 +1241,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 **Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 
 ---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

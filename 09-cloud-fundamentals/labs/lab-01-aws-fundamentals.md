@@ -647,7 +647,6 @@ aws s3 ls | grep devops-lab
 - [ ] Clean up all resources to avoid charges
 - [ ] Explain the difference between public and private subnets
 
-
 ## 📝 What to Commit
 
 Add these to your portfolio repo as evidence of completed work:

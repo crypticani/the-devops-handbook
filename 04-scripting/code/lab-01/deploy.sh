@@ -9,9 +9,16 @@ set -euo pipefail
 # ═══════════════════════════════════════
 # Configuration
 # ═══════════════════════════════════════
-readonly SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-readonly LOG_FILE="/tmp/deploy_$(date +%Y%m%d_%H%M%S).log"
+# Declare and assign separately: `readonly X="$(cmd)"` hides the command's
+# exit status behind readonly's, so a failure here would go unnoticed (SC2155).
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+readonly SCRIPT_DIR
+
+LOG_FILE="/tmp/deploy_$(date +%Y%m%d_%H%M%S).log"
+readonly LOG_FILE
+
 readonly LOCK_FILE="/tmp/deploy.lock"
+readonly BACKUP_DIR="${SCRIPT_DIR}/backups"
 
 # ═══════════════════════════════════════
 # Logging Functions
@@ -109,9 +116,13 @@ fi
 # Step 2: Backup current version
 info "Step 2: Creating backup..."
 if [ "${DRY_RUN}" = true ]; then
-    info "[DRY RUN] Would backup current version"
+    info "[DRY RUN] Would back up current version to ${BACKUP_DIR}"
 else
-    info "Backup created ✅"
+    mkdir -p "${BACKUP_DIR}"
+    backup_path="${BACKUP_DIR}/${APP}_$(date +%Y%m%d_%H%M%S).tar.gz"
+    # A real script would archive the current release here.
+    : > "${backup_path}"
+    info "Backup created at ${backup_path} ✅"
 fi
 
 # Step 3: Deploy

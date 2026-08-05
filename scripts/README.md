@@ -1,6 +1,6 @@
 # Repository Maintenance Scripts
 
-> ### 📖 Learners: you can ignore this directory entirely.
+> ### 📖 Learners: you can ignore this directory entirely
 >
 > Nothing here is part of the curriculum. These scripts maintain the handbook itself — they
 > check that the lab files still work as tool versions change. They are not something to read,

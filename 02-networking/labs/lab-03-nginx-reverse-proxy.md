@@ -380,6 +380,7 @@ curl -s -o /dev/null -w "HTTP %{http_code}\n" http://localhost:8888
 ```
 
 Solution:
+
 ```bash
 # The backend is on 8080, not 5555
 sudo sed -i 's/5555/8080/' /etc/nginx/sites-available/devops-lab-broken
@@ -433,7 +434,6 @@ You've completed this lab when you can:
 ---
 
 [← Previous Lab](./lab-02-tcp-ports-connectivity.md) | [Back to Module README](../README.md)
-
 
 ## 📝 What to Commit
 

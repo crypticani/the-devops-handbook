@@ -516,7 +516,6 @@ You've completed this lab when you can:
 
 [← Previous Lab](./lab-01-dns-deep-dive.md) | [Next Lab: Nginx Reverse Proxy Setup →](./lab-03-nginx-reverse-proxy.md)
 
-
 ## 📝 What to Commit
 
 Add these to your portfolio repo as evidence of completed work:

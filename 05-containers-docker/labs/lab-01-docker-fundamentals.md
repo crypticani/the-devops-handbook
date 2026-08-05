@@ -426,7 +426,6 @@ docker rm -f first second
 - [ ] Debug a container that exits immediately
 - [ ] Run containers as non-root users
 
-
 ## 📝 What to Commit
 
 Add these to your portfolio repo as evidence of completed work:

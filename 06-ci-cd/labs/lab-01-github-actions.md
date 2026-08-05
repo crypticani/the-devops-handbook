@@ -304,6 +304,7 @@ git push origin main
 ```
 
 Watch the pipeline in **Actions** tab:
+
 1. **Lint** runs first (flake8 + black)
 2. **Test** runs after lint passes (3 Python versions in parallel)
 3. **Build** runs after all tests pass (pushes Docker image to GHCR)
@@ -411,7 +412,6 @@ Watch the pipeline fail at the Test stage. Read the logs — find the assertion 
 - [ ] Create a PR and observe CI checks
 - [ ] Debug a failing workflow by reading logs
 - [ ] Explain the difference between `push` and `pull_request` triggers
-
 
 ## 📝 What to Commit
 

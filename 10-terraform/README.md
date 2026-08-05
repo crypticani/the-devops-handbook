@@ -15,6 +15,7 @@
 Clicking through the AWS console doesn't scale. When you manage 50 servers, 3 environments, and multiple regions, you need to **define infrastructure as code** — repeatable, reviewable, and automated. Terraform is the industry standard for this.
 
 **In real-world DevOps work**, you will:
+
 - Write Terraform configurations to provision cloud infrastructure
 - Manage state files and collaborate with teams
 - Build reusable modules for common patterns
@@ -823,6 +824,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 **Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 
 ---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

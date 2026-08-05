@@ -540,7 +540,6 @@ bandit -r .                        # flags requests-without-timeout, among other
 
 [← Previous Lab](./lab-01-bash-scripting.md) | [Back to Module README](../README.md)
 
-
 ## 📝 What to Commit
 
 Add these to your portfolio repo as evidence of completed work:

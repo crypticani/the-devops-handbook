@@ -62,9 +62,16 @@ set -euo pipefail
 # ═══════════════════════════════════════
 # Configuration
 # ═══════════════════════════════════════
-readonly SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-readonly LOG_FILE="/tmp/deploy_$(date +%Y%m%d_%H%M%S).log"
+# Declare and assign separately: `readonly X="$(cmd)"` hides the command's
+# exit status behind readonly's, so a failure here would go unnoticed (SC2155).
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+readonly SCRIPT_DIR
+
+LOG_FILE="/tmp/deploy_$(date +%Y%m%d_%H%M%S).log"
+readonly LOG_FILE
+
 readonly LOCK_FILE="/tmp/deploy.lock"
+readonly BACKUP_DIR="${SCRIPT_DIR}/backups"
 
 # ═══════════════════════════════════════
 # Logging Functions
@@ -162,9 +169,13 @@ fi
 # Step 2: Backup current version
 info "Step 2: Creating backup..."
 if [ "${DRY_RUN}" = true ]; then
-    info "[DRY RUN] Would backup current version"
+    info "[DRY RUN] Would back up current version to ${BACKUP_DIR}"
 else
-    info "Backup created ✅"
+    mkdir -p "${BACKUP_DIR}"
+    backup_path="${BACKUP_DIR}/${APP}_$(date +%Y%m%d_%H%M%S).tar.gz"
+    # A real script would archive the current release here.
+    : > "${backup_path}"
+    info "Backup created at ${backup_path} ✅"
 fi
 
 # Step 3: Deploy
@@ -230,10 +241,11 @@ check_http() {
     local url="$1"
     local name="$2"
 
-    local start_time=$(date +%s%N)
-    local status_code
+    # Same rule inside functions: `local x=$(cmd)` masks the exit status (SC2155)
+    local start_time end_time status_code
+    start_time=$(date +%s%N)
     status_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 --max-time 5 "${url}" 2>/dev/null || echo "000")
-    local end_time=$(date +%s%N)
+    end_time=$(date +%s%N)
     local duration=$(( (end_time - start_time) / 1000000 ))
 
     if [ "${status_code}" = "200" ]; then
@@ -502,7 +514,6 @@ env -i /bin/bash --noprofile --norc ./health_monitor.sh   # cron simulation
 - [ ] Health monitor checks multiple services and reports status
 - [ ] All scripts use `set -euo pipefail`
 - [ ] All scripts include cleanup traps
-
 
 ## 📝 What to Commit
 

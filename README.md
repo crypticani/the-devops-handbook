@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Modules](https://img.shields.io/badge/Modules-17-orange.svg)](#-module-hierarchy)
-[![Hands-On](https://img.shields.io/badge/Hands--On-60%25-red.svg)](#-hands-on-philosophy)
+[![Labs](https://img.shields.io/badge/Hands--On%20Labs-38-red.svg)](#-module-hierarchy)
 
 ---
 
@@ -91,23 +91,23 @@ Everything under `code/` is automatically tested whenever it changes, so the fil
 
 | # | Module | Focus | Est. Time | Cheat Sheet | Lab Code |
 |---|--------|-------|-----------|-------------|----------|
-| **Phase 1: Fundamentals** |||||
+| **Phase 1: Fundamentals** ||||||
 | 00 | [Foundations](./00-foundations/) | DevOps culture, SDLC, Agile, tooling overview | 1 week | — | — |
 | 01 | [Linux](./01-linux/) | Debian/Ubuntu and RHEL-family Linux, filesystem, processes, permissions, systemd | 2 weeks | [📋](./01-linux/cheatsheet.md) | [📁](./01-linux/code/) |
 | 02 | [Networking](./02-networking/) | TCP/IP, DNS, HTTP, firewalls, troubleshooting | 1.5 weeks | [📋](./02-networking/cheatsheet.md) | [📁](./02-networking/code/) |
 | 03 | [Git](./03-git/) | Version control, branching, PRs, Git workflows | 1 week | [📋](./03-git/cheatsheet.md) | — |
 | 04 | [Scripting](./04-scripting/) | Bash scripting, Python basics for automation | 2 weeks | [📋](./04-scripting/cheatsheet.md) | [📁](./04-scripting/code/) |
-| **Phase 2: Core Tools** |||||
+| **Phase 2: Core Tools** ||||||
 | 05 | [Containers & Docker](./05-containers-docker/) | Images, containers, Compose, registries | 2 weeks | [📋](./05-containers-docker/cheatsheet.md) | [📁](./05-containers-docker/code/) |
 | 06 | [CI/CD](./06-ci-cd/) | GitHub Actions, Jenkins, pipelines, testing | 2 weeks | [📋](./06-ci-cd/cheatsheet.md) | [📁](./06-ci-cd/code/) |
 | 07 | [Observability](./07-observability/) | Prometheus, Grafana, metrics, alerting | 2 weeks | [📋](./07-observability/cheatsheet.md) | [📁](./07-observability/code/) |
 | 08 | [Logging](./08-logging/) | ELK stack, Loki, centralized logging, debugging | 1.5 weeks | [📋](./08-logging/cheatsheet.md) | [📁](./08-logging/code/) |
-| **Phase 3: Production Skills** |||||
+| **Phase 3: Production Skills** ||||||
 | 09 | [Cloud Fundamentals](./09-cloud-fundamentals/) | Cloud-agnostic concepts, then AWS specifics | 2 weeks | [📋](./09-cloud-fundamentals/cheatsheet.md) | [📁](./09-cloud-fundamentals/code/) |
 | 10 | [Terraform](./10-terraform/) | Infrastructure as Code, state, modules | 2 weeks | [📋](./10-terraform/cheatsheet.md) | [📁](./10-terraform/code/) |
 | 11 | [Ansible](./11-ansible/) | Configuration management, playbooks, roles | 1 week | [📋](./11-ansible/cheatsheet.md) | [📁](./11-ansible/code/) |
 | 12 | [Kubernetes](./12-kubernetes/) | Pods, Services, Deployments, Helm, debugging | 3 weeks | [📋](./12-kubernetes/cheatsheet.md) | [📁](./12-kubernetes/code/) |
-| **Phase 4: Mastery** |||||
+| **Phase 4: Mastery** ||||||
 | 13 | [Security Basics](./13-security-basics/) | Secrets, RBAC, container security, secure CI/CD | 1.5 weeks | [📋](./13-security-basics/cheatsheet.md) | [📁](./13-security-basics/code/) |
 | 14 | [System Design](./14-system-design-devops/) | Architecture, scaling, HA, load balancing | 1 week | — | [📁](./14-system-design-devops/code/) |
 | 15 | [Projects](./15-projects/) | Beginner → Advanced real-world projects | 3-4 weeks | — | — |
@@ -164,7 +164,7 @@ cd 00-foundations
 
 If you already have Linux/Git experience, you can start from Module 04 or 05, but **verify your knowledge first** by completing the labs in earlier modules.
 
-### For Every Module, Follow This Order:
+### For Every Module, Follow This Order
 
 1. **Read** `README.md` — understand the concepts and why they matter
 2. **Study** the commands and tools — don't just memorize, understand
@@ -182,6 +182,7 @@ If you already have Linux/Git experience, you can start from Module 04 or 05, bu
 Use this checklist to track your progress. Copy it to a separate file or use GitHub's checkbox feature.
 
 ### Phase 1: Fundamentals
+
 - [ ] **00 - Foundations**: DevOps concepts, culture, SDLC
   - [ ] Read README.md
   - [ ] Complete all labs
@@ -206,6 +207,7 @@ Use this checklist to track your progress. Copy it to a separate file or use Git
   - [ ] Review resources
 
 ### Phase 2: Core Tools
+
 - [ ] **05 - Docker**: Images, containers, Compose, registries
   - [ ] Read README.md
   - [ ] Complete all labs
@@ -228,6 +230,7 @@ Use this checklist to track your progress. Copy it to a separate file or use Git
   - [ ] Review resources
 
 ### Phase 3: Production Skills
+
 - [ ] **09 - Cloud Fundamentals**: Cloud concepts, AWS basics
   - [ ] Read README.md
   - [ ] Complete all labs
@@ -248,6 +251,7 @@ Use this checklist to track your progress. Copy it to a separate file or use Git
   - [ ] Review resources
 
 ### Phase 4: Mastery
+
 - [ ] **13 - Security**: Secrets, RBAC, secure pipelines
   - [ ] Read README.md
   - [ ] Complete all labs
@@ -338,6 +342,7 @@ Module 13 serves as consolidation, not introduction.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this handbook.
 
 We welcome:
+
 - Bug fixes and corrections
 - Additional labs and exercises
 - New resources and references

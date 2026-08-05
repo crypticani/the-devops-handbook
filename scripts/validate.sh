@@ -12,8 +12,7 @@
 #
 set -uo pipefail
 
-cd "$(dirname "${BASH_SOURCE[0]}")/.."
-ROOT="$PWD"
+cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 1
 
 FAILED=0
 RUN=()

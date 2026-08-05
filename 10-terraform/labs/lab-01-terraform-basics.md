@@ -557,7 +557,6 @@ terraform state push restored.tfstate
 - [ ] Destroy all resources cleanly
 - [ ] Explain what the state file does and why it matters
 
-
 ## 📝 What to Commit
 
 Add these to your portfolio repo as evidence of completed work:

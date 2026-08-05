@@ -15,6 +15,7 @@
 You can containerize an app with Docker. But how do you run 50 containers across 10 servers, handle failures, scale on demand, and do zero-downtime deployments? **Kubernetes** — the industry-standard container orchestration platform.
 
 **In real-world DevOps work**, you will:
+
 - Deploy applications as Pods, Deployments, and Services
 - Scale applications horizontally based on load
 - Perform zero-downtime rolling updates and rollbacks
@@ -927,6 +928,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 **Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 
 ---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

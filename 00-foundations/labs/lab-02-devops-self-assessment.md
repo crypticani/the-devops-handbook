@@ -130,6 +130,7 @@ python3 --version
 ```
 
 **Expected output** (versions may differ):
+
 ```
 git version 2.43.0
 curl 8.5.0
@@ -185,6 +186,7 @@ cat test.txt
 ```
 
 **Expected output:**
+
 ```
 DevOps Handbook - Environment Ready!
 ```
@@ -265,6 +267,7 @@ docker run hello-world
 ```
 
 **Expected output for `docker run hello-world`:**
+
 ```
 Hello from Docker!
 This message shows that your installation appears to be working correctly.
@@ -308,9 +311,11 @@ cat > 00-foundations-notes.md << 'EOF'
 ```bash
 # Add useful commands here
 ```
+
 EOF
 
 echo "Lab notebook created! Edit it as you learn."
+
 ```
 
 ---
@@ -603,6 +608,7 @@ echo "=== Check Complete ==="
 ```
 
 Save and run:
+
 ```bash
 chmod +x env-check.sh
 ./env-check.sh
@@ -620,7 +626,6 @@ chmod +x env-check.sh
 ---
 
 [← Previous Lab](./lab-01-mapping-delivery-pipeline.md) | [Back to Module README](../README.md)
-
 
 ## 📝 What to Commit
 

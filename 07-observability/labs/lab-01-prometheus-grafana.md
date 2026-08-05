@@ -200,10 +200,11 @@ docker compose ps
 ```
 
 Open in your browser:
-- **Prometheus**: http://localhost:9090
-- **Grafana**: http://localhost:3000 (login: admin/admin)
-- **Node Exporter**: http://localhost:9100/metrics
-- **Alertmanager**: http://localhost:9093
+
+- **Prometheus**: <http://localhost:9090>
+- **Grafana**: <http://localhost:3000> (login: admin/admin)
+- **Node Exporter**: <http://localhost:9100/metrics>
+- **Alertmanager**: <http://localhost:9093>
 
 **✅ Checkpoint:** All four services should be running. Prometheus → Status → Targets should show both targets as UP.
 
@@ -213,7 +214,7 @@ Open in your browser:
 
 ### Step 1: Open Prometheus UI
 
-Go to http://localhost:9090 → click "Graph" tab.
+Go to <http://localhost:9090> → click "Graph" tab.
 
 ### Step 2: Run These Queries (One at a Time)
 
@@ -260,7 +261,7 @@ For each query, click **Execute**, then switch between **Table** and **Graph** v
 
 ### Step 1: Add Prometheus Data Source
 
-1. Go to http://localhost:3000 (login: admin/admin)
+1. Go to <http://localhost:3000> (login: admin/admin)
 2. Navigate to **Connections** → **Data Sources** → **Add data source**
 3. Select **Prometheus**
 4. URL: `http://prometheus:9090`
@@ -274,6 +275,7 @@ For each query, click **Execute**, then switch between **Table** and **Graph** v
 ### Step 3: Add Panels (Build Each One)
 
 **Panel 1: CPU Usage (Gauge)**
+
 - Query: `100 - (avg(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)`
 - Visualization: **Gauge**
 - Title: "CPU Usage %"
@@ -281,23 +283,27 @@ For each query, click **Execute**, then switch between **Table** and **Graph** v
 - Unit: Percent (0-100)
 
 **Panel 2: Memory Usage (Gauge)**
+
 - Query: `(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100`
 - Visualization: **Gauge**
 - Title: "Memory Usage %"
 - Set thresholds: Green < 70, Yellow < 85, Red ≥ 85
 
 **Panel 3: CPU Over Time (Time Series)**
+
 - Query: `100 - (avg(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)`
 - Visualization: **Time series**
 - Title: "CPU Usage Over Time"
 
 **Panel 4: Network I/O (Time Series)**
+
 - Query A: `rate(node_network_receive_bytes_total{device!="lo"}[5m])`  — Legend: "Received"
 - Query B: `rate(node_network_transmit_bytes_total{device!="lo"}[5m])` — Legend: "Transmitted"
 - Title: "Network Traffic"
 - Unit: bytes/sec (data rate)
 
 **Panel 5: Disk Usage (Bar Gauge)**
+
 - Query: `(node_filesystem_size_bytes{mountpoint="/"} - node_filesystem_avail_bytes{mountpoint="/"}) / node_filesystem_size_bytes{mountpoint="/"} * 100`
 - Visualization: **Bar gauge**
 - Title: "Disk Usage %"
@@ -325,6 +331,7 @@ For each query, click **Execute**, then switch between **Table** and **Graph** v
 ### Step 2: Explore the Dashboard
 
 This is a production-grade dashboard with dozens of panels. Study it:
+
 - How are panels organized into rows?
 - What PromQL queries do they use? (Click a panel → Edit to see)
 - What template variables are at the top?
@@ -337,7 +344,7 @@ This is a production-grade dashboard with dozens of panels. Study it:
 
 ### Step 1: Verify Alerts in Prometheus
 
-1. Go to http://localhost:9090 → **Alerts**
+1. Go to <http://localhost:9090> → **Alerts**
 2. You should see your alert rules: InstanceDown, HighCPU, HighMemory
 3. They should all be in **green** (inactive) state
 
@@ -353,7 +360,7 @@ docker compose stop node-exporter
 
 ### Step 3: Check Alertmanager
 
-1. Go to http://localhost:9093
+1. Go to <http://localhost:9093>
 2. You should see the firing alert
 
 ### Step 4: Resolve the Alert
@@ -673,7 +680,6 @@ cd .. && rm -rf observability-lab
 - [ ] Trigger and resolve an alert by stopping/starting a service
 - [ ] Explain the difference between a counter and a gauge
 - [ ] Write a PromQL query for memory usage percentage from memory
-
 
 ## 📝 What to Commit
 

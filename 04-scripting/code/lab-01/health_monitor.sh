@@ -12,10 +12,11 @@ check_http() {
     local url="$1"
     local name="$2"
 
-    local start_time=$(date +%s%N)
-    local status_code
+    # Same rule inside functions: `local x=$(cmd)` masks the exit status (SC2155)
+    local start_time end_time status_code
+    start_time=$(date +%s%N)
     status_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 --max-time 5 "${url}" 2>/dev/null || echo "000")
-    local end_time=$(date +%s%N)
+    end_time=$(date +%s%N)
     local duration=$(( (end_time - start_time) / 1000000 ))
 
     if [ "${status_code}" = "200" ]; then

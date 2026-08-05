@@ -7,6 +7,7 @@ Design, provision, and manage a complete production-grade environment using Infr
 ## Requirements
 
 ### Infrastructure (Terraform)
+
 - VPC with public and private subnets across 2 availability zones
 - Security groups following least privilege
 - An EKS/K3s/minikube Kubernetes cluster (cloud or local)
@@ -14,11 +15,13 @@ Design, provision, and manage a complete production-grade environment using Infr
 - IAM roles for services (not user access keys)
 
 ### Configuration Management (Ansible)
+
 - Playbook to bootstrap cluster nodes (if using self-managed K8s)
 - Role for common security hardening (SSH, firewall, updates)
 - Ansible Vault for any sensitive variables
 
 ### Application Deployment (Kubernetes)
+
 - At least 2 microservices deployed as Kubernetes Deployments
 - Services exposed via Kubernetes Services and Ingress
 - ConfigMaps for non-sensitive configuration
@@ -29,6 +32,7 @@ Design, provision, and manage a complete production-grade environment using Infr
 - Rolling update strategy with rollback evidence
 
 ### Observability
+
 - Prometheus + Grafana for metrics (deployed in-cluster or external)
 - Loki or EFK for centralized logging
 - At least 2 custom dashboards (infrastructure + application)
@@ -36,6 +40,7 @@ Design, provision, and manage a complete production-grade environment using Infr
 - Evidence of using observability to debug a real issue
 
 ### CI/CD
+
 - GitHub Actions pipeline that:
   - Runs tests
   - Builds and scans container images
@@ -43,6 +48,7 @@ Design, provision, and manage a complete production-grade environment using Infr
   - Includes rollback on failure
 
 ### Security
+
 - Container images scanned with Trivy
 - No secrets in source code or git history
 - RBAC configured in Kubernetes

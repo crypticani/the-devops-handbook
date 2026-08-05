@@ -147,12 +147,14 @@ Compare the two approaches using these numbers:
 ### Expected Calculations
 
 **Manual process monthly cost:**
+
 - Deployment time: 1 × 4 hours = 4 hours
 - Failure recovery: 0.30 × 4 hours = 1.2 hours
 - Total: ~5.2 engineer-hours
 - Downtime cost: 0.30 × 4 hours × $10,000 = $12,000
 
 **DevOps pipeline monthly cost:**
+
 - Deployment time: 30 × 0.17 hours = 5.1 hours (but fully automated)
 - Failure recovery: 0.05 × 30 × 0.25 hours = 0.375 hours
 - Total human time: ~1 hour (monitoring/intervention)
@@ -203,12 +205,14 @@ Write a blameless postmortem using this template:
 ### Key Points for Your Postmortem
 
 Your action items should include things like:
+
 - ✅ Add database migration testing to CI pipeline
 - ✅ Create staging database with realistic (anonymized) data
 - ✅ Add database performance checks to deployment pipeline
 - ✅ Set up alerts for sudden increases in 500 error rates
 
 Things **not** to write:
+
 - ❌ "Bob should be more careful with migrations"
 - ❌ "We need to approve all database changes manually"
 
@@ -298,7 +302,6 @@ You've completed this lab successfully when you can:
 3. Blameless postmortems fix systems, not people
 4. The business case for DevOps is measurable and compelling
 
-
 ## 📝 What to Commit
 
 Add these to your portfolio repo as evidence of completed work:
@@ -311,4 +314,3 @@ Add these to your portfolio repo as evidence of completed work:
 ---
 
 [← Back to Module README](../README.md) | [Next Lab: DevOps Self-Assessment →](./lab-02-devops-self-assessment.md)
-

@@ -15,6 +15,7 @@
 **Linux runs the internet.** Over 96% of the world's top web servers run Linux. Every Docker container is Linux. Every CI/CD runner is Linux. Every Kubernetes node is Linux. AWS, GCP, and Azure all default to Linux instances.
 
 **In real-world DevOps work**, you will:
+
 - SSH into servers to troubleshoot production issues at 3 AM
 - Write scripts that manage hundreds of servers
 - Read and parse logs that are thousands of lines long
@@ -1069,6 +1070,7 @@ Problem reported
 ### Common Scenarios
 
 **"Service won't start"**
+
 ```bash
 # 1. Check the status
 sudo systemctl status myservice
@@ -1084,6 +1086,7 @@ journalctl -u myservice --no-pager -n 50
 ```
 
 **"Server is slow"**
+
 ```bash
 # 1. Check load average
 uptime
@@ -1109,18 +1112,21 @@ ps aux --sort=-%mem | head -10
 > 🔐 Security is embedded throughout this handbook. Here are Linux-specific practices.
 
 ### SSH Hardening
+
 - Disable root login via SSH
 - Use key-based authentication only
 - Change the default SSH port
 - Use `fail2ban` to block brute force attempts
 
 ### File Permissions
+
 - Follow principle of least privilege
 - Never use `chmod 777`
 - Protect sensitive files (keys, configs, secrets)
 - Use proper ownership (`chown`)
 
 ### System Updates
+
 ```bash
 # Debian/Ubuntu
 sudo apt update && sudo apt upgrade -y
@@ -1134,6 +1140,7 @@ sudo systemctl enable --now dnf-automatic.timer
 ```
 
 ### Firewall Basics
+
 ```bash
 # Debian/Ubuntu with UFW
 sudo ufw enable
@@ -1205,6 +1212,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 **Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 
 ---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

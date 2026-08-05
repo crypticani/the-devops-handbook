@@ -15,6 +15,7 @@
 Scripting is the **bridge between manual operations and full automation**. Before you learn Terraform, Ansible, or CI/CD pipelines, you need to be able to write scripts that automate repetitive tasks, process data, and glue systems together.
 
 **In real-world DevOps work**, you will:
+
 - Write deployment scripts that handle rollbacks
 - Build health check and monitoring scripts
 - Automate log rotation and cleanup
@@ -37,6 +38,7 @@ Scripting is the **bridge between manual operations and full automation**. Befor
 ## 📚 Table of Contents
 
 ### Part 1: Bash Scripting
+
 1. [Bash Fundamentals](#1-bash-fundamentals)
 2. [Variables and Data Types](#2-variables-and-data-types)
 3. [Control Flow](#3-control-flow)
@@ -46,16 +48,18 @@ Scripting is the **bridge between manual operations and full automation**. Befor
 7. [Error Handling](#7-error-handling)
 
 ### Part 2: Python for DevOps
+
 8. [Python Fundamentals for DevOps](#8-python-fundamentals-for-devops)
 9. [Working with Files and Data](#9-working-with-files-and-data)
 10. [API Interactions](#10-api-interactions)
 11. [System Administration with Python](#11-system-administration-with-python)
 
 ### General
+
 12. [Common Mistakes and Anti-Patterns](#12-common-mistakes-and-anti-patterns)
 13. [Debugging Mindset](#13-debugging-mindset)
 14. [Security Considerations](#14-security-considerations)
-15. [Interview Insights](#15-interview-insights)
+ 4. [Interview Insights](#15-interview-insights)
 
 ---
 
@@ -885,6 +889,7 @@ logger.debug(f"Processing server: {server_name}")
 ## 15. Interview Insights
 
 **Q: Write a script to check if a service is running and restart it if not.**
+
 ```bash
 #!/bin/bash
 set -euo pipefail
@@ -928,6 +933,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 **Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 
 ---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

@@ -215,6 +215,7 @@ aws iam simulate-principal-policy \
 | `explicitDeny` | ⭐ A `Deny` statement, SCP, or permission boundary blocked it. **Cannot be overridden** |
 
 > ⭐ Put this in CI. A test that asserts your app role **cannot** delete the bucket, and **cannot** read `secrets/`, catches an over-broad policy edit before it merges:
+>
 > ```bash
 > aws iam simulate-principal-policy --policy-source-arn "$ROLE_ARN" \
 >   --action-names s3:DeleteBucket --resource-arns "arn:aws:s3:::$BUCKET" \

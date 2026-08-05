@@ -299,6 +299,7 @@ module "app_data" {
   public bucket, this is the wrong module.
 - The module declares no `provider` block; the caller supplies region and credentials.
 MD
+
 ```
 
 **✅ Checkpoint:** The module has a validated input interface, useful outputs, secure defaults that can't be turned off, and a README. That's the difference between a module and a directory of `.tf` files.

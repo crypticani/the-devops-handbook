@@ -288,6 +288,7 @@ aws s3api list-object-versions --bucket "$TF_STATE_BUCKET" --prefix lab-02/app/t
 ```
 
 > 💡 **S3 native locking (Terraform 1.10+)** removes the DynamoDB table entirely:
+>
 > ```hcl
 > terraform {
 >   backend "s3" {
@@ -299,6 +300,7 @@ aws s3api list-object-versions --bucket "$TF_STATE_BUCKET" --prefix lab-02/app/t
 >   }
 > }
 > ```
+>
 > One less resource to bootstrap and pay for. DynamoDB remains the compatible choice for older Terraform versions and for teams already running it.
 
 ---
@@ -475,6 +477,7 @@ terraform output
 | **Best for** | Tightly related stacks owned by one team | Loosely coupled stacks, different teams | Values that genuinely vary per environment |
 
 > ⚠️ **`terraform_remote_state` grants read access to the entire producer state file**, including any secrets in it — not just the declared outputs. For cross-team boundaries, prefer a data source lookup by tag, or publish values to SSM Parameter Store:
+>
 > ```hcl
 > # Producer
 > resource "aws_ssm_parameter" "bucket_name" {

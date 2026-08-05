@@ -15,6 +15,7 @@
 Your CI/CD pipeline deploys code to production. But **how do you know it's working?** Observability gives you the eyes and ears to understand what's happening inside your systems — before users complain.
 
 **In real-world DevOps work**, you will:
+
 - Set up Prometheus to collect metrics from every service
 - Build Grafana dashboards that tell a story at a glance
 - Configure alerts that wake you up only when it matters
@@ -99,18 +100,21 @@ flowchart TB
 > **💡 Why the order matters**: you cannot alert on logs cheaply, and you cannot debug from metrics alone. Alert on **metrics** (cheap, aggregate, low noise), then pivot to **traces** to find the slow hop, then read the **logs** for that exact trace ID. Teams that skip metrics and alert on log patterns end up with expensive, flaky alerting.
 
 ### Metrics (This Module)
+
 - **What**: Numeric measurements collected over time (counters, gauges, histograms)
 - **Example**: `http_requests_total = 14523`, `cpu_usage = 72.3%`
 - **Tool**: **Prometheus** + **Grafana**
 - **Strength**: Cheap to store, fast to query, great for alerting and trends
 
 ### Logs (Module 08)
+
 - **What**: Timestamped text records of discrete events
 - **Example**: `2024-01-15 14:23:01 ERROR Failed to connect to database: timeout after 30s`
 - **Tool**: ELK Stack, Loki
 - **Strength**: Rich context, great for debugging specific issues
 
 ### Traces (Mentioned Here, Advanced Topic)
+
 - **What**: The journey of a single request across multiple services
 - **Example**: Request → API Gateway (12ms) → Auth Service (45ms) → Database (230ms)
 - **Tool**: Jaeger, Zipkin, OpenTelemetry
@@ -397,6 +401,7 @@ rate(http_requests_total[5m]) / rate(http_requests_total[1h]) > 2
 ```
 
 **Key rules:**
+
 - **Top row = stat panels** with the most important numbers (SLIs)
 - **Use consistent colors** — green = good, yellow = warning, red = bad
 - **Time range selector** — always let users adjust the window
@@ -811,6 +816,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 **Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 
 ---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

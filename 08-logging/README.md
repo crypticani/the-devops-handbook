@@ -15,6 +15,7 @@
 Metrics (Module 07) tell you a service has a 5% error rate. Logs tell you **exactly which requests failed and why** — a stack trace, a malformed payload, a database timeout. Without centralized logging, debugging production issues means SSH-ing into individual servers and grep-ing through files — it doesn't scale.
 
 **In real-world DevOps work**, you will:
+
 - Set up centralized logging so all services ship logs to one place
 - Use the ELK Stack (Elasticsearch, Logstash, Kibana) for enterprise logging
 - Use Loki + Grafana as a lightweight alternative
@@ -84,6 +85,7 @@ Without centralized logging:
 ```
 
 **Benefits:**
+
 - **One place** to search all logs across all services
 - **Persistence** — logs survive container restarts and server failures
 - **Correlation** — find all logs for a specific request ID across services
@@ -190,6 +192,7 @@ logger.error("Payment failed", extra={"_order_id": 4521, "_error": "card_decline
 ```
 
 **Production rules:**
+
 - Default level: **INFO** (captures business events + errors)
 - Enable **DEBUG** temporarily for troubleshooting specific issues
 - Every **ERROR** should be actionable — if nothing to do, it's a WARNING
@@ -599,6 +602,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 **Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 
 ---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

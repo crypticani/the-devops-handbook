@@ -45,6 +45,7 @@ tree -L 1 /
 ```
 
 **Expected output:**
+
 ```
 /
 ├── bin -> usr/bin
@@ -275,6 +276,7 @@ ls -la configs/softlink.txt
 ### ✅ Validation: Understanding Links
 
 Answer these questions:
+
 - [ ] Can you create a hard link across different filesystems? (No)
 - [ ] What happens to a soft link when the target is moved? (It breaks)
 - [ ] Why would you use a soft link in DevOps? (e.g., `/etc/nginx/sites-enabled/mysite` → `../sites-available/mysite`)
@@ -367,7 +369,6 @@ You've completed this lab successfully when you can:
 3. `find` is one of your most powerful tools for operations work
 4. Hard links share data; soft links point to paths — different use cases
 5. **Always back up config files before editing them**
-
 
 ## 📝 What to Commit
 

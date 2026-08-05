@@ -15,6 +15,7 @@
 A single misconfigured S3 bucket, a leaked secret in git, or an unpatched container image can end careers and companies. Security in DevOps is **not a bolt-on** — it's embedded in every tool and workflow you've learned so far. This module consolidates security practices across the entire stack.
 
 **In real-world DevOps work**, you will:
+
 - Manage secrets securely across CI/CD, containers, and cloud
 - Harden Linux servers and SSH configurations
 - Scan container images for vulnerabilities
@@ -673,6 +674,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 **Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 
 ---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

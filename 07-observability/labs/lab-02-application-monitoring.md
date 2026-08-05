@@ -313,10 +313,11 @@ docker compose up -d --build
 ```
 
 Verify:
-- **App**: http://localhost:8080/health → `{"status": "healthy"}`
-- **App metrics**: http://localhost:8080/metrics → raw Prometheus metrics
-- **Prometheus**: http://localhost:9090 → Targets → flask-app should be UP
-- **Grafana**: http://localhost:3000
+
+- **App**: <http://localhost:8080/health> → `{"status": "healthy"}`
+- **App metrics**: <http://localhost:8080/metrics> → raw Prometheus metrics
+- **Prometheus**: <http://localhost:9090> → Targets → flask-app should be UP
+- **Grafana**: <http://localhost:3000>
 
 **✅ Checkpoint:** All services running, `/metrics` endpoint returning counter and histogram data.
 
@@ -340,7 +341,7 @@ echo "Traffic generator running in background (PID: $!)"
 
 ### Step 2: Query in Prometheus UI
 
-Go to http://localhost:9090 and run these queries:
+Go to <http://localhost:9090> and run these queries:
 
 ```promql
 # Total requests (raw counter)
@@ -496,7 +497,6 @@ cd .. && rm -rf app-monitoring-lab
 - [ ] Explain why you use `rate()` on counters but not on gauges
 - [ ] Describe what high-cardinality labels are and why they're dangerous
 - [ ] Debug a "target down" scenario using Prometheus
-
 
 ## 📝 What to Commit
 

@@ -251,7 +251,7 @@ done
 echo "Elasticsearch is ready!"
 ```
 
-**✅ Checkpoint:** All 5 containers running. Elasticsearch at http://localhost:9200, Kibana at http://localhost:5601.
+**✅ Checkpoint:** All 5 containers running. Elasticsearch at <http://localhost:9200>, Kibana at <http://localhost:5601>.
 
 ---
 
@@ -269,7 +269,7 @@ done
 
 ### Step 2: Create Data View in Kibana
 
-1. Go to http://localhost:5601
+1. Go to <http://localhost:5601>
 2. Navigate to **Management** → **Stack Management** → **Data Views**
 3. Click **Create data view**
 4. Name: `app-logs`, Index pattern: `app-logs-*`
@@ -311,18 +311,21 @@ level: "ERROR" AND reason: "payment_error"
 2. Add these visualizations:
 
 **Viz 1: Log Count Over Time (Lens → Bar chart)**
+
 - Drag `@timestamp` to X-axis
 - Use Count for Y-axis
 - Split by `level` field
 
 **Viz 2: Error Count (Lens → Metric)**
+
 - Filter: `level: "ERROR"`
 - Metric: Count
 
 **Viz 3: Logs by Service (Lens → Pie chart)**
+
 - Split by `service` field
 
-3. Save as "ELK Demo Dashboard"
+1. Save as "ELK Demo Dashboard"
 
 **✅ Checkpoint:** Dashboard shows log volume over time, error counts, and service distribution.
 
@@ -540,6 +543,7 @@ curl -s "localhost:9200/_cluster/settings?include_defaults=true&flat_settings=tr
 ```
 
 > ⚠️ At **95% disk** Elasticsearch sets every index to `read_only_allow_delete` and **all indexing stops**. Freeing disk does not automatically clear the flag — you must reset it:
+>
 > ```bash
 > curl -X PUT "localhost:9200/_all/_settings" -H 'Content-Type: application/json' \
 >   -d '{"index.blocks.read_only_allow_delete": null}'
@@ -640,7 +644,6 @@ cd .. && rm -rf elk-lab
 - [ ] Build a Kibana dashboard with log volume, error counts, and breakdowns
 - [ ] Explain the role of each ELK component
 - [ ] Compare ELK vs Loki — when to use each
-
 
 ## 📝 What to Commit
 

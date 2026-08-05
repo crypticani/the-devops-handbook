@@ -93,6 +93,7 @@ docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 ### Step 3: Install Additional Plugins
 
 Go to **Manage Jenkins → Plugins → Available plugins** and install:
+
 - **Pipeline** (usually pre-installed)
 - **Git**
 - **Docker Pipeline**
@@ -390,7 +391,8 @@ docker compose down -v
 
 ---
 
-[← Previous Lab: GitHub Actions](./lab-01-github-actions.md) | 
+[← Previous Lab: GitHub Actions](./lab-01-github-actions.md) |
+
 ## 📝 What to Commit
 
 Add these to your portfolio repo as evidence of completed work:

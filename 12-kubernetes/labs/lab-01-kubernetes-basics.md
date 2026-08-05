@@ -346,7 +346,6 @@ minikube stop    # or: minikube delete
 - [ ] Debug ImagePullBackOff, OOMKilled, and selector mismatch issues
 - [ ] Explain the difference between Deployment and Pod
 
-
 ## 📝 What to Commit
 
 Add these to your portfolio repo as evidence of completed work:

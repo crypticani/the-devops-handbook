@@ -560,6 +560,7 @@ handlers:
 ```
 
 **Handler rules:**
+
 - Fire only when the notifying task reports **changed**
 - Run **once**, at the **end of the play** (not immediately) — use `meta: flush_handlers` to force them early
 - Skipped by default if any task later fails — set `force_handlers: true` to override

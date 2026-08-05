@@ -695,7 +695,6 @@ cd .. && rm -rf ansible-lab
 - [ ] Explain why handlers only run when notified
 - [ ] Explain the difference between Ansible and Terraform
 
-
 ## 📝 What to Commit
 
 Add these to your portfolio repo as evidence of completed work:

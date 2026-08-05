@@ -189,6 +189,7 @@ kubectl apply -f sealed-db.yaml
 ```
 
 **Rules:**
+
 - Rotate on a schedule **and** on every departure or suspected exposure
 - Prefer **short-lived, dynamically issued** credentials over long-lived static ones
 - Scope every credential to the narrowest resource and action set that works

@@ -89,6 +89,7 @@ docker compose -f docker-compose-incident1.yml up -d --build
 The webapp container keeps restarting. Diagnose why and fix it.
 
 **Hints** (use only if stuck):
+
 1. Check the container status: `docker compose -f docker-compose-incident1.yml ps`
 2. Check logs: `docker compose -f docker-compose-incident1.yml logs webapp`
 3. The fix involves providing what the application needs
@@ -174,6 +175,7 @@ docker compose -f docker-compose-incident2.yml up -d --build
 The application will eventually fail when the log directory fills up. Diagnose the disk issue and implement log rotation or cleanup.
 
 **Debugging steps to practice:**
+
 ```bash
 # Check container resource usage
 docker stats --no-stream
@@ -262,9 +264,10 @@ docker compose -f docker-compose-incident3.yml up -d --build
 
 ### Your Mission
 
-The frontend (http://localhost:8888/) works, but the API (http://localhost:8888/api/health) returns 502 Bad Gateway. Diagnose and fix.
+The frontend (<http://localhost:8888/>) works, but the API (<http://localhost:8888/api/health>) returns 502 Bad Gateway. Diagnose and fix.
 
 **Debugging steps:**
+
 ```bash
 # Test the endpoints
 curl http://localhost:8888/
@@ -323,6 +326,7 @@ docker compose -f docker-compose-incident4.yml up -d --build
 The app cannot connect to the datastore. The error mentions name resolution. Diagnose the network isolation issue and fix it.
 
 **Debugging steps:**
+
 ```bash
 # Check app logs
 docker compose -f docker-compose-incident4.yml logs app

@@ -7,6 +7,7 @@ Design a production-ready architecture for a web application that must handle gr
 ## Scenario
 
 You are the DevOps engineer for a team launching a content platform. The application has:
+
 - A web frontend (React/static files)
 - An API backend (REST, stateless)
 - A PostgreSQL database
@@ -26,6 +27,7 @@ You are the DevOps engineer for a team launching a content platform. The applica
 ## Validation
 
 Your architecture document should answer these questions:
+
 - Where are the single points of failure, and how are they mitigated?
 - Can you scale each tier independently?
 - What is the estimated cost difference between your design and a simpler alternative?
@@ -35,6 +37,7 @@ Your architecture document should answer these questions:
 ## Failure Scenario
 
 Include a section analyzing what happens when:
+
 1. The primary database crashes during peak traffic
 2. A deployment introduces a bug that returns 500 errors on 30% of requests
 3. Traffic spikes to 10x normal due to a viral event
