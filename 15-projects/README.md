@@ -150,6 +150,8 @@ How to tear down all resources.
 
 **Skills used**: Linux, Git, Docker, CI/CD, basic networking
 
+**Time and cost**: ~1 week, £0. The spec has the target architecture, a repository skeleton, a five-phase build sequence with a gate per phase, and a weighted rubric.
+
 **Detailed spec**: [project-01-static-site-pipeline.md](./projects/project-01-static-site-pipeline.md)
 
 ---
@@ -167,6 +169,8 @@ How to tear down all resources.
 
 **Skills used**: Docker Compose, Nginx, Prometheus, Grafana, Loki, networking
 
+**Time and cost**: ~2 weeks, £0 in cash but ~4 GB of RAM. Phases 1–3 are a Compose tutorial; phases 4–6 (metrics, logs, alerting) are the project — the spec says so explicitly and budgets your time accordingly.
+
 **Detailed spec**: [project-02-microservices-platform.md](./projects/project-02-microservices-platform.md)
 
 ---
@@ -183,6 +187,8 @@ How to tear down all resources.
 - You think about cost, scaling, and disaster recovery
 
 **Skills used**: Terraform, Ansible, Kubernetes, Prometheus, Grafana, security scanning, CI/CD
+
+**Time and cost**: 2–3 weeks. ⚠️ This is the only project that can bill you — roughly £150/month on the managed-cloud path if left running, £0 on the k3s path. Read the spec's cost section and set a budget alert **before** your first `terraform apply`.
 
 **Detailed spec**: [project-03-production-infrastructure.md](./projects/project-03-production-infrastructure.md)
 
@@ -216,6 +222,14 @@ Every project, regardless of difficulty level, must include:
 - Clear teardown instructions
 - All cloud resources, containers, and volumes removed
 - Confirmation output proving cleanup is complete
+
+### How You Know You're Done
+
+Each project spec ends with a **weighted rubric** and a **build sequence** whose phases have
+explicit gates. Score yourself honestly against the rubric before you call a project finished —
+the weights are not decoration, they say which parts a reviewer actually cares about. In all
+three, evidence of failure handling is weighted highest, and in all three it is the part people
+leave out.
 
 ---
 
