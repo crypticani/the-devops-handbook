@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 //
+// REPOSITORY MAINTENANCE — not lab material. Learners can ignore this file.
+//
 // Parse every ```mermaid block in every markdown file and report syntax errors.
 //
 //   npm install mermaid jsdom

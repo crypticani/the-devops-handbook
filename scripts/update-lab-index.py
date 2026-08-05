@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+#
+# REPOSITORY MAINTENANCE — not lab material. Learners can ignore this file.
 """
 Regenerate the "🧪 Labs and Projects" table in every module README.
 

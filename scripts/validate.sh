@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 #
+# REPOSITORY MAINTENANCE — not lab material. Learners can ignore this file.
+#
 # Validate everything in this repository that can be checked automatically:
 # internal links, Mermaid diagrams, and every file under */code/.
 #

@@ -109,6 +109,10 @@ pip install ansible-lint                  # ansible
 The `labs` check enforces two rules automatically: every lab has a Break It section,
 and every `code/lab-XX/` directory has a matching lab file.
 
+See [`scripts/README.md`](./scripts/README.md) for what each script does. Note that the
+`scripts/` directory is **repository maintenance only** — it is deliberately not referenced
+from any lab, so learners never have to think about it.
+
 ### 6. Content Quality Standards
 
 - **No shallow content**: Every section must provide genuine learning value

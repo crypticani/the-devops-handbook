@@ -87,7 +87,7 @@ flowchart LR
 
 Every module has a `README.md` (concepts), `labs/` (hands-on), `projects/` (portfolio work), and `resources.md` (curated links). Modules 01–13 also ship a **`cheatsheet.md`** — the command reference you'll keep coming back to long after you've read the theory — and most ship a **`code/`** directory holding the real, runnable files from each lab: Dockerfiles, Compose stacks, Terraform configs, Ansible roles, Kubernetes manifests, Prometheus rules, and workflows.
 
-Everything under `code/` is checked on every commit by [`scripts/validate.sh`](./scripts/validate.sh) — YAML parses, Terraform validates, Compose files resolve, Python compiles, Go is `gofmt`-clean, and every internal link and Mermaid diagram is verified. If a tool changes under us, CI says so before you hit it in a lab.
+Everything under `code/` is automatically tested whenever it changes, so the files you copy into a lab actually run. **That tooling is not part of the curriculum** — you never need to look at it. It exists so the handbook doesn't quietly rot as tool versions move on.
 
 | # | Module | Focus | Est. Time | Cheat Sheet | Lab Code |
 |---|--------|-------|-----------|-------------|----------|
