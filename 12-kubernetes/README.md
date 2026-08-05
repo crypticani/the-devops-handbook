@@ -929,6 +929,61 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 ---
 
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. What does each control plane component do?</strong></summary>
+
+The API server is the only component that talks to etcd, and every change goes through it. etcd stores cluster state. The scheduler decides which node an unassigned pod lands on. The controller manager runs the loops that drive actual state toward desired. On each node, the kubelet starts and watches containers and kube-proxy programs service routing.
+
+</details>
+
+<details>
+<summary><strong>2. What follows from Kubernetes being a reconciliation loop rather than a command runner?</strong></summary>
+
+You declare desired state and controllers work continuously to match it. Delete a pod owned by a Deployment and you get a replacement — the pod was never the thing you asked for. To stop something you change the desired state, and if it keeps coming back, some controller still wants it.
+
+</details>
+
+<details>
+<summary><strong>3. Deployment, StatefulSet, or DaemonSet?</strong></summary>
+
+Deployment for interchangeable stateless replicas. StatefulSet when pods need stable identity, stable per-pod storage, and ordered rollout — databases and quorum systems. DaemonSet when you want exactly one pod per node, which is what agents, log shippers, and CNI plugins need.
+
+</details>
+
+<details>
+<summary><strong>4. A pod is in CrashLoopBackOff. What are your first three commands?</strong></summary>
+
+`kubectl describe pod` for events, last state, and exit code; `kubectl logs --previous` for what the crashed container printed before it died; then look at the probes and resource limits. Exit code 137 means OOMKilled, so raise the memory limit or fix the leak. A liveness probe that fails during a slow startup produces the identical symptom.
+
+</details>
+
+<details>
+<summary><strong>5. Liveness, readiness, and startup probes — what breaks if you confuse them?</strong></summary>
+
+Liveness restarts a container it considers hung. Readiness only removes the pod from Service endpoints, without restarting it. Startup gives a slow starter time before liveness applies. Using a liveness probe where you needed readiness restart-loops an application that was merely busy, which turns a load spike into an outage.
+
+</details>
+
+<details>
+<summary><strong>6. Requests or limits — which one does the scheduler use?</strong></summary>
+
+Requests. They are what the scheduler reserves and what your workload is actually guaranteed. Limits are the ceiling: exceed CPU and you are throttled, exceed memory and you are OOMKilled. A pod with no requests gets scheduled on a guess, which is how nodes end up overcommitted.
+
+</details>
+
+<details>
+<summary><strong>7. Is a Kubernetes Secret encrypted?</strong></summary>
+
+No — it is base64-encoded, which is encoding, not encryption. Anyone with `get secret` in the namespace can read it, and it sits in etcd in plain text unless you enable encryption at rest. Real protection comes from RBAC, encryption at rest, and for anything valuable an external secret store.
+
+</details>
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

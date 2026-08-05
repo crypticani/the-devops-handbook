@@ -365,6 +365,54 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 ---
 
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. "The service is down — walk me through it." How do you structure the answer?</strong></summary>
+
+State what you would confirm first (are users affected, or only a monitor), then work outward through the layers naming the signal that would confirm or kill each hypothesis: recent deploys, DNS, load balancer, application, dependencies, database. Say what you would do to restore service before you talk about root cause. Structure is what is being assessed, not the answer.
+
+</details>
+
+<details>
+<summary><strong>2. Why is "roll back first" such a strong answer?</strong></summary>
+
+Because restoring service and understanding the failure are two different jobs, and doing them in that order is the whole discipline. You stop the bleeding, preserve the evidence — logs, a snapshot, the failing pod — and investigate afterwards. Debugging live while users are down is the mistake interviewers are listening for.
+
+</details>
+
+<details>
+<summary><strong>3. What is STAR, and what do most candidates leave out?</strong></summary>
+
+Situation, Task, Action, Result. The Result — with a number in it — is what most people skip, and the honest "what I would do differently" that follows it is what distinguishes a senior answer from a competent one.
+
+</details>
+
+<details>
+<summary><strong>4. You have 45 minutes for a system design question. What order?</strong></summary>
+
+Clarify requirements and get real numbers first, sketch the high-level request path, then go deep wherever the interviewer pushes. Leave time for failure modes, monitoring, and cost. Drawing boxes before asking questions is the most common way this interview is lost.
+
+</details>
+
+<details>
+<summary><strong>5. How do you handle a question you cannot answer?</strong></summary>
+
+Say what you do know, how you would find out, and what you would expect to be true — then move on without dwelling. An invented specific is far worse than an admitted gap: once one detail is caught as fabricated, every other answer is suspect.
+
+</details>
+
+<details>
+<summary><strong>6. What preparation actually differentiates candidates?</strong></summary>
+
+Having built things and broken them, so you can answer follow-ups with specifics: the actual error message, the number you measured, the tradeoff you accepted. Memorized definitions survive the first question and collapse on the second.
+
+</details>
+
+---
+
 ## Practical Checkpoint
 
 Before considering yourself interview-ready, you should be able to:

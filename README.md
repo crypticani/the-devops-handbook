@@ -145,6 +145,9 @@ We use a **specific, industry-relevant** stack throughout this handbook. No tool
 
 For a hands-on workflow, read the [Practical Learning Guide](./PRACTICAL-LEARNING.md).
 For day-to-day command lookup, use the [Quick Reference](./QUICK-REFERENCE.md).
+For any term a module uses without stopping to explain it, see the [Glossary](./GLOSSARY.md).
+
+Every module ends with a **✅ Self-Check** — collapsed questions to answer from memory before you start its labs. If more than two are shaky, the reading isn't done yet.
 
 ### Option 1: Sequential Learning (Recommended)
 

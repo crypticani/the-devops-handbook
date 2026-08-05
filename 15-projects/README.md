@@ -262,6 +262,54 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 ---
 
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. What separates a portfolio project from a replayed tutorial?</strong></summary>
+
+A stated problem with constraints, a decision you can defend, an alternative you rejected and why, and evidence a stranger can reproduce. Following someone else's steps demonstrates that you can follow steps.
+
+</details>
+
+<details>
+<summary><strong>2. Besides working code, what has to be in the repository?</strong></summary>
+
+A README covering the problem, architecture, and how to run it; the infrastructure and pipeline definitions; validation output; failure notes from at least one real break-and-fix; cost notes; and cleanup instructions that actually work.
+
+</details>
+
+<details>
+<summary><strong>3. Why does a reviewer care about your teardown step?</strong></summary>
+
+It shows you think in lifecycles and costs rather than only in creation, and it is the strongest available evidence that the environment is genuinely reproducible instead of a hand-tuned pet you could never rebuild.
+
+</details>
+
+<details>
+<summary><strong>4. Screenshots or reproducible artefacts?</strong></summary>
+
+A screenshot proves that something once looked right on your machine. A reviewer who can clone the repository and get it running in ten minutes is evaluating your work rather than your claims. Keep screenshots as supporting evidence, never as the proof.
+
+</details>
+
+<details>
+<summary><strong>5. Describe a project in two minutes. What order?</strong></summary>
+
+Problem, constraints, what you built, the one hard decision and its tradeoff, how you would know it broke, and what you would change with more time. Starting with the tool list is the mistake — nobody is impressed by a list of technologies.
+
+</details>
+
+<details>
+<summary><strong>6. What should be true of all three projects, regardless of scope?</strong></summary>
+
+Version-controlled from the first commit, a pipeline that runs on every change, infrastructure defined as code rather than clicked together, no secrets in the repository, at least one meaningful signal monitored with an alert, and a documented failure mode you have actually triggered.
+
+</details>
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

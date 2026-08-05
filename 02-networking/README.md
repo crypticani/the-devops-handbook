@@ -1242,6 +1242,54 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 ---
 
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. How many usable host addresses does a `/24` give you, and a `/16`?</strong></summary>
+
+254 and 65,534 — the total minus the network and broadcast addresses. In AWS subtract a few more: the provider reserves the first four addresses and the last one in every subnet.
+
+</details>
+
+<details>
+<summary><strong>2. "The site is down." What order do you check things in?</strong></summary>
+
+Follow the layers, because each one isolates a different cause: does the name resolve (`dig`), does TCP connect on the port (`nc -vz`), does TLS complete (`openssl s_client -connect`), and what does the application actually answer (`curl -v`). Guessing at the top wastes the most time.
+
+</details>
+
+<details>
+<summary><strong>3. Connection refused versus connection timeout — what does each tell you?</strong></summary>
+
+Refused means a host answered with a RST: you reached the machine and nothing is listening on that port, so the process is down or on a different port. Timeout means your packets disappeared with no reply, which is a firewall, security group, or routing problem silently dropping them.
+
+</details>
+
+<details>
+<summary><strong>4. Why does a backend behind a reverse proxy need `X-Forwarded-For`?</strong></summary>
+
+Because the connection the backend sees comes from the proxy, so every client looks like the same IP — which breaks rate limits, geo logic, and audit logs. The proxy records the original address in the header. Trust that header only when the request came from your own proxy, otherwise a client can forge it.
+
+</details>
+
+<details>
+<summary><strong>5. When would you choose UDP over TCP?</strong></summary>
+
+When latency matters more than delivery and the application can tolerate or handle loss itself: DNS queries, metrics emission, real-time voice and video. TCP's handshake, ordering, and retransmission are what you want for HTTP, SSH, and databases.
+
+</details>
+
+<details>
+<summary><strong>6. What can an L7 load balancer do that an L4 one cannot?</strong></summary>
+
+L7 parses HTTP, so it can route by host and path, terminate TLS, rewrite headers, retry idempotent requests, and health-check a real endpoint. L4 only forwards IP and port — which makes it faster, protocol-agnostic, and blind to everything above the transport layer.
+
+</details>
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

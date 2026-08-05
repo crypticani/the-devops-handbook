@@ -511,6 +511,54 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 ---
 
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. What problem was DevOps invented to solve?</strong></summary>
+
+The wall of confusion: development was rewarded for shipping change, operations for keeping things stable, and the two lived in separate teams with opposing incentives. Releases were rare, large, and risky. DevOps makes one team own the service from build through run, so the people who write the change also feel it in production.
+
+</details>
+
+<details>
+<summary><strong>2. Name the four DORA metrics and say what each one tells you.</strong></summary>
+
+Deployment frequency and lead time for changes measure speed; change failure rate and time to restore service measure stability. The point is that they move together — teams that deploy often recover faster, because small changes are easier to understand and undo.
+
+</details>
+
+<details>
+<summary><strong>3. Why is "we hired a DevOps team" usually an anti-pattern?</strong></summary>
+
+It recreates the silo DevOps was meant to remove — now there are three teams and a new hand-off. A platform team is fine when it builds tooling other teams use themselves; it stops being fine when it becomes the queue every deployment waits in.
+
+</details>
+
+<details>
+<summary><strong>4. What is the difference between continuous integration, continuous delivery, and continuous deployment?</strong></summary>
+
+CI: every commit is merged to shared main and automatically built and tested. Continuous delivery: every green build is releasable and deploying is a decision someone makes. Continuous deployment: that decision is automated — green means it goes to production.
+
+</details>
+
+<details>
+<summary><strong>5. Why are postmortems blameless, given that a human usually did type the command?</strong></summary>
+
+Because punished people stop volunteering information, and that information is the entire value of the exercise. A system where one mistyped command causes an outage has a design defect; the fix is a guardrail, not a scolded engineer.
+
+</details>
+
+<details>
+<summary><strong>6. Why does finding a defect earlier cost less?</strong></summary>
+
+The later it surfaces, the more context has been lost and the more work has been built on top of it. A failing unit test costs minutes and one person's attention; the same bug found in production costs an incident, a rollback, and everyone's trust in the release.
+
+</details>
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

@@ -817,6 +817,54 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 ---
 
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. Monitoring versus observability — is this more than vocabulary?</strong></summary>
+
+Monitoring answers questions you thought of in advance: dashboards and alerts for known failure modes. Observability is whether your telemetry lets you ask a new question during an incident you never predicted. The dashboard tells you something is wrong; cardinality and correlation are what let you find out why.
+
+</details>
+
+<details>
+<summary><strong>2. Why does Prometheus scrape targets instead of receiving pushes?</strong></summary>
+
+The target needs no knowledge of the monitoring system, configuration lives in one place, and a failed scrape is itself a signal you can alert on (`up == 0`). The exception is short-lived batch jobs that finish before any scrape — those push to the Pushgateway.
+
+</details>
+
+<details>
+<summary><strong>3. Counter, gauge, histogram — when does each apply?</strong></summary>
+
+A counter only ever increases, so you query its `rate()` (requests, errors, bytes). A gauge goes up and down and you read it directly (queue depth, memory in use, temperature). A histogram buckets observations so you can compute quantiles and averages server-side (request duration, payload size).
+
+</details>
+
+<details>
+<summary><strong>4. Why wrap counters in `rate()`, and why not alert on average latency?</strong></summary>
+
+A raw counter's absolute value is meaningless and resets to zero on restart; `rate()` gives per-second change over a window and handles the reset. Averages hide exactly the users who are suffering — one request in a hundred taking ten seconds barely moves the mean, so alert on p95 or p99 from histogram buckets.
+
+</details>
+
+<details>
+<summary><strong>5. What makes an alert worth waking someone for?</strong></summary>
+
+It describes a symptom users feel or an SLO burning down, it names an action, and it has a runbook. Cause-based alerts like "CPU above 80%" page a human for a condition that may be harming nobody — and every such page makes the next real one less likely to be read.
+
+</details>
+
+<details>
+<summary><strong>6. What is the `for:` clause in an alerting rule doing?</strong></summary>
+
+Requiring the condition to hold continuously for that long before the alert fires, which absorbs single bad scrapes and momentary spikes. Set it too short and you page on noise; too long and you find out about the outage after your users do.
+
+</details>
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

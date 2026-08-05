@@ -1,17 +1,20 @@
 # Practical Learning Guide
 
-This repository already has strong topic coverage in Modules 00-13. To turn those modules into job-ready practice, use each module as a build-and-debug loop instead of a reading checklist.
+This repository already has strong topic coverage across Modules 00-16. To turn those modules into job-ready practice, use each module as a build-and-debug loop instead of a reading checklist.
 
 ## Learning Loop
 
 For each completed module, complete the work in this order:
 
 1. Read the module README for the mental model and vocabulary.
-2. Run the labs exactly once to learn the happy path.
-3. Repeat the lab from memory with notes closed.
-4. Break one part on purpose and debug it with real commands.
-5. Write a short runbook: symptoms, checks, root cause, fix, prevention.
-6. Commit your work, screenshots, configs, scripts, and runbook to a portfolio repo.
+2. Answer that module's **Self-Check** questions from memory before you expand the answers. Anything you cannot answer, re-read now — the labs assume it.
+3. Run the labs exactly once to learn the happy path.
+4. Repeat the lab from memory with notes closed.
+5. Break one part on purpose and debug it with real commands.
+6. Write a short runbook: symptoms, checks, root cause, fix, prevention.
+7. Commit your work, screenshots, configs, scripts, and runbook to a portfolio repo.
+
+Unfamiliar term along the way? [GLOSSARY.md](./GLOSSARY.md) defines everything the modules use in passing.
 
 You have learned a skill only when you can reproduce it, explain it, and recover when it fails.
 
@@ -60,6 +63,9 @@ Use these deliverables to make the existing modules practical:
 | 11 Ansible | Idempotent playbook with inventory, variables, and validation |
 | 12 Kubernetes | Multi-service app with rollout, rollback, probes, and resource limits |
 | 13 Security | Security scan report with fixes and accepted residual risks |
+| 14 System Design | One-page design for a real service: HA topology, SLIs/SLOs with an error budget, RTO/RPO, and the cost of the tier you chose |
+| 15 Projects | Three portfolio repos (static site pipeline → microservices platform → production infrastructure), each with validation output, failure notes, and a working teardown |
+| 16 Interview Prep | Recorded or written answers: one incident walkthrough, one system design, three STAR stories with numbers — plus a two-minute pitch for each portfolio project |
 
 ## Portfolio Standard
 

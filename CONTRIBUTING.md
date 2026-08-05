@@ -63,6 +63,20 @@ Thank you for your interest in contributing! This project aims to be the most co
 - Include an **error decoder table** entry when you learn what a confusing message actually means
 - Cross-module commands belong in the root [QUICK-REFERENCE.md](./QUICK-REFERENCE.md); module-specific depth belongs in the module's `cheatsheet.md`
 
+#### Self-Check Questions
+
+- Every module README has a `## ✅ Self-Check` section of `<details>`-collapsed questions, placed after the labs table and before the Practical Checkpoint
+- Ask about **judgement, not vocabulary**: "which probe do you use and what breaks if you pick the other one" beats "what is a readiness probe". A question whose answer is a definition tests nothing
+- The answer is 2-4 sentences and says *why*, including the failure the mistake causes. If it reads like a glossary entry, it belongs in [GLOSSARY.md](./GLOSSARY.md) instead
+- Six or seven questions per module. More than that and people stop doing them
+
+#### Glossary
+
+- [GLOSSARY.md](./GLOSSARY.md) is for terms the modules use in passing without defining. One line each — enough to unblock a sentence, not a substitute for the module
+- Format: `- **Term** — definition. [NN]`, where `NN` is a reference link to the module that teaches it. Add up to two module refs; every label used must have a definition at the bottom of the file or markdownlint will flag it
+- Alphabetical within its letter section. Symbols and backticked commands sort by their first letter (`` `rate()` `` under R)
+- Where a term has a common misunderstanding, the definition is the place to kill it ("Base64-encoded, not encrypted")
+
 #### New Resources
 
 - Add to the relevant module's `resources.md`
@@ -114,8 +128,9 @@ npx markdownlint-cli2                     # markdown (config: .markdownlint-cli2
 # terraform, docker, and go you probably already have
 ```
 
-The `labs` check enforces two rules automatically: every lab has a Break It section,
-and every `code/lab-XX/` directory has a matching lab file.
+The `labs` check enforces three rules automatically: every lab has a Break It section,
+every `code/lab-XX/` directory has a matching lab file, and every module README has a
+Self-Check section.
 
 See [`scripts/README.md`](./scripts/README.md) for what each script does. Note that the
 `scripts/` directory is **repository maintenance only** — it is deliberately not referenced
