@@ -1,0 +1,10 @@
+# ⭐ Immutable: this digest can never point at different content
+FROM python:3.12-slim@sha256:REPLACE-WITH-THE-REAL-DIGEST
+WORKDIR /app
+COPY app/requirements.txt .
+RUN pip install --no-cache-dir --require-hashes -r requirements.txt 2>/dev/null \
+ || pip install --no-cache-dir -r requirements.txt
+COPY app/ .
+RUN useradd -r -u 10001 appuser && chown -R appuser /app
+USER 10001
+CMD ["python", "main.py"]

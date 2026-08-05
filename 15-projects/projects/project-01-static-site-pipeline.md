@@ -7,17 +7,20 @@ Build a containerized static website with an automated CI/CD pipeline that lints
 ## Requirements
 
 ### Application
+
 - A static website (HTML/CSS/JS) — can be a personal portfolio, landing page, or documentation site
 - Served by Nginx in a Docker container
 - Health check endpoint that returns 200
 
 ### Dockerfile
+
 - Uses `nginx:alpine` (slim base image)
 - Runs as non-root user
 - Copies only static files (no source code, no build tools in final image)
 - Pinned image version (not `:latest`)
 
 ### CI/CD Pipeline (GitHub Actions)
+
 - **Lint**: Validate HTML (htmlhint or similar)
 - **Build**: Build the Docker image with a unique tag (git SHA)
 - **Scan**: Run Trivy on the built image, fail on CRITICAL CVEs
@@ -25,6 +28,7 @@ Build a containerized static website with an automated CI/CD pipeline that lints
 - **Push** (optional): Push to GitHub Container Registry or Docker Hub
 
 ### Documentation
+
 - README with architecture diagram
 - Setup instructions for running locally
 - Cleanup instructions
@@ -48,6 +52,7 @@ Build a containerized static website with an automated CI/CD pipeline that lints
 ## Failure Scenario
 
 Introduce one of these failures and document how the pipeline catches it:
+
 1. Add a `<script>alert('xss')</script>` tag and see if the linter flags it
 2. Switch to an image with known CRITICAL CVEs and see Trivy fail the pipeline
 3. Break the Nginx config so the container starts but returns 500 on the health check

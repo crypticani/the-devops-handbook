@@ -4,11 +4,18 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 Terraform creates infrastructure (VMs, networks, databases). But who installs packages, configures Nginx, deploys your app, and manages config files? **Ansible** — the agentless configuration management tool that turns manual server setup into repeatable, version-controlled automation.
 
 **In real-world DevOps work**, you will:
+
 - Write playbooks to configure servers consistently
 - Manage fleets of servers from a single control node
 - Build reusable roles for common patterns (web server, database, monitoring)
@@ -626,6 +633,23 @@ Playbook failed?
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[Ansible Basics](./labs/lab-01-ansible-basics.md)** | Write and run Ansible playbooks against Docker containers as managed nodes. |
+| 2 | **[Roles, Vault, and Testing](./labs/lab-02-roles-vault-and-testing.md)** | Turn a working playbook into something a team can maintain. |
+
+**Portfolio project:**
+
+- [Project: Idempotent Service Configuration](./projects/project-01-idempotent-service-config.md) — Use Ansible to configure a service on a local VM, container, or remote host in a repeatable way.
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:
@@ -656,6 +680,6 @@ With Terraform provisioning infrastructure and Ansible configuring it, you're re
 
 **Module 11 Complete** ✅
 
-[← Back to Terraform](../10-terraform/) | [Next: Kubernetes →](../12-kubernetes/)
+[← Back to Terraform](../10-terraform/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: Kubernetes →](../12-kubernetes/)
 
 </div>

@@ -7,6 +7,7 @@ Deploy a multi-service application with a reverse proxy, centralized monitoring,
 ## Requirements
 
 ### Application Stack
+
 - **Frontend**: Static site or simple web UI served by Nginx
 - **API**: A small REST API (Python Flask, Node Express, or Go) with at least 3 endpoints
 - **Database**: PostgreSQL or MySQL for persistent data
@@ -14,18 +15,21 @@ Deploy a multi-service application with a reverse proxy, centralized monitoring,
 - **Reverse Proxy**: Nginx load balancing traffic to the API
 
 ### Observability Stack
+
 - **Metrics**: Prometheus scraping application and infrastructure metrics
 - **Dashboards**: Grafana with at least one custom dashboard (4+ panels)
 - **Logging**: Loki + Promtail (or ELK) collecting logs from all services
 - **Alerting**: At least one alert rule (e.g., API error rate > 5%)
 
 ### Infrastructure
+
 - All services run via Docker Compose
 - Health checks defined for every service
 - Environment variables for configuration (no hardcoded values)
 - `.env.example` file documenting required variables
 
 ### Documentation
+
 - Architecture diagram showing all services and connections
 - Setup instructions that work from `docker compose up`
 - Troubleshooting guide with at least 3 real issues you encountered

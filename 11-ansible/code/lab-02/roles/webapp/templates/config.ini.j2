@@ -1,0 +1,9 @@
+; {{ ansible_managed }}
+[app]
+name       = {{ webapp_name }}
+version    = {{ webapp_version }}
+log_level  = {{ webapp_log_level }}
+secret_key = {{ webapp_secret_key }}
+
+[database]
+password = {{ webapp_db_password }}

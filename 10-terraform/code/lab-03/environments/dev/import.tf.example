@@ -1,0 +1,11 @@
+# One-time adoption of a resource created outside Terraform.
+#
+#   1. Set the id below to the real bucket name
+#   2. terraform plan -generate-config-out=generated.tf   (writes the resource block)
+#   3. terraform plan    → "1 to import, 0 to add, 0 to change, 0 to destroy"
+#   4. terraform apply
+#   5. DELETE this file — import is not permanent configuration
+import {
+  to = aws_s3_bucket.adopted
+  id = "REPLACE-WITH-THE-EXISTING-BUCKET-NAME"
+}

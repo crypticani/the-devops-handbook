@@ -26,6 +26,22 @@ Treat the validation section as the minimum proof that the lab worked.
 
 ---
 
+## 📂 Lab Files
+
+Every file this lab creates also exists as a real, CI-validated file in
+[`../code/lab-01/`](../code/lab-01/) (2 files).
+
+```bash
+# Option A — type them out yourself (recommended the first time; that's the learning)
+# Option B — start from the reference copies
+cp -r /path/to/the-devops-handbook/04-scripting/code/lab-01/. .
+```
+
+Use Option B when you're comparing against a known-good version, or when something
+won't start and you need to rule out a typo. See [`../code/README.md`](../code/README.md).
+
+---
+
 ## 🔬 Exercise 1: Build a Deployment Script
 
 ### The Script
@@ -46,9 +62,16 @@ set -euo pipefail
 # ═══════════════════════════════════════
 # Configuration
 # ═══════════════════════════════════════
-readonly SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-readonly LOG_FILE="/tmp/deploy_$(date +%Y%m%d_%H%M%S).log"
+# Declare and assign separately: `readonly X="$(cmd)"` hides the command's
+# exit status behind readonly's, so a failure here would go unnoticed (SC2155).
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+readonly SCRIPT_DIR
+
+LOG_FILE="/tmp/deploy_$(date +%Y%m%d_%H%M%S).log"
+readonly LOG_FILE
+
 readonly LOCK_FILE="/tmp/deploy.lock"
+readonly BACKUP_DIR="${SCRIPT_DIR}/backups"
 
 # ═══════════════════════════════════════
 # Logging Functions
@@ -146,9 +169,13 @@ fi
 # Step 2: Backup current version
 info "Step 2: Creating backup..."
 if [ "${DRY_RUN}" = true ]; then
-    info "[DRY RUN] Would backup current version"
+    info "[DRY RUN] Would back up current version to ${BACKUP_DIR}"
 else
-    info "Backup created ✅"
+    mkdir -p "${BACKUP_DIR}"
+    backup_path="${BACKUP_DIR}/${APP}_$(date +%Y%m%d_%H%M%S).tar.gz"
+    # A real script would archive the current release here.
+    : > "${backup_path}"
+    info "Backup created at ${backup_path} ✅"
 fi
 
 # Step 3: Deploy
@@ -214,10 +241,11 @@ check_http() {
     local url="$1"
     local name="$2"
 
-    local start_time=$(date +%s%N)
-    local status_code
+    # Same rule inside functions: `local x=$(cmd)` masks the exit status (SC2155)
+    local start_time end_time status_code
+    start_time=$(date +%s%N)
     status_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 --max-time 5 "${url}" 2>/dev/null || echo "000")
-    local end_time=$(date +%s%N)
+    end_time=$(date +%s%N)
     local duration=$(( (end_time - start_time) / 1000000 ))
 
     if [ "${status_code}" = "200" ]; then
@@ -254,6 +282,230 @@ chmod +x health_monitor.sh
 
 ---
 
+## 🧨 Break It: Four Ways a "Working" Script Fails in Production
+
+Every one of these scripts passes a happy-path test. Each scenario below is a real failure mode that only appears later — usually at 3am, inside cron or CI.
+
+### Scenario 1: The Stale Lock File
+
+**Break it:**
+
+```bash
+cd ~/devops-labs/module-04/scripts
+
+# Simulate a deployment that was killed mid-run (power loss, OOM, Ctrl-C on a
+# machine where the trap didn't fire — e.g. SIGKILL)
+echo 99999 > /tmp/deploy.lock
+
+./deploy.sh -a myapp -v 1.0.0 -e staging
+```
+
+**Symptom:** `Another deployment is in progress!` — forever. No deployment can ever run again.
+
+**Investigate:**
+
+```bash
+cat /tmp/deploy.lock                 # 99999 — is that PID alive?
+ps -p "$(cat /tmp/deploy.lock)" || echo "PID is dead — the lock is STALE"
+```
+
+**Root cause:** The lock is a plain file with no liveness check. `trap cleanup EXIT` removes it on a normal exit and on SIGTERM, but **SIGKILL cannot be trapped** — the file survives the process that owned it.
+
+**Fix — validate the lock holder, or use a kernel-backed lock:**
+
+```bash
+# Option A: check that the recorded PID is still alive
+if [ -f "${LOCK_FILE}" ]; then
+    lock_pid=$(cat "${LOCK_FILE}" 2>/dev/null || echo "")
+    if [[ -n "$lock_pid" ]] && kill -0 "$lock_pid" 2>/dev/null; then
+        error "Deployment already running (PID ${lock_pid})"; exit 1
+    else
+        warn "Removing stale lock from dead PID ${lock_pid:-unknown}"
+        rm -f "${LOCK_FILE}"
+    fi
+fi
+
+# Option B — better: let the kernel hold the lock. It is released
+# automatically when the process dies, however it dies.
+exec 200>/var/lock/deploy.lock
+flock -n 200 || die "another deployment is already running"
+```
+
+```bash
+rm -f /tmp/deploy.lock          # clean up before continuing
+```
+
+---
+
+### Scenario 2: `set -e` Doesn't Catch What You Think
+
+**Break it:**
+
+```bash
+cat > trap-test.sh <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+check_disk() {
+    df / | awk 'NR==2 {print $5}' | tr -d '%'
+}
+
+# Looks safe. Isn't.
+usage=$(check_disk)
+if [ "$usage" -gt 90 ]; then echo "too full"; fi
+
+# Now the trap: a failing command inside an if-condition
+if grep -q "nonexistent-pattern" /etc/hostname; then
+    echo "found"
+fi
+echo "STILL RUNNING — set -e did not stop us"
+
+# And the real killer:
+result=$(false | wc -l)      # pipefail? the ASSIGNMENT masks the exit status
+echo "STILL RUNNING after a failed pipeline: result=$result"
+EOF
+chmod +x trap-test.sh && ./trap-test.sh
+```
+
+**Symptom:** The script keeps going after commands that failed. In a deploy script, this means step 4 runs even though step 3 never succeeded — you ship a half-applied change and the script exits 0.
+
+**Investigate:**
+
+```bash
+bash -x ./trap-test.sh 2>&1 | tail -20      # watch each command and its result
+```
+
+**Root cause:** `set -e` is deliberately suppressed in three places: inside `if`/`while` conditions, on the left of `&&`/`||`, and for any command whose status is being *tested*. Separately, `local x=$(cmd)` and `x=$(cmd)` where the assignment is the whole statement can mask the inner exit status.
+
+**Fix — check explicitly where correctness matters:**
+
+```bash
+# Separate declaration from assignment so the status isn't swallowed
+local usage
+usage=$(check_disk) || die "could not read disk usage"
+
+# Check a pipeline's stages when it matters
+cmd1 | cmd2 | cmd3
+[[ "${PIPESTATUS[*]}" == "0 0 0" ]] || die "pipeline failed: ${PIPESTATUS[*]}"
+```
+
+---
+
+### Scenario 3: It Works in Your Shell, Not in Cron
+
+**Break it:**
+
+```bash
+# Simulate cron's environment: no PATH, no profile, no HOME assumptions
+env -i /bin/bash --noprofile --norc ~/devops-labs/module-04/scripts/health_monitor.sh
+```
+
+**Symptom:** `curl: command not found`, or the script exits instantly with no output at all.
+
+**Investigate:**
+
+```bash
+env -i /bin/bash --noprofile --norc -c 'echo "PATH=[$PATH]"'
+# PATH=[/usr/bin:/bin]  — or empty. Your ~/.bashrc additions are gone.
+
+command -v curl                      # /usr/bin/curl — fine in YOUR shell
+```
+
+**Root cause:** Cron runs with a nearly empty environment. Anything you rely on from `~/.bashrc`, `~/.profile`, a version manager (`nvm`, `pyenv`, `rbenv`), or a custom `PATH` does not exist.
+
+**Fix:**
+
+```bash
+# At the top of the script
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# In the crontab, set the environment explicitly and capture BOTH streams
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+MAILTO=ops@example.com
+*/5 * * * * /home/user/devops-labs/module-04/scripts/health_monitor.sh >> /var/log/health.log 2>&1
+```
+
+Re-test with `env -i` until it passes. That's the only honest cron test.
+
+---
+
+### Scenario 4: The Unquoted Variable
+
+**Break it:**
+
+```bash
+mkdir -p /tmp/breaklab && cd /tmp/breaklab
+touch "my report.txt" "notes.txt"
+
+cat > cleanup.sh <<'EOF'
+#!/usr/bin/env bash
+TARGET_DIR="/tmp/breaklab"
+FILE="my report.txt"
+
+# Unquoted — bash word-splits on the space
+for f in $(ls $TARGET_DIR); do
+    echo "would process: $f"
+done
+
+echo "---"
+rm -v $FILE 2>&1 || true
+EOF
+chmod +x cleanup.sh && ./cleanup.sh
+```
+
+**Symptom:** The loop prints `my`, `report.txt`, `notes.txt` — three items where there are two files. `rm` reports it cannot find `my` or `report.txt`.
+
+**Investigate:**
+
+```bash
+bash -x ./cleanup.sh 2>&1 | grep '^+ rm'      # see the expansion the shell actually built
+shellcheck cleanup.sh                          # SC2086, SC2045 — it tells you exactly this
+```
+
+**Root cause:** Unquoted expansion is split on `$IFS` (space, tab, newline by default) and then glob-expanded. A filename with a space becomes two arguments. Worse, an **unset** variable expands to nothing: `rm -rf $TARGET_DIR/` becomes `rm -rf /`.
+
+**Fix:**
+
+```bash
+for f in "$TARGET_DIR"/*; do          # glob, don't parse ls
+    [[ -e "$f" ]] || continue         # guard the no-match case
+    echo "would process: $f"
+done
+
+rm -v -- "$FILE"                      # quote, and use -- to stop leading-dash names
+rm -rf -- "${TARGET_DIR:?TARGET_DIR must be set}"   # ⭐ refuses to run if unset/empty
+```
+
+```bash
+cd ~ && rm -rf /tmp/breaklab          # clean up
+```
+
+---
+
+### Prevention Checklist
+
+Run this against both of your scripts before you call them done:
+
+```bash
+cd ~/devops-labs/module-04/scripts
+shellcheck deploy.sh health_monitor.sh          # must be clean
+bash -n deploy.sh                                # syntax only
+env -i /bin/bash --noprofile --norc ./health_monitor.sh   # cron simulation
+```
+
+| Failure mode | Guard |
+|--------------|-------|
+| Stale lock | `flock`, or verify the PID with `kill -0` |
+| `set -e` gap | Separate declaration from assignment; check `PIPESTATUS` |
+| Empty environment | Absolute paths, explicit `PATH`, test with `env -i` |
+| Unquoted variable | Quote everything; `${VAR:?}` on anything you pass to `rm` |
+| Silent failure | `set -Eeuo pipefail` **plus** `trap ... ERR` |
+
+**Write this up** in `failure-notes.md` — one paragraph per scenario: symptom, how you found it, root cause, fix.
+
+---
+
 ## ✅ Validation
 
 - [ ] Deploy script runs without ShellCheck warnings
@@ -262,7 +514,6 @@ chmod +x health_monitor.sh
 - [ ] Health monitor checks multiple services and reports status
 - [ ] All scripts use `set -euo pipefail`
 - [ ] All scripts include cleanup traps
-
 
 ## 📝 What to Commit
 

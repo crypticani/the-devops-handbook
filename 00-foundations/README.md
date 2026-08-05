@@ -9,6 +9,7 @@
 Before you touch a single tool, you need to understand **why DevOps exists**. Every company you'll work at has its own version of "DevOps," but the underlying principles are universal. This module gives you the mental model that makes every subsequent tool and practice click into place.
 
 **In real-world DevOps work**, you'll constantly be asked:
+
 - "Why are we automating this?"
 - "How does this fit into our delivery pipeline?"
 - "What's the risk of this change?"
@@ -149,18 +150,21 @@ A well-known model for evaluating DevOps maturity:
 ### Principle 1: The Three Ways (from *The Phoenix Project*)
 
 **The First Way — Systems Thinking (Flow)**
+
 - Optimize for the overall system, not individual parts
 - Work flows from left (Dev) to right (Ops) to customer
 - Reduce batch sizes and intervals of work
 - Never pass known defects downstream
 
 **The Second Way — Feedback Loops**
+
 - Create right-to-left feedback at all stages
 - Shorten and amplify feedback loops
 - When problems happen, fix them immediately
 - Push quality closer to the source
 
 **The Third Way — Continuous Learning**
+
 - Foster a culture of experimentation
 - Accept that failure is inevitable — learn from it
 - Allocate time for process improvement
@@ -184,6 +188,7 @@ Manual Process              →  Automated Process
 ### Principle 3: Infrastructure as Code (IaC)
 
 Treat your infrastructure like application code:
+
 - **Version controlled** — track every change
 - **Reviewable** — code reviews for infra changes
 - **Testable** — validate before applying
@@ -252,6 +257,7 @@ A blameless postmortem template:
 ### Shared Responsibility (You Build It, You Run It)
 
 In modern DevOps organizations:
+
 - The team that **builds** the service also **operates** it
 - This creates incentive to build reliable, observable software
 - On-call rotations include developers, not just ops
@@ -268,16 +274,19 @@ In modern DevOps organizations:
 ## 6. Key DevOps Practices
 
 ### Continuous Integration (CI)
+
 - Developers merge code to main branch frequently (at least daily)
 - Every merge triggers automated build + tests
 - Broken builds are fixed immediately (top priority)
 
 ### Continuous Delivery (CD)
+
 - Every code change is automatically prepared for release
 - Deployment to production is a one-click (or zero-click) operation
 - Production-like environments for testing
 
 ### Continuous Deployment
+
 - CI + CD, but deployments happen automatically
 - No human approval gate for production
 - Requires high confidence in test suite
@@ -289,16 +298,19 @@ CI + Continuous:  Code → Build → Test → Package → Staging → Production
 ```
 
 ### Infrastructure as Code (IaC)
+
 - Define infrastructure in code files
 - Version control all infrastructure
 - Apply changes through pipelines, not manual commands
 
 ### Configuration Management
+
 - Ensure all servers are configured consistently
 - Detect and correct configuration drift
 - Tools: Ansible, Puppet, Chef
 
 ### Monitoring and Observability
+
 - **Metrics**: Numbers that describe system state (CPU, latency, error rate)
 - **Logs**: Event records from applications and infrastructure
 - **Traces**: Request path through distributed systems
@@ -471,6 +483,7 @@ Writing Terraform like a shell script (procedural, no state management).
 ### Scenario-Based Questions
 
 **Q: Your team deploys once a month and releases keep breaking. What do you do?**
+>
 > 1. Increase deployment frequency (smaller changes = less risk)
 > 2. Implement CI with automated tests
 > 3. Add staging environment that mirrors production
@@ -480,6 +493,21 @@ Writing Terraform like a shell script (procedural, no state management).
 
 **Q: A developer says "it works on my machine." How do you solve this?**
 > This is a classic environment inconsistency problem. Solutions: containerize the application (Docker), use infrastructure as code for environment parity, implement CI that builds in a clean environment, and define development environments in code.
+
+---
+
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[Mapping a Software Delivery Pipeline](./labs/lab-01-mapping-delivery-pipeline.md)** | Understand how software gets from a developer's machine to production by mapping a real delivery pipeline. |
+| 2 | **[DevOps Self-Assessment & Environment Setup](./labs/lab-02-devops-self-assessment.md)** | Assess your current knowledge level and set up the foundational environment you'll use throughout this entire handbook. |
+
+**Portfolio project:**
+
+- [Project: Delivery Pipeline Map and Improvement Proposal](./projects/project-01-delivery-pipeline-map.md) — Choose a real or realistic software delivery process and map how work moves from idea to production.
 
 ---
 

@@ -1,0 +1,17 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: restart-one-deployment}
+rules:
+  # Listing has to be broad — you can't restrict `list` by name
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch"]
+  # But mutation can be pinned to ONE object
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    resourceNames: ["payments-api"]        # ⭐ this deployment and no other
+    verbs: ["patch", "update"]
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale"]        # ⭐ subresources are separate
+    resourceNames: ["payments-api"]
+    verbs: ["update", "patch"]

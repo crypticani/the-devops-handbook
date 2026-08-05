@@ -4,11 +4,18 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 Every DevOps role requires cloud knowledge. Whether it's AWS, GCP, or Azure, the **concepts are the same** — compute, storage, networking, IAM, and managed services. This module teaches cloud-agnostic fundamentals first, then maps them to AWS (the market leader).
 
 **In real-world DevOps work**, you will:
+
 - Provision virtual machines, networks, and storage in the cloud
 - Configure IAM roles, policies, and security groups
 - Deploy applications to cloud compute services
@@ -561,6 +568,23 @@ GOOD: Use IAM roles for EC2/Lambda/ECS — no credentials to manage
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[AWS Fundamentals](./labs/lab-01-aws-fundamentals.md)** | Get hands-on with the four foundational AWS services. |
+| 2 | **[IAM and Least Privilege](./labs/lab-02-iam-least-privilege.md)** | Write IAM policies that grant exactly what's needed and nothing more — and, more importantly, learn to **test** them before they reach production. |
+
+**Portfolio project:**
+
+- [Project: Small Cloud Environment Walkthrough](./projects/project-01-small-cloud-environment.md) — Create a minimal cloud environment and document the core building blocks: network, compute, access control, security boundary, validation, cost, and…
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:
@@ -591,6 +615,6 @@ With cloud fundamentals understood, you're ready to automate cloud infrastructur
 
 **Module 09 Complete** ✅
 
-[← Back to Logging](../08-logging/) | [Next: Terraform →](../10-terraform/)
+[← Back to Logging](../08-logging/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: Terraform →](../10-terraform/)
 
 </div>

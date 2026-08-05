@@ -13,6 +13,22 @@ Master the Linux text processing pipeline — the combination of `grep`, `awk`, 
 
 ---
 
+## 📂 Lab Files
+
+Every file this lab creates also exists as a real, CI-validated file in
+[`../code/lab-04/`](../code/lab-04/) (2 files).
+
+```bash
+# Option A — type them out yourself (recommended the first time; that's the learning)
+# Option B — start from the reference copies
+cp -r /path/to/the-devops-handbook/01-linux/code/lab-04/. .
+```
+
+Use Option B when you're comparing against a known-good version, or when something
+won't start and you need to rule out a typo. See [`../code/README.md`](../code/README.md).
+
+---
+
 ## 🔬 Setup: Generate Realistic Log Data
 
 ```bash
@@ -34,7 +50,7 @@ STATUSES=("200" "200" "200" "200" "200" "200" "200" "301" "304" "400" "401" "403
 
 AGENTS=("Mozilla/5.0 Chrome/120.0" "curl/7.88.1" "python-requests/2.31" "PostmanRuntime/7.36" "Googlebot/2.1")
 
-for i in $(seq 1 500); do
+for _ in $(seq 1 500); do   # _ = the counter is unused
     ip=${IPS[$RANDOM % ${#IPS[@]}]}
     path=${PATHS[$RANDOM % ${#PATHS[@]}]}
     status=${STATUSES[$RANDOM % ${#STATUSES[@]}]}
@@ -456,7 +472,6 @@ You've completed this lab when you can:
 ---
 
 [← Previous Lab](./lab-03-processes-services.md) | [Back to Module README](../README.md)
-
 
 ## 📝 What to Commit
 

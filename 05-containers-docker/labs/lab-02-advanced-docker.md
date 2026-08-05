@@ -26,6 +26,22 @@ Treat the validation section as the minimum proof that the lab worked.
 
 ---
 
+## 📂 Lab Files
+
+Every file this lab creates also exists as a real, CI-validated file in
+[`../code/lab-02/`](../code/lab-02/) (4 files).
+
+```bash
+# Option A — type them out yourself (recommended the first time; that's the learning)
+# Option B — start from the reference copies
+cp -r /path/to/the-devops-handbook/05-containers-docker/code/lab-02/. .
+```
+
+Use Option B when you're comparing against a known-good version, or when something
+won't start and you need to rule out a typo. See [`../code/README.md`](../code/README.md).
+
+---
+
 ## 🔬 Exercise 1: Multi-Stage Build
 
 ### Build a Go App (Extreme Size Reduction)
@@ -38,45 +54,45 @@ cat > main.go << 'GOAPP'
 package main
 
 import (
-    "encoding/json"
-    "fmt"
-    "log"
-    "net/http"
-    "os"
-    "time"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"time"
 )
 
 type Response struct {
-    Message   string `json:"message"`
-    Hostname  string `json:"hostname"`
-    Timestamp string `json:"timestamp"`
+	Message   string `json:"message"`
+	Hostname  string `json:"hostname"`
+	Timestamp string `json:"timestamp"`
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-    hostname, _ := os.Hostname()
-    resp := Response{
-        Message:   "Hello from multi-stage build!",
-        Hostname:  hostname,
-        Timestamp: time.Now().Format(time.RFC3339),
-    }
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(resp)
+	hostname, _ := os.Hostname()
+	resp := Response{
+		Message:   "Hello from multi-stage build!",
+		Hostname:  hostname,
+		Timestamp: time.Now().Format(time.RFC3339),
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
-    w.WriteHeader(http.StatusOK)
-    fmt.Fprint(w, `{"status":"healthy"}`)
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, `{"status":"healthy"}`)
 }
 
 func main() {
-    http.HandleFunc("/", handler)
-    http.HandleFunc("/health", healthHandler)
-    port := os.Getenv("PORT")
-    if port == "" {
-        port = "8080"
-    }
-    log.Printf("Server starting on port %s", port)
-    log.Fatal(http.ListenAndServe(":"+port, nil))
+	http.HandleFunc("/", handler)
+	http.HandleFunc("/health", healthHandler)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	log.Printf("Server starting on port %s", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 GOAPP
 
@@ -336,7 +352,6 @@ docker network rm appnet
 ---
 
 [← Previous Lab](./lab-01-docker-fundamentals.md) | [Back to Module README](../README.md)
-
 
 ## 📝 What to Commit
 

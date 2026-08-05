@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: team-dev}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: team-dev-edit}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole            # ⭐ a CLUSTER role...
+  name: edit
+subjects:
+  - kind: ServiceAccount
+    name: team-dev
+    namespace: rbaclab

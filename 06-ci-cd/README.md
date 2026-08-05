@@ -4,11 +4,18 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 CI/CD is the **backbone of modern software delivery**. Without it, every deployment is a manual, error-prone, stressful event. With it, you ship code multiple times a day with confidence.
 
 **In real-world DevOps work**, you will:
+
 - Build CI pipelines that automatically test every code change
 - Create CD pipelines that deploy to staging and production
 - Configure deployment strategies (rolling, blue-green, canary)
@@ -66,20 +73,37 @@ Continuous Deployment (CD):
 
 ### The Pipeline Mental Model
 
+The three terms describe **where the automation stops**. Same pipeline, different end point:
+
+```mermaid
+flowchart LR
+    DEV(["👩‍💻 Developer<br/>git push"]) --> B["Build"]
+    B --> T["Test"]
+    T --> STG["Deploy to<br/>Staging"]
+    STG --> GATE{"Manual<br/>approval?"}
+    GATE -->|"required"| PROD["Deploy to<br/>Production"]
+    GATE -->|"skipped"| PROD
+    PROD --> USERS(["👥 Users"])
+
+    subgraph ci["Continuous Integration"]
+        B
+        T
+    end
+    subgraph cdel["Continuous Delivery — stops at the gate"]
+        STG
+        GATE
+    end
+    subgraph cdep["Continuous Deployment — no gate at all"]
+        PROD
+    end
+
+    style ci fill:#e8f0ff,stroke:#3366cc
+    style cdel fill:#fff4e0,stroke:#cc8800
+    style cdep fill:#e8ffe8,stroke:#22aa22
+    style GATE fill:#fff,stroke:#cc8800,stroke-width:2px
 ```
-Developer                                                    Users
-   │                                                           ▲
-   │ git push                                                  │
-   ▼                                                           │
-┌──────┐    ┌──────┐    ┌──────┐    ┌──────┐    ┌──────────┐  │
-│ Code │───▶│Build │───▶│ Test │───▶│Stage │───▶│Production│──┘
-│ Push │    │      │    │      │    │Deploy│    │  Deploy  │
-└──────┘    └──────┘    └──────┘    └──────┘    └──────────┘
-                                       │             │
-                              Auto deploy     Manual approval
-                                              (Delivery) OR
-                                              Auto (Deployment)
-```
+
+**CI** = every merge is built and tested. **Continuous Delivery** = every passing build *could* go to prod, a human decides when. **Continuous Deployment** = it goes, no human involved. The only structural difference between the last two is that one diamond.
 
 ---
 
@@ -87,24 +111,53 @@ Developer                                                    Users
 
 ### Stages of a Production Pipeline
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        CI/CD Pipeline                           │
-├─────────┬──────────┬──────────┬──────────┬────────────────────┤
-│  Source  │  Build   │   Test   │  Stage   │    Production      │
-│         │          │          │          │                    │
-│ • Clone │ • Compile│ • Unit   │ • Deploy │ • Deploy           │
-│ • Lint  │ • Bundle │ • Integ  │   to dev │ • Smoke tests      │
-│ • SAST  │ • Docker │ • E2E    │ • Smoke  │ • Monitor          │
-│         │   image  │ • Cover  │   test   │ • Rollback ready   │
-├─────────┴──────────┴──────────┴──────────┴────────────────────┤
-│  Feedback: Notify on failure at ANY stage (Slack, email, PR)   │
-└─────────────────────────────────────────────────────────────────┘
+Real pipelines are a **graph**, not a line. Independent checks fan out in parallel; everything converges on a single build artifact that is then promoted — never rebuilt — through each environment.
+
+```mermaid
+flowchart TD
+    SRC(["git push / pull_request"]) --> CHECKOUT["Checkout + restore cache"]
+
+    CHECKOUT --> LINT["Lint<br/><i>~20s</i>"]
+    CHECKOUT --> SAST["SAST + secret scan<br/><i>~40s</i>"]
+    CHECKOUT --> UNIT["Unit tests<br/><i>~2m</i>"]
+
+    LINT --> BUILD
+    SAST --> BUILD
+    UNIT --> BUILD
+
+    BUILD["<b>Build once</b><br/>compile · bundle · docker build<br/>tag with the commit SHA"]
+    BUILD --> SCAN["Image scan — Trivy<br/>fail on HIGH/CRITICAL"]
+    SCAN --> PUSH["Push artifact to registry<br/><code>myapp:a1b2c3d</code>"]
+
+    PUSH --> DEPSTG["Deploy to <b>staging</b><br/>same artifact"]
+    DEPSTG --> INTEG["Integration + E2E tests"]
+    INTEG --> SMOKE1["Smoke test staging"]
+
+    SMOKE1 --> GATE{"Approval gate<br/><i>Continuous Delivery only</i>"}
+    GATE --> DEPPROD["Deploy to <b>production</b><br/><b>same artifact</b> — never rebuilt"]
+    DEPPROD --> SMOKE2["Smoke test prod"]
+    SMOKE2 --> WATCH["Watch error rate + latency<br/>Module 07"]
+    WATCH -->|"SLO breached"| RB["🔙 Automatic rollback"]
+    WATCH -->|"healthy"| DONE(["✅ Released"])
+
+    LINT -.->|"❌"| FB
+    SAST -.->|"❌"| FB
+    UNIT -.->|"❌"| FB
+    SCAN -.->|"❌"| FB
+    INTEG -.->|"❌"| FB
+    FB["🔔 Notify: PR comment · Slack · red check"]
+
+    style BUILD fill:#e8f0ff,stroke:#3366cc,stroke-width:2px
+    style GATE fill:#fff4e0,stroke:#cc8800
+    style DONE fill:#e0ffe0,stroke:#0a0
+    style RB fill:#ffe0e0,stroke:#c00
+    style FB fill:#ffe0e0,stroke:#c00
 ```
 
 **Key Principles:**
-- **Fail fast** — cheapest checks (linting) run first
-- **Immutable artifacts** — build once, deploy the same artifact everywhere
+
+- **Fail fast** — cheapest checks (linting) run first, and in parallel
+- **Immutable artifacts** — build once, deploy the same artifact everywhere. If you rebuild between staging and prod, you tested a different thing than you shipped
 - **Environment parity** — staging mirrors production
 - **Feedback loops** — developers know within minutes if something broke
 
@@ -121,6 +174,52 @@ Developer                                                    Users
 - YAML-based, version-controlled alongside code
 
 ### Workflow Anatomy
+
+Four nested concepts. Getting the boundaries wrong is the most common source of "why is my file missing in the next job?"
+
+```mermaid
+flowchart TB
+    EVT(["<b>Event</b><br/>push · pull_request · schedule ·<br/>workflow_dispatch"]) --> WF
+
+    subgraph WF["<b>Workflow</b> — .github/workflows/ci.yml"]
+        direction TB
+
+        subgraph J1["<b>Job: lint</b> — fresh ubuntu-latest VM"]
+            S1["Step: actions/checkout@v4"]
+            S2["Step: setup-python@v5"]
+            S3["Step: run flake8"]
+            S1 --> S2 --> S3
+        end
+
+        subgraph J2["<b>Job: test</b> — fresh ubuntu-latest VM"]
+            T1["Step: checkout"]
+            T2["Step: pytest"]
+            T1 --> T2
+        end
+
+        subgraph J3["<b>Job: build</b> — fresh ubuntu-latest VM"]
+            B1["Step: docker build"]
+            B2["Step: upload-artifact"]
+            B1 --> B2
+        end
+    end
+
+    J1 -->|"needs: lint"| J2
+    J2 -->|"needs: test"| J3
+
+    style J1 fill:#e8f0ff,stroke:#3366cc
+    style J2 fill:#e8f0ff,stroke:#3366cc
+    style J3 fill:#e8f0ff,stroke:#3366cc
+```
+
+| Level | What it is | Key rule |
+|-------|-----------|----------|
+| **Event** | What triggers the run | Defined by `on:` |
+| **Workflow** | One YAML file | A repo can have many; they run independently |
+| **Job** | A unit that gets **its own clean VM** | Jobs run **in parallel** unless linked with `needs:` |
+| **Step** | One command or action | Steps in a job share the same filesystem and shell session |
+
+> **💡 The boundary that trips everyone up**: each job starts on a **brand-new machine**. Files written in the `build` job do **not** exist in the `deploy` job — and neither does your checkout. To move data between jobs use `actions/upload-artifact` / `download-artifact`, or `outputs:`. To move data between *steps*, just write a file; they share a disk.
 
 ```yaml
 # .github/workflows/ci.yml
@@ -426,6 +525,7 @@ jobs:
 ### Environment Protection Rules
 
 Configure in GitHub: **Settings → Environments → production**:
+
 - ✅ Required reviewers (team lead must approve)
 - ✅ Wait timer (e.g., 5 minutes after staging)
 - ✅ Deployment branch restrictions (only `main`)
@@ -604,7 +704,11 @@ pipeline {
 
 ## 8. Deployment Strategies
 
+All three strategies achieve zero downtime. They differ in **how much infrastructure you pay for** and **how fast you can undo a bad release**.
+
 ### Rolling Deployment
+
+Replace instances a few at a time. The default in Kubernetes.
 
 ```
 Time 0: [v1] [v1] [v1] [v1]    ← All running v1
@@ -612,42 +716,94 @@ Time 1: [v2] [v1] [v1] [v1]    ← Replace one at a time
 Time 2: [v2] [v2] [v1] [v1]
 Time 3: [v2] [v2] [v2] [v1]
 Time 4: [v2] [v2] [v2] [v2]    ← All running v2
-
-✅ Pros: Zero downtime, simple
-❌ Cons: Both versions run simultaneously during rollout
 ```
+
+```mermaid
+sequenceDiagram
+    participant LB as Load Balancer
+    participant P as Pool (4 instances)
+
+    Note over P: v1 v1 v1 v1
+    LB->>P: drain instance 1
+    Note over P: -- v1 v1 v1
+    LB->>P: start v1 → v2, wait for readiness probe
+    Note over P: v2 v1 v1 v1
+    LB->>P: repeat for instances 2, 3, 4
+    Note over P: v2 v2 v2 v2
+    Note over LB,P: ⚠️ v1 and v2 serve traffic simultaneously<br/>for the whole rollout window
+```
+
+- ✅ **Pros**: Zero downtime, no extra infrastructure, built into Kubernetes
+- ❌ **Cons**: Both versions run at once — your API and DB schema must be **backward compatible**. Rollback is another full rolling update, so it's slow.
 
 ### Blue-Green Deployment
 
-```
-                    Load Balancer
-                    ┌───┴───┐
-              ┌─────▼─────┐ │
-              │ Blue (v1)  │ │  ← Currently serving traffic
-              │ [v1][v1]   │ │
-              └────────────┘ │
-              ┌────────────┐ │
-              │ Green (v2)  │ │  ← Deploy + test here
-              │ [v2][v2]   │ │
-              └─────▲──────┘ │
-                    └────────┘
-                    Switch traffic when green is verified!
+Two complete environments. Flip all traffic at once.
 
-✅ Pros: Instant rollback (switch back to blue), zero downtime
-❌ Cons: Double infrastructure cost during deployment
+```mermaid
+flowchart TB
+    U(["Users"]) --> LB{"Load Balancer /<br/>DNS / Target Group"}
+
+    LB ==>|"100% — live"| BLUE
+    LB -.->|"0% — idle, warmed"| GREEN
+
+    subgraph BLUE["🔵 Blue — v1 (current)"]
+        B1["v1"]
+        B2["v1"]
+    end
+    subgraph GREEN["🟢 Green — v2 (new)"]
+        G1["v2"]
+        G2["v2"]
+    end
+
+    GREEN -.-> TEST["Smoke tests run here<br/>with zero user impact"]
+    TEST -->|"pass → flip the LB"| SWITCH["Cut 100% to Green<br/><i>Blue stays up as the rollback target</i>"]
+
+    style BLUE fill:#ddeeff,stroke:#3366cc,stroke-width:2px
+    style GREEN fill:#ddffdd,stroke:#22aa22
 ```
+
+- ✅ **Pros**: **Instant rollback** — flip the load balancer back. Full testing against production infrastructure before any user sees it.
+- ❌ **Cons**: Double the infrastructure cost during the switch. Shared state (databases, caches, queues) doesn't get duplicated, so schema changes still need care.
 
 ### Canary Deployment
 
-```
-Before:  Load Balancer → [v1] [v1] [v1] [v1]  (100% v1)
-Canary:  Load Balancer → [v1] [v1] [v1] [v2]  (25% → v2)
-         Monitor metrics... error rate OK? latency OK?
-Rollout: Load Balancer → [v2] [v2] [v2] [v2]  (100% v2)
+Shift a small slice of real traffic, watch the metrics, then decide.
 
-✅ Pros: Minimal risk, real-world validation
-❌ Cons: Complex routing, monitoring required
+```mermaid
+flowchart LR
+    U(["Users"]) --> LB{"Traffic split"}
+
+    LB -->|"95%"| V1["v1<br/>stable"]
+    LB -->|"5%"| V2["v2<br/>canary"]
+
+    V1 --> M["📊 Prometheus<br/>error rate · p99 latency · saturation"]
+    V2 --> M
+
+    M --> D{"Canary healthier than<br/>or equal to stable?"}
+    D -->|"yes"| UP["Promote: 5% → 25% → 50% → 100%"]
+    D -->|"no"| AB["🔙 Abort: route 100% back to v1<br/>only 5% of users were ever affected"]
+
+    style V2 fill:#fff4e0,stroke:#cc8800
+    style AB fill:#ffe0e0,stroke:#c00
+    style UP fill:#e0ffe0,stroke:#0a0
 ```
+
+- ✅ **Pros**: Smallest blast radius of any strategy — a bad release hits 5% of users, not 100%. Validates against real production traffic patterns that staging can't reproduce.
+- ❌ **Cons**: Needs weighted routing (service mesh, ingress, or ALB rules) **and** the observability from Module 07 to make the promote/abort decision. Without metrics, a canary is just a slow rollout.
+
+### Choosing One
+
+| | Rolling | Blue-Green | Canary |
+|---|---------|-----------|--------|
+| **Extra infrastructure** | None | 2× during switch | ~5–10% |
+| **Rollback speed** | Slow (another rollout) | **Instant** (flip LB) | Instant (reroute) |
+| **Blast radius of a bad release** | Grows as rollout proceeds | 100% at once after the flip | 5% |
+| **Requires good metrics** | Helpful | Helpful | **Mandatory** |
+| **Complexity** | Low | Medium | High |
+| **Good default for** | Most services on Kubernetes | Releases you must be able to undo in seconds | High-traffic, user-facing services |
+
+> **💡 All three break the same way**: none of them protect you from a **non-backward-compatible database migration**. During any of these rollouts, old and new code run against the same database. Use the expand/contract pattern — add the new column, deploy code that writes both, backfill, deploy code that reads the new one, *then* drop the old column across separate releases.
 
 ---
 
@@ -700,6 +856,7 @@ on:
 ### ❌ No Rollback Strategy
 
 Always plan for failure:
+
 - Keep the previous Docker image tagged and available
 - Use blue-green or canary deployments
 - Have a one-command rollback script
@@ -801,6 +958,7 @@ permissions:
 > Never in code or environment files committed to git. Use the platform's secret store (GitHub Secrets, Jenkins Credentials, Vault). Rotate regularly. Use OIDC for cloud providers instead of static keys. Audit access logs.
 
 **Q: A deployment failed in production. What do you do?**
+>
 > 1. Rollback immediately (don't debug in production). 2. Verify rollback with health checks. 3. Check deployment logs for the root cause. 4. Reproduce in staging. 5. Fix, test, and redeploy. Always have a rollback plan *before* you deploy.
 
 **Q: What are the benefits of pipeline-as-code?**
@@ -808,6 +966,23 @@ permissions:
 
 **Q: How do you make pipelines faster?**
 > Cache dependencies, run independent jobs in parallel, use matrix builds for multi-version testing, fail fast (lint before test), use slim Docker base images, only run relevant jobs (path filters), and avoid unnecessary steps on PRs vs main.
+
+---
+
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[GitHub Actions](./labs/lab-01-github-actions.md)** | Go from zero to a working CI/CD pipeline. |
+| 2 | **[Jenkins Pipeline](./labs/lab-02-jenkins-pipeline.md)** | Set up Jenkins from scratch using Docker, create a Declarative Pipeline, configure credentials and triggers, and debug common failures. |
+
+**Portfolio project:**
+
+- [Project: Pull Request CI Pipeline](./projects/project-01-pull-request-pipeline.md) — Create a CI pipeline that gives fast feedback on every pull request and blocks changes that fail linting, tests, or build checks.
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 
 ---
 
@@ -841,6 +1016,6 @@ With CI/CD mastered, you can now build the observability stack needed to monitor
 
 **Module 06 Complete** ✅
 
-[← Back to Docker](../05-containers-docker/) | [Next: Observability →](../07-observability/)
+[← Back to Docker](../05-containers-docker/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: Observability →](../07-observability/)
 
 </div>

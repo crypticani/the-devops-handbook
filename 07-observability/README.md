@@ -4,11 +4,18 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 Your CI/CD pipeline deploys code to production. But **how do you know it's working?** Observability gives you the eyes and ears to understand what's happening inside your systems — before users complain.
 
 **In real-world DevOps work**, you will:
+
 - Set up Prometheus to collect metrics from every service
 - Build Grafana dashboards that tell a story at a glance
 - Configure alerts that wake you up only when it matters
@@ -64,34 +71,50 @@ Observability:
 
 ## 2. The Three Pillars
 
-```
-                    OBSERVABILITY
-          ┌─────────────┼─────────────┐
-          │             │             │
-     ┌────▼────┐  ┌─────▼─────┐  ┌───▼───┐
-     │ METRICS │  │   LOGS    │  │TRACES │
-     │         │  │           │  │       │
-     │ Numbers │  │ Text      │  │ Path  │
-     │ over    │  │ events    │  │ of a  │
-     │ time    │  │ with      │  │ request│
-     │         │  │ context   │  │ across │
-     │ "WHAT"  │  │ "WHY"     │  │ "WHERE"│
-     └─────────┘  └───────────┘  └───────┘
+The three pillars answer three different questions. Debugging a real incident means walking from one to the next — an alert tells you *what*, a trace tells you *where*, a log tells you *why*.
+
+```mermaid
+flowchart TB
+    O["<b>OBSERVABILITY</b>"]
+
+    O --> M["<b>METRICS</b><br/>numbers over time<br/><br/>❓ <b>WHAT</b> is wrong?<br/>'error rate is 12%'<br/><br/>Prometheus · Grafana<br/><i>Module 07</i>"]
+    O --> T["<b>TRACES</b><br/>one request across services<br/><br/>❓ <b>WHERE</b> is it wrong?<br/>'checkout → payment: 4.2s'<br/><br/>Jaeger · OpenTelemetry"]
+    O --> L["<b>LOGS</b><br/>timestamped events<br/><br/>❓ <b>WHY</b> is it wrong?<br/>'connection pool exhausted'<br/><br/>Loki · ELK<br/><i>Module 08</i>"]
+
+    M -->|"alert fires"| T
+    T -->|"slow span found"| L
+    L -->|"root cause"| FIX(["🔧 Fix"])
+
+    style M fill:#e8f0ff,stroke:#3366cc,stroke-width:2px
+    style T fill:#fff4e0,stroke:#cc8800
+    style L fill:#e8ffe8,stroke:#22aa22
+    style FIX fill:#f0f0f0,stroke:#666
 ```
 
+| Pillar | Cardinality cost | Retention | Best for |
+|--------|------------------|-----------|----------|
+| **Metrics** | Low — aggregated | Months/years cheaply | Alerting, dashboards, trends, SLOs |
+| **Traces** | Medium — usually sampled | Days | Latency attribution in distributed systems |
+| **Logs** | High — one line per event | Days/weeks (expensive) | Root cause on a specific request |
+
+> **💡 Why the order matters**: you cannot alert on logs cheaply, and you cannot debug from metrics alone. Alert on **metrics** (cheap, aggregate, low noise), then pivot to **traces** to find the slow hop, then read the **logs** for that exact trace ID. Teams that skip metrics and alert on log patterns end up with expensive, flaky alerting.
+
 ### Metrics (This Module)
+
 - **What**: Numeric measurements collected over time (counters, gauges, histograms)
 - **Example**: `http_requests_total = 14523`, `cpu_usage = 72.3%`
 - **Tool**: **Prometheus** + **Grafana**
 - **Strength**: Cheap to store, fast to query, great for alerting and trends
 
 ### Logs (Module 08)
+
 - **What**: Timestamped text records of discrete events
 - **Example**: `2024-01-15 14:23:01 ERROR Failed to connect to database: timeout after 30s`
 - **Tool**: ELK Stack, Loki
 - **Strength**: Rich context, great for debugging specific issues
 
 ### Traces (Mentioned Here, Advanced Topic)
+
 - **What**: The journey of a single request across multiple services
 - **Example**: Request → API Gateway (12ms) → Auth Service (45ms) → Database (230ms)
 - **Tool**: Jaeger, Zipkin, OpenTelemetry
@@ -112,29 +135,48 @@ Observability:
 
 ### Architecture
 
+Note the direction of every arrow into Prometheus: it **pulls**. Your application never pushes metrics anywhere — it just exposes an HTTP endpoint and waits.
+
+```mermaid
+flowchart LR
+    subgraph targets["Scrape Targets — each exposes GET /metrics"]
+        APP["Your app<br/>:8080/metrics<br/><i>client library</i>"]
+        NODE["node_exporter<br/>:9100/metrics<br/><i>host CPU/mem/disk</i>"]
+        CAD["cAdvisor<br/>:8080/metrics<br/><i>container stats</i>"]
+        BB["blackbox_exporter<br/>:9115<br/><i>probes URLs/TLS</i>"]
+    end
+
+    SD["<b>Service Discovery</b><br/>static · file_sd · kubernetes_sd · ec2_sd"]
+
+    subgraph prom["Prometheus Server"]
+        RET["<b>Retrieval</b><br/>scrapes every 15s"]
+        TSDB[("<b>TSDB</b><br/>local time-series storage<br/>15d default retention")]
+        RULES["<b>Rule Evaluator</b><br/>recording rules<br/>alerting rules"]
+        API["<b>HTTP API</b><br/>PromQL"]
+        RET --> TSDB
+        TSDB --> RULES
+        TSDB --> API
+    end
+
+    AM["<b>Alertmanager</b><br/>dedupe · group · silence · inhibit · route"]
+    GRAF["<b>Grafana</b><br/>dashboards"]
+    LT[("Long-term storage<br/>Thanos · Mimir<br/><i>optional</i>")]
+
+    SD -.->|"tells Prometheus<br/>what exists"| RET
+    targets -->|"HTTP pull ⬅"| RET
+    RULES -->|"fires alerts (push)"| AM
+    API -->|"query"| GRAF
+    TSDB -.->|"remote_write"| LT
+
+    AM --> SLACK["Slack"]
+    AM --> PD["PagerDuty"]
+    AM --> EMAIL["Email"]
+
+    style prom fill:#f0f6ff,stroke:#3366cc,stroke-width:2px
+    style AM fill:#fff4e0,stroke:#cc8800
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      PROMETHEUS SERVER                       │
-│  ┌──────────┐  ┌────────────┐  ┌──────────────────────┐    │
-│  │ Retrieval │  │  TSDB      │  │  HTTP Server         │    │
-│  │ (scraper) │  │ (storage)  │  │  (PromQL API)        │    │
-│  └─────┬─────┘  └────────────┘  └──────────┬───────────┘    │
-│        │                                    │               │
-└────────┼────────────────────────────────────┼───────────────┘
-         │ scrapes /metrics                   │ queries
-         ▼                                    ▼
-┌─────────────────┐              ┌────────────────────┐
-│ TARGETS         │              │ GRAFANA            │
-│ • App :8080     │              │ (visualization)    │
-│ • Node :9100    │              └────────────────────┘
-│ • cAdvisor :8080│                       │
-└─────────────────┘              ┌────────▼───────────┐
-                                 │ ALERTMANAGER       │
-                                 │ (notifications)    │
-                                 │ → Slack, Email,    │
-                                 │   PagerDuty        │
-                                 └────────────────────┘
-```
+
+> **💡 Pull vs push — the consequence that matters**: because Prometheus pulls, a target that disappears is *detectably* down (`up == 0`), and you never need to configure your app with a monitoring endpoint. The tradeoff is that Prometheus must be able to **reach** every target — which is why short-lived batch jobs (that finish before the next scrape) need the **Pushgateway**, and why targets behind NAT need an exporter Prometheus can route to.
 
 ### How Prometheus Works
 
@@ -359,6 +401,7 @@ rate(http_requests_total[5m]) / rate(http_requests_total[1h]) > 2
 ```
 
 **Key rules:**
+
 - **Top row = stat panels** with the most important numbers (SLIs)
 - **Use consistent colors** — green = good, yellow = warning, red = bad
 - **Time range selector** — always let users adjust the window
@@ -481,12 +524,61 @@ receivers:
 
 ### Alert Lifecycle
 
+Every alerting rule moves through this state machine on **every rule evaluation** (default: every 15s). The `for:` duration is what separates a real problem from a momentary spike.
+
+```mermaid
+stateDiagram-v2
+    direction LR
+
+    [*] --> Inactive
+
+    Inactive --> Pending: expr becomes true
+    Pending --> Inactive: expr becomes false<br/>before <code>for:</code> elapses<br/><i>❌ never notified — this is the point</i>
+    Pending --> Firing: expr stayed true<br/>for the whole <code>for:</code> duration
+    Firing --> Inactive: expr becomes false<br/>→ resolved notification sent
+
+    note left of Pending
+        Prometheus side.
+        A 30-second CPU spike
+        dies here and never
+        wakes anybody up.
+    end note
+
+    note right of Firing
+        Handed to Alertmanager, which then:
+        1. groups by group_by labels
+        2. waits group_wait (30s) for friends
+        3. checks silences and inhibitions
+        4. routes to a receiver
+        5. re-notifies every repeat_interval
+    end note
 ```
-    INACTIVE ──────▶ PENDING ──────▶ FIRING ──────▶ RESOLVED
-                    (for: 5m)     (sent to         (auto-resolves
-                    condition      Alertmanager)     when expr
-                    must hold                        is false)
+
+**Where an alert can vanish** — check these in order when someone says "the alert didn't fire":
+
+```mermaid
+flowchart TD
+    A["Rule not firing?"] --> B{"Does the expr return<br/>rows in the Prometheus UI?"}
+    B -->|"no"| B1["Wrong metric name, wrong labels,<br/>or the target isn't being scraped.<br/>Check Status → Targets."]
+    B -->|"yes"| C{"Status → Rules:<br/>is it Pending or Firing?"}
+    C -->|"stuck Pending"| C1["<code>for:</code> is longer than the<br/>condition lasts. Shorten it."]
+    C -->|"Firing"| D{"Does Alertmanager<br/>show the alert?"}
+    D -->|"no"| D1["<code>alerting.alertmanagers</code> misconfigured<br/>in prometheus.yml, or network blocked."]
+    D -->|"yes"| E{"Is it silenced or inhibited?"}
+    E -->|"yes"| E1["Someone silenced it —<br/>check the Silences tab."]
+    E -->|"no"| F{"Did the route match<br/>a receiver?"}
+    F -->|"no"| F1["Label mismatch in <code>route.match</code>.<br/>Use amtool to test routing."]
+    F -->|"yes"| G["Receiver itself is failing —<br/>bad webhook URL, expired token.<br/>Check Alertmanager logs."]
+
+    style B1 fill:#ffe8e8
+    style C1 fill:#ffe8e8
+    style D1 fill:#ffe8e8
+    style E1 fill:#ffe8e8
+    style F1 fill:#ffe8e8
+    style G fill:#ffe8e8
 ```
+
+> **💡 Test the whole chain before you need it.** `amtool config routes test --config.file=alertmanager.yml severity=critical` shows which receiver a label set would reach — without waiting for a real outage to find out you had a typo.
 
 ---
 
@@ -708,6 +800,23 @@ Alert fires!
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[Prometheus + Grafana](./labs/lab-01-prometheus-grafana.md)** | Set up a complete monitoring stack from scratch using Docker Compose. |
+| 2 | **[Application Monitoring](./labs/lab-02-application-monitoring.md)** | Instrument a Python Flask application with custom Prometheus metrics. |
+
+**Portfolio project:**
+
+- [Project: Metrics Dashboard and Alert](./projects/project-01-dashboard-alert.md) — Build a small monitoring setup that scrapes an application or service, visualizes key metrics, and fires one useful alert.
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:
@@ -738,6 +847,6 @@ With observability in place, you can now see your systems. Next, you'll learn to
 
 **Module 07 Complete** ✅
 
-[← Back to CI/CD](../06-ci-cd/) | [Next: Logging →](../08-logging/)
+[← Back to CI/CD](../06-ci-cd/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: Logging →](../08-logging/)
 
 </div>

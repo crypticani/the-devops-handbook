@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: insecure-pod
+spec:
+  containers:
+    - name: app
+      image: myapp:latest
+      securityContext:
+        privileged: true            # Full host access!
+        runAsUser: 0                # Running as root!

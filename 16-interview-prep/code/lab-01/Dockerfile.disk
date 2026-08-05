@@ -1,0 +1,4 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY diskfill_app.py .
+CMD ["python3", "-u", "diskfill_app.py"]

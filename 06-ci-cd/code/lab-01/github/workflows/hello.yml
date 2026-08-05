@@ -1,0 +1,34 @@
+name: Hello CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:    # Manual trigger
+
+jobs:
+  hello:
+    name: Hello World
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Print info
+        run: |
+          echo "🎉 Hello from GitHub Actions!"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Triggered by: ${{ github.event_name }}"
+          echo "Runner OS: ${{ runner.os }}"
+
+      - name: List files
+        run: ls -la
+
+      - name: Check tools
+        run: |
+          python3 --version || echo "No Python"
+          node --version || echo "No Node"
+          docker --version || echo "No Docker"

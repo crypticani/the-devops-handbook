@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-settings
+data:
+  LOG_LEVEL: "info"
+  MAX_CONNECTIONS: "100"
+  FEATURE_DARK_MODE: "true"
+  # A whole file as one key — the | preserves newlines
+  app.properties: |
+    server.port=8080
+    server.timeout=30s
+    cache.enabled=true
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-credentials
+type: Opaque
+stringData:              # ⭐ stringData takes PLAIN text; Kubernetes encodes it for you
+  username: appuser
+  password: S3cr3t-P@ss

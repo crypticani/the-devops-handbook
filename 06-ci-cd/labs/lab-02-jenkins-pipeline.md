@@ -27,6 +27,22 @@ Treat the validation section as the minimum proof that the lab worked.
 
 ---
 
+## 📂 Lab Files
+
+Every file this lab creates also exists as a real, CI-validated file in
+[`../code/lab-02/`](../code/lab-02/) (2 files).
+
+```bash
+# Option A — type them out yourself (recommended the first time; that's the learning)
+# Option B — start from the reference copies
+cp -r /path/to/the-devops-handbook/06-ci-cd/code/lab-02/. .
+```
+
+Use Option B when you're comparing against a known-good version, or when something
+won't start and you need to rule out a typo. See [`../code/README.md`](../code/README.md).
+
+---
+
 ## 🔬 Exercise 1: Run Jenkins in Docker
 
 ### Step 1: Start Jenkins
@@ -37,8 +53,6 @@ cd ~/devops-labs/module-06/jenkins
 
 # Create a Docker Compose file for Jenkins
 cat > docker-compose.yml << 'COMPOSE'
-version: "3.8"
-
 services:
   jenkins:
     image: jenkins/jenkins:lts-jdk17
@@ -79,6 +93,7 @@ docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 ### Step 3: Install Additional Plugins
 
 Go to **Manage Jenkins → Plugins → Available plugins** and install:
+
 - **Pipeline** (usually pre-installed)
 - **Git**
 - **Docker Pipeline**
@@ -376,7 +391,8 @@ docker compose down -v
 
 ---
 
-[← Previous Lab: GitHub Actions](./lab-01-github-actions.md) | 
+[← Previous Lab: GitHub Actions](./lab-01-github-actions.md) |
+
 ## 📝 What to Commit
 
 Add these to your portfolio repo as evidence of completed work:

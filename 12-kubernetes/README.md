@@ -4,11 +4,18 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 You can containerize an app with Docker. But how do you run 50 containers across 10 servers, handle failures, scale on demand, and do zero-downtime deployments? **Kubernetes** — the industry-standard container orchestration platform.
 
 **In real-world DevOps work**, you will:
+
 - Deploy applications as Pods, Deployments, and Services
 - Scale applications horizontally based on load
 - Perform zero-downtime rolling updates and rollbacks
@@ -76,35 +83,53 @@ DON'T USE K8S WHEN:
 
 ### Cluster Components
 
+```mermaid
+flowchart TB
+    U["👩‍💻 kubectl / CI / Helm"]
+
+    subgraph CP["🧠 Control Plane"]
+        API["<b>kube-apiserver</b><br/>the ONLY component that talks to etcd<br/>authn · authz · admission · validation"]
+        ETCD[("<b>etcd</b><br/>every object in the cluster<br/><i>back this up</i>")]
+        SCH["<b>kube-scheduler</b><br/>picks a node for each<br/>unscheduled Pod"]
+        CM["<b>controller-manager</b><br/>Deployment · ReplicaSet · Node ·<br/>Job controllers — reconciliation loops"]
+        CCM["<b>cloud-controller-manager</b><br/>LoadBalancers · volumes · routes"]
+    end
+
+    subgraph N1["🖥️ Worker Node 1"]
+        K1["<b>kubelet</b><br/>starts/stops containers,<br/>runs probes, reports status"]
+        KP1["<b>kube-proxy</b><br/>Service → Pod routing<br/>iptables / IPVS"]
+        CR1["container runtime<br/>containerd"]
+        P1["Pod A"]
+        P2["Pod B"]
+        K1 --> CR1 --> P1 & P2
+    end
+
+    subgraph N2["🖥️ Worker Node 2"]
+        K2["kubelet"]
+        KP2["kube-proxy"]
+        CR2["containerd"]
+        P3["Pod C"]
+        K2 --> CR2 --> P3
+    end
+
+    U -->|"REST over HTTPS :6443"| API
+    API <--> ETCD
+    SCH -.->|"watch + bind"| API
+    CM -.->|"watch + reconcile"| API
+    CCM -.-> API
+    K1 -.->|"watch my node's pods,<br/>report status"| API
+    K2 -.-> API
+    KP1 -.->|"watch Services<br/>+ EndpointSlices"| API
+    KP2 -.-> API
+
+    style CP fill:#e8f0ff,stroke:#3366cc,stroke-width:2px
+    style API fill:#fff,stroke:#3366cc,stroke-width:3px
+    style ETCD fill:#fff4e0,stroke:#cc8800
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    KUBERNETES CLUSTER                         │
-│                                                              │
-│  ┌─────────────── CONTROL PLANE ──────────────────────┐     │
-│  │                                                     │     │
-│  │  ┌──────────┐  ┌──────────────┐  ┌──────────────┐ │     │
-│  │  │API Server│  │  Scheduler   │  │  Controller  │ │     │
-│  │  │          │  │              │  │  Manager     │ │     │
-│  │  │ kubectl  │  │ "Where to   │  │ "Desired vs  │ │     │
-│  │  │ talks to │  │  place pods" │  │  actual state"│ │     │
-│  │  │ this     │  │              │  │              │ │     │
-│  │  └──────────┘  └──────────────┘  └──────────────┘ │     │
-│  │  ┌──────────┐                                     │     │
-│  │  │  etcd    │  Key-value store (cluster state)    │     │
-│  │  └──────────┘                                     │     │
-│  └─────────────────────────────────────────────────────┘     │
-│                                                              │
-│  ┌──── WORKER NODE 1 ─────┐  ┌──── WORKER NODE 2 ─────┐   │
-│  │  ┌─────┐  ┌─────┐      │  │  ┌─────┐  ┌─────┐      │   │
-│  │  │Pod A│  │Pod B│      │  │  │Pod C│  │Pod D│      │   │
-│  │  └─────┘  └─────┘      │  │  └─────┘  └─────┘      │   │
-│  │                         │  │                         │   │
-│  │  ┌───────┐ ┌─────────┐ │  │  ┌───────┐ ┌─────────┐ │   │
-│  │  │kubelet│ │kube-proxy│ │  │  │kubelet│ │kube-proxy│ │   │
-│  │  └───────┘ └─────────┘ │  │  └───────┘ └─────────┘ │   │
-│  └─────────────────────────┘  └─────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-```
+
+> **💡 The one idea that explains all of Kubernetes**: nothing gives orders. Every component **watches the API server** for the state it cares about and works to close the gap between desired and actual. `kubectl apply` doesn't create a pod — it writes a record to etcd, and then a chain of independent controllers notices and reacts. This is why the answer to "why isn't my thing running?" is always `kubectl describe` → **read the events**: the events are the controllers telling you where the chain stalled.
+>
+> Two operational corollaries: **etcd is the entire cluster** — lose it unbacked-up and the cluster is gone; and **the API server is the only path to etcd**, which is why API server availability, not node count, defines your control-plane SLO.
 
 ### Component Roles
 
@@ -192,6 +217,40 @@ spec:
             periodSeconds: 5
 ```
 
+#### Who Owns What
+
+You create a Deployment. Kubernetes creates everything below it. Knowing this chain tells you **which object to edit** and **which one to look at when something's wrong**.
+
+```mermaid
+flowchart TB
+    D["<b>Deployment</b> web-app<br/><i>you write this</i><br/>declares: 3 replicas, image nginx:1.25,<br/>rolling update strategy"]
+
+    D -->|"owns"| RS1["<b>ReplicaSet</b> web-app-7d9f<br/><i>created automatically</i><br/>one per pod-template revision"]
+    D -.->|"kept for rollback"| RS0["<b>ReplicaSet</b> web-app-5c2a<br/>old revision — scaled to 0"]
+
+    RS1 -->|"owns"| P1["<b>Pod</b> web-app-7d9f-a1b2"]
+    RS1 -->|"owns"| P2["<b>Pod</b> web-app-7d9f-c3d4"]
+    RS1 -->|"owns"| P3["<b>Pod</b> web-app-7d9f-e5f6"]
+
+    P1 --> C1["container: nginx"]
+    P2 --> C2["container: nginx"]
+    P3 --> C3["container: nginx"]
+
+    SVC["<b>Service</b> web-app"] -.->|"selects by <b>label</b>,<br/>not by ownership"| P1
+    SVC -.-> P2
+    SVC -.-> P3
+
+    style D fill:#e8f0ff,stroke:#3366cc,stroke-width:2px
+    style RS0 fill:#f5f5f5,stroke:#999,stroke-dasharray: 5 5
+    style SVC fill:#fff4e0,stroke:#cc8800
+```
+
+Three rules that follow from this picture:
+
+1. **Never edit a Pod or a ReplicaSet directly.** The controller above will overwrite you, or your change vanishes on the next rollout. Edit the Deployment.
+2. **Deleting a Pod doesn't remove it** — the ReplicaSet immediately makes a new one. That's the feature. To actually stop it, scale or delete the Deployment.
+3. **The Service is connected by labels only**, not ownership. This is why a typo in `spec.selector` produces a Service with zero endpoints and a very confusing outage. Check it with `kubectl get endpoints web-app` — if it's `<none>`, your selector doesn't match your pod labels.
+
 ### Service — Expose Pods to Network
 
 ```yaml
@@ -238,20 +297,49 @@ spec:
 
 ### Service Types
 
-```
-ClusterIP:     Internal only (service-to-service communication)
-               web-app.default.svc.cluster.local:80
-               
-NodePort:      Exposes on each node's IP at a static port (30000-32767)
-               <NodeIP>:30080
-               
-LoadBalancer:  Cloud LB → forwards to NodePort → to Pods
-               External users → ALB → Pods
+The types **stack**: LoadBalancer builds on NodePort, which builds on ClusterIP. Each one adds a layer of external reach on top of the last.
 
-Ingress:       HTTP/HTTPS routing (paths, domains → services)
-               example.com/api → api-service
-               example.com/web → web-service
+```mermaid
+flowchart TB
+    EXT(["🌍 External users"])
+
+    subgraph cluster["Kubernetes Cluster"]
+        ING["<b>Ingress</b><br/>L7 HTTP router<br/>example.com/api → api-svc<br/>example.com/web → web-svc<br/><i>one LB for many services + TLS</i>"]
+
+        LBS["<b>Service type: LoadBalancer</b><br/>asks the cloud for an external IP"]
+        NPS["<b>Service type: NodePort</b><br/>opens port 30080 on <i>every</i> node"]
+        CIP["<b>Service type: ClusterIP</b> (default)<br/>virtual IP, cluster-internal only<br/><code>web-app.default.svc.cluster.local</code>"]
+
+        PODS["Pods<br/>selected by label"]
+
+        ING --> CIP
+        LBS --> NPS --> CIP
+        CIP -->|"kube-proxy<br/>iptables/IPVS rules"| PODS
+    end
+
+    CLB["☁️ Cloud Load Balancer<br/>ALB / NLB — <b>costs money per Service</b>"]
+
+    EXT -->|"https://example.com"| CLB
+    CLB --> ING
+    EXT -.->|"http://NODE_IP:30080<br/><i>dev/testing only</i>"| NPS
+    EXT -.->|"one cloud LB<br/>per Service 💸"| LBS
+
+    INT["Other pods in the cluster"] -->|"http://web-app:80"| CIP
+
+    style CIP fill:#e8f0ff,stroke:#3366cc,stroke-width:2px
+    style ING fill:#e8ffe8,stroke:#22aa22
+    style CLB fill:#fff4e0,stroke:#cc8800
 ```
+
+| Type | Reachable from | Cost | Use it for |
+|------|----------------|------|------------|
+| **ClusterIP** | Inside the cluster only | Free | Service-to-service. **The default and the right answer 90% of the time.** |
+| **NodePort** | `<any-node-IP>:30000–32767` | Free | Local clusters, quick tests, bare metal behind your own LB |
+| **LoadBalancer** | Public internet | 💸 One cloud LB **per Service** | A single TCP/UDP service that must be exposed directly |
+| **Ingress** | Public internet, HTTP/S only | 💸 One cloud LB **for all services** | Normal web traffic — host/path routing and TLS termination |
+| **ExternalName** | n/a — CNAME to an outside host | Free | Pointing an in-cluster name at an external database |
+
+> **💡 The cost trap**: giving ten microservices `type: LoadBalancer` provisions ten cloud load balancers and ten bills. Use one Ingress in front of ten ClusterIP Services instead. Ingress is HTTP/S only, though — non-HTTP protocols (Postgres, gRPC streaming over raw TCP, game servers) still need LoadBalancer or a Gateway API implementation.
 
 ---
 
@@ -656,43 +744,111 @@ GOOD: Use Kubernetes Secrets + external secret management (Vault)
 
 ## 11. Debugging Mindset
 
+### The Pod Lifecycle
+
+Before you can debug a pod, you need to know **which stage it is stuck at**. Each stalled state has a different owner and a different fix.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pending: kubectl apply<br/>object written to etcd
+
+    state "Pending" as Pending
+    state "ContainerCreating" as Creating
+    state "Running" as Running
+    state "Succeeded" as Succeeded
+    state "Failed" as Failed
+
+    Pending --> Creating: scheduler bound it to a node
+    Pending --> Pending: ⛔ Unschedulable<br/>no node fits requests,<br/>taint without toleration,<br/>no matching nodeSelector/affinity,<br/>unbound PVC
+
+    Creating --> Running: image pulled,<br/>volumes mounted,<br/>container started
+    Creating --> ImagePullBackOff: ⛔ bad image name/tag,<br/>private registry without<br/>imagePullSecret
+    Creating --> Creating: ⛔ volume won't mount,<br/>missing ConfigMap or Secret
+
+    ImagePullBackOff --> Creating: fixed / retry
+
+    Running --> CrashLoopBackOff: ⛔ container exits repeatedly<br/>(backoff: 10s → 20s → 40s → ... → 5m)
+    CrashLoopBackOff --> Running: it finally stays up
+
+    Running --> OOMKilled: ⛔ exceeded memory limit<br/>exit code 137
+    OOMKilled --> CrashLoopBackOff
+
+    Running --> Running: liveness probe fails<br/>→ kubelet restarts the container<br/><i>same Pod, RESTARTS count +1</i>
+
+    Running --> Succeeded: exit 0 (Jobs)
+    Running --> Failed: non-zero exit,<br/>restartPolicy: Never
+    Running --> Terminating: deleted / evicted / rollout
+    Terminating --> [*]: SIGTERM → grace period → SIGKILL
+
+    Succeeded --> [*]
+    Failed --> [*]
+```
+
+> **💡 Ready ≠ Running.** A pod shows `1/1 Running` only when its **readiness** probe passes. `0/1 Running` means the container is up but failing readiness — so the Service is deliberately not sending it traffic. That's the single most misread line in `kubectl get pods`.
+
 ### K8s Debugging Framework
 
-```
-Pod not running?
-│
-├─ 1. kubectl get pods (check STATUS)
-│     ├─ Pending     → No node has resources → kubectl describe pod
-│     ├─ ImagePull   → Wrong image name/tag → check image reference
-│     ├─ CrashLoop   → App crashing → kubectl logs <pod>
-│     ├─ Error       → Container failed → kubectl logs <pod> --previous
-│     └─ Running     → But not working → check service/ingress
-│
-├─ 2. kubectl describe pod <name>
-│     └─ Events section shows WHY (scheduling, pulling, crashes)
-│
-├─ 3. kubectl logs <pod>
-│     └─ Application-level errors
-│
-├─ 4. kubectl exec -it <pod> -- /bin/sh
-│     └─ Debug from inside the container
-│
-└─ 5. kubectl get events --sort-by='.lastTimestamp'
-      └─ Cluster-wide events timeline
+```mermaid
+flowchart TD
+    S(["Pod isn't working"]) --> G["<code>kubectl get pods</code><br/>read STATUS, READY and RESTARTS"]
+
+    G --> ST{"STATUS?"}
+
+    ST -->|"Pending"| PEND["<code>kubectl describe pod</code> → Events<br/><br/>• <i>Insufficient cpu/memory</i> → lower requests or add nodes<br/>• <i>had taint that pod didn't tolerate</i> → add toleration<br/>• <i>didn't match node selector</i> → fix nodeSelector/affinity<br/>• <i>pod has unbound PVC</i> → check StorageClass"]
+
+    ST -->|"ImagePullBackOff /<br/>ErrImagePull"| IMG["<code>kubectl describe pod</code> → Events<br/><br/>• <i>not found</i> → typo in image name or tag<br/>• <i>unauthorized</i> → missing imagePullSecret<br/>• <i>toomanyrequests</i> → Docker Hub rate limit<br/>Verify: <code>docker pull &lt;same image&gt;</code>"]
+
+    ST -->|"CrashLoopBackOff"| CLB["<code>kubectl logs POD --previous</code><br/><i>--previous is essential — the running<br/>container is a fresh one with no output yet</i>"]
+    CLB --> CLB2{"Logs show anything?"}
+    CLB2 -->|"app error / stack trace"| APPFIX["Application bug, missing env var,<br/>unreachable dependency at startup"]
+    CLB2 -->|"empty, exit 137"| OOM["<b>OOMKilled</b> — check:<br/><code>kubectl describe pod | grep -i -A2 'last state'</code><br/>Raise memory limit, or fix the leak"]
+    CLB2 -->|"empty, exit 0"| PID1["Main process isn't long-running —<br/>same PID 1 rule as Docker"]
+    CLB2 -->|"exit 127 / 126"| CMDERR["Bad command/entrypoint or missing<br/><code>chmod +x</code>. Check the image, not the cluster."]
+
+    ST -->|"Init:0/1 or<br/>PodInitializing"| INIT["<code>kubectl logs POD -c &lt;init-container&gt;</code><br/>An init container is blocking startup"]
+
+    ST -->|"Terminating (stuck)"| TERM["Finalizer or a process ignoring SIGTERM.<br/><code>kubectl describe</code> → check .metadata.finalizers<br/>Last resort: <code>--grace-period=0 --force</code>"]
+
+    ST -->|"Running but READY 0/1"| RDY["<b>Readiness probe is failing.</b><br/><code>kubectl describe pod</code> → 'Readiness probe failed'<br/><br/>• Wrong path or port<br/>• initialDelaySeconds too short for a slow starter<br/>• App genuinely unhealthy — curl it from inside"]
+
+    ST -->|"Running and READY 1/1"| OK["Pod is fine.<br/>➡️ The problem is Service/Ingress/DNS —<br/>see the next flowchart."]
+
+    ALL["🔎 Always also run:<br/><code>kubectl get events --sort-by=.lastTimestamp -A</code><br/>Cluster-level causes (evictions, disk pressure,<br/>failed scheduling) only show up here"]
+
+    style S fill:#ffe0e0,stroke:#c00
+    style OK fill:#e0ffe0,stroke:#0a0
+    style ALL fill:#f0f6ff,stroke:#3366cc
 ```
 
 ### Service Not Reachable?
 
+The pod is healthy but nothing can reach it. Work **outside-in**, and check `endpoints` early — it splits the problem in half.
+
+```mermaid
+flowchart TD
+    S(["Can't reach my service"]) --> EP{"<code>kubectl get endpoints myservice</code><br/>Any addresses listed?"}
+
+    EP -->|"&lt;none&gt;"| NOEP["<b>The Service matches zero pods.</b><br/>Almost always one of:<br/><br/>1. Selector ≠ pod labels — compare:<br/>&nbsp;&nbsp;<code>kubectl get svc myservice -o jsonpath='{.spec.selector}'</code><br/>&nbsp;&nbsp;<code>kubectl get pods --show-labels</code><br/>2. Pods exist but are <b>not Ready</b> — unready pods<br/>&nbsp;&nbsp;are excluded from endpoints by design<br/>3. Wrong namespace"]
+
+    EP -->|"has pod IPs"| PORT{"Do the ports line up?<br/><code>targetPort</code> == container's real listening port?"}
+    PORT -->|"no"| PORTFIX["Fix <code>targetPort</code>.<br/>Note: <code>containerPort</code> is documentation only —<br/>what matters is what the process actually binds."]
+    PORT -->|"yes"| BIND{"Is the app bound to 0.0.0.0,<br/>not 127.0.0.1?"}
+    BIND -->|"127.0.0.1"| BINDFIX["Classic bug: the process only listens on<br/>loopback, so nothing outside the container<br/>can reach it. Bind to 0.0.0.0."]
+    BIND -->|"0.0.0.0"| DIRECT{"Curl the Pod IP directly from another pod:<br/><code>kubectl run tmp --rm -it --image=nicolaka/netshoot<br/>-- curl POD_IP:PORT</code>"}
+
+    DIRECT -->|"fails"| APPPROB["Not a networking problem —<br/>the app isn't serving. Back to pod debugging."]
+    DIRECT -->|"works"| DNS{"Does DNS resolve?<br/><code>nslookup myservice.mynamespace.svc.cluster.local</code>"}
+
+    DNS -->|"fails"| DNSFIX["CoreDNS problem:<br/><code>kubectl -n kube-system get pods -l k8s-app=kube-dns</code><br/><code>kubectl -n kube-system logs -l k8s-app=kube-dns</code><br/>Cross-namespace? Use the FQDN."]
+    DNS -->|"resolves"| NP{"Any NetworkPolicy in this namespace?<br/><code>kubectl get networkpolicy</code>"}
+    NP -->|"yes"| NPFIX["A default-deny policy is blocking you.<br/>Add an ingress rule for the caller."]
+    NP -->|"no"| ING["Service works internally →<br/>the problem is <b>Ingress</b>:<br/>• <code>kubectl describe ingress</code><br/>• ingress-controller logs<br/>• host/path rules, TLS secret, ingressClassName"]
+
+    style S fill:#ffe0e0,stroke:#c00
+    style NOEP fill:#fff4e0,stroke:#cc8800
 ```
-Can't reach my service?
-│
-├─ 1. Does the Pod exist? → kubectl get pods -l app=myapp
-├─ 2. Is the Pod running? → kubectl describe pod
-├─ 3. Do labels match?    → Pod labels must match Service selector
-├─ 4. Right ports?        → targetPort must match containerPort
-├─ 5. DNS working?        → kubectl exec test -- nslookup myservice
-└─ 6. Endpoints exist?    → kubectl get endpoints myservice
-```
+
+> **💡 `kubectl get endpoints` is the fastest triage command in Kubernetes.** Empty means the problem is *above* the Service — labels or readiness. Populated means the problem is *below* it — ports, binding, DNS, policy, or ingress. One command, half the search space gone.
 
 ### `kubectl debug` — Debugging Minimal and Distroless Images
 
@@ -753,6 +909,26 @@ kubectl debug my-pod -it --copy-to=my-pod-debug --container=my-container -- /bin
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[Kubernetes Basics](./labs/lab-01-kubernetes-basics.md)** | Set up a local Kubernetes cluster, deploy applications, expose them with Services, scale horizontally, perform rolling updates and rollbacks — the… |
+| 2 | **[Configuration and Health](./labs/lab-02-configuration-and-health.md)** | Separate configuration from code the way Kubernetes intends, and make your workloads honestly report their own health. |
+| 3 | **[Services, Ingress, and Network Policy](./labs/lab-03-networking-and-ingress.md)** | Understand how a packet actually reaches a pod. |
+| 4 | **[Scaling and Resource Tuning](./labs/lab-04-scaling-and-resources.md)** | Get resource requests and limits right — and learn what each kind of "wrong" looks like from the outside. |
+| 5 | **[RBAC and Pod Security](./labs/lab-05-rbac-and-security.md)** | Lock down a cluster the way a real one is locked down. |
+
+**Portfolio project:**
+
+- [Project: Kubernetes Rollout and Rollback](./projects/project-01-rollout-rollback.md) — Deploy a small application to Kubernetes, update it, intentionally break it, and recover with a rollback.
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:
@@ -783,6 +959,6 @@ With Kubernetes mastered, you've completed the core production skills. Next, you
 
 **Module 12 Complete** ✅
 
-[← Back to Ansible](../11-ansible/) | [Next: Security Basics →](../13-security-basics/)
+[← Back to Ansible](../11-ansible/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: Security Basics →](../13-security-basics/)
 
 </div>

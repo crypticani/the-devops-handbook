@@ -9,6 +9,7 @@
 Every production outage, every scaling failure, and every "it works on my machine" moment traces back to a system design decision. As a DevOps engineer, you don't just run infrastructure — you **design, evaluate, and defend architectural choices** that keep systems reliable, scalable, and recoverable.
 
 **In real-world DevOps work**, you will:
+
 - Evaluate whether a system can handle 10x traffic growth
 - Design deployment architectures that survive component failures
 - Choose between scaling vertically or horizontally
@@ -591,6 +592,22 @@ GOOD: Metrics, logging, and tracing are part of the architecture
 
 **Q: Walk me through a disaster recovery plan.**
 > Define RPO and RTO based on business requirements. For a typical web application: RPO of 5 minutes (continuous DB replication), RTO of 15 minutes (warm standby). Maintain a replica environment in a second region. Automate failover with DNS and health checks. Test the DR plan quarterly with actual failover drills — an untested plan is not a plan. Document the runbook so any on-call engineer can execute it.
+
+---
+
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[High Availability and Load Balancing](./labs/lab-01-ha-load-balancing.md)** | Build a load-balanced, highly available web application using Nginx as a reverse proxy with health checks, and simulate real-world failure scenarios… |
+
+**Portfolio project:**
+
+- [Project: Architecture Design Document](./projects/project-01-architecture-design-doc.md) — Design a production-ready architecture for a web application that must handle growing traffic, survive component failures, and be operationally…
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 
 ---
 

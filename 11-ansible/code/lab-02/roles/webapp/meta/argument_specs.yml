@@ -1,0 +1,38 @@
+---
+argument_specs:
+  main:
+    short_description: Install and configure the demo web application
+    description:
+      - Creates a service account, deploys the application, renders its config
+        from a template, and manages the service lifecycle.
+    options:
+      webapp_name:
+        type: str
+        required: true
+        description: Application name, used for paths and the service unit.
+      webapp_version:
+        type: str
+        required: true
+        description: Version string, rendered into the config and the health response.
+      webapp_port:
+        type: int
+        default: 8000
+        description: TCP port the application binds.
+      webapp_log_level:
+        type: str
+        default: info
+        choices: [debug, info, warning, error]
+      webapp_workers:
+        type: int
+        default: 2
+        description: Worker process count.
+      webapp_secret_key:
+        type: str
+        required: true
+        no_log: true          # ⭐ never printed, even at -vvv
+        description: Application secret key. Supply from Vault.
+      webapp_db_password:
+        type: str
+        required: true
+        no_log: true
+        description: Database password. Supply from Vault.

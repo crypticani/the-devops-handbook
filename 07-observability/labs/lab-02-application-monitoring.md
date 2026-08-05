@@ -27,6 +27,22 @@ Treat the validation section as the minimum proof that the lab worked.
 
 ---
 
+## 📂 Lab Files
+
+Every file this lab creates also exists as a real, CI-validated file in
+[`../code/lab-02/`](../code/lab-02/) (6 files).
+
+```bash
+# Option A — type them out yourself (recommended the first time; that's the learning)
+# Option B — start from the reference copies
+cp -r /path/to/the-devops-handbook/07-observability/code/lab-02/. .
+```
+
+Use Option B when you're comparing against a known-good version, or when something
+won't start and you need to rule out a typo. See [`../code/README.md`](../code/README.md).
+
+---
+
 ## 🔬 Exercise 1: Build an Instrumented Application
 
 ### Step 1: Create the Project Structure
@@ -297,10 +313,11 @@ docker compose up -d --build
 ```
 
 Verify:
-- **App**: http://localhost:8080/health → `{"status": "healthy"}`
-- **App metrics**: http://localhost:8080/metrics → raw Prometheus metrics
-- **Prometheus**: http://localhost:9090 → Targets → flask-app should be UP
-- **Grafana**: http://localhost:3000
+
+- **App**: <http://localhost:8080/health> → `{"status": "healthy"}`
+- **App metrics**: <http://localhost:8080/metrics> → raw Prometheus metrics
+- **Prometheus**: <http://localhost:9090> → Targets → flask-app should be UP
+- **Grafana**: <http://localhost:3000>
 
 **✅ Checkpoint:** All services running, `/metrics` endpoint returning counter and histogram data.
 
@@ -324,7 +341,7 @@ echo "Traffic generator running in background (PID: $!)"
 
 ### Step 2: Query in Prometheus UI
 
-Go to http://localhost:9090 and run these queries:
+Go to <http://localhost:9090> and run these queries:
 
 ```promql
 # Total requests (raw counter)
@@ -480,7 +497,6 @@ cd .. && rm -rf app-monitoring-lab
 - [ ] Explain why you use `rate()` on counters but not on gauges
 - [ ] Describe what high-cardinality labels are and why they're dangerous
 - [ ] Debug a "target down" scenario using Prometheus
-
 
 ## 📝 What to Commit
 

@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: apps
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+    # ── Path-based routing on one host ──
+    - host: apps.local
+      http:
+        paths:
+          - path: /api(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: api
+                port: {number: 8080}
+          - path: /()(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: web
+                port: {number: 80}
+    # ── Host-based routing ──
+    - host: api.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api
+                port: {number: 8080}

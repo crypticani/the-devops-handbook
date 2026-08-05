@@ -1,0 +1,6 @@
+# syntax=docker/dockerfile:1
+FROM alpine:3.20
+# ⭐ The secret is mounted for THIS RUN only. It is never a layer.
+RUN --mount=type=secret,id=npmrc,target=/root/.npmrc \
+    echo "token starts with: $(head -c 20 /root/.npmrc)" > /build-evidence.txt
+CMD ["cat", "/build-evidence.txt"]

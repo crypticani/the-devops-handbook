@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe-content
+data:
+  # /healthz always returns 200. /ready we will toggle by hand.
+  default.conf: |
+    server {
+      listen 80;
+      location / {
+        return 200 "serving\n";
+        add_header Content-Type text/plain;
+      }
+      location /healthz {
+        return 200 "alive\n";
+        add_header Content-Type text/plain;
+      }
+      location /ready {
+        # Serves the file if it exists, 503 if it doesn't
+        root /var/ready;
+        try_files /ready.txt =503;
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: probes-demo
+  labels: {app: probes-demo}
+spec:
+  replicas: 3
+  selector:
+    matchLabels: {app: probes-demo}
+  template:
+    metadata:
+      labels: {app: probes-demo}
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27-alpine
+          ports: [{containerPort: 80, name: http}]
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              mkdir -p /var/ready
+              # Simulate a slow start: not ready for the first 15 seconds
+              (sleep 15 && echo ok > /var/ready/ready.txt) &
+              exec nginx -g 'daemon off;'
+
+          startupProbe:                # ⭐ gives the app up to 60s to boot
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 2
+            failureThreshold: 30
+
+          readinessProbe:              # ⭐ gates TRAFFIC
+            httpGet: {path: /ready, port: http}
+            periodSeconds: 3
+            failureThreshold: 2
+            successThreshold: 1
+
+          livenessProbe:               # ⭐ gates RESTART — cheap, no dependencies
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 10
+            failureThreshold: 3
+
+          volumeMounts:
+            - {name: conf, mountPath: /etc/nginx/conf.d}
+          resources:
+            requests: {cpu: 50m, memory: 32Mi}
+            limits:   {memory: 96Mi}
+      volumes:
+        - name: conf
+          configMap: {name: probe-content}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: probes-demo
+spec:
+  selector: {app: probes-demo}
+  ports: [{port: 80, targetPort: http}]

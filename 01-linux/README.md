@@ -4,11 +4,18 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 **Linux runs the internet.** Over 96% of the world's top web servers run Linux. Every Docker container is Linux. Every CI/CD runner is Linux. Every Kubernetes node is Linux. AWS, GCP, and Azure all default to Linux instances.
 
 **In real-world DevOps work**, you will:
+
 - SSH into servers to troubleshoot production issues at 3 AM
 - Write scripts that manage hundreds of servers
 - Read and parse logs that are thousands of lines long
@@ -1063,6 +1070,7 @@ Problem reported
 ### Common Scenarios
 
 **"Service won't start"**
+
 ```bash
 # 1. Check the status
 sudo systemctl status myservice
@@ -1078,6 +1086,7 @@ journalctl -u myservice --no-pager -n 50
 ```
 
 **"Server is slow"**
+
 ```bash
 # 1. Check load average
 uptime
@@ -1103,18 +1112,21 @@ ps aux --sort=-%mem | head -10
 > 🔐 Security is embedded throughout this handbook. Here are Linux-specific practices.
 
 ### SSH Hardening
+
 - Disable root login via SSH
 - Use key-based authentication only
 - Change the default SSH port
 - Use `fail2ban` to block brute force attempts
 
 ### File Permissions
+
 - Follow principle of least privilege
 - Never use `chmod 777`
 - Protect sensitive files (keys, configs, secrets)
 - Use proper ownership (`chown`)
 
 ### System Updates
+
 ```bash
 # Debian/Ubuntu
 sudo apt update && sudo apt upgrade -y
@@ -1128,6 +1140,7 @@ sudo systemctl enable --now dnf-automatic.timer
 ```
 
 ### Firewall Basics
+
 ```bash
 # Debian/Ubuntu with UFW
 sudo ufw enable
@@ -1181,6 +1194,25 @@ sudo firewall-cmd --list-all
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[Linux Filesystem Mastery](./labs/lab-01-filesystem-mastery.md)** | Navigate the Linux filesystem with confidence, understand the hierarchy, manage files and directories, and develop the muscle memory for commands… |
+| 2 | **[Permissions, Users, and Security](./labs/lab-02-permissions-users.md)** | Master Linux permissions, user management, and security fundamentals. |
+| 3 | **[Process Management & Systemd Services](./labs/lab-03-processes-services.md)** | Master process management and systemd — the skills you'll use to monitor running applications, debug slow servers, manage services, and create your… |
+| 4 | **[Text Processing & Log Analysis](./labs/lab-04-text-processing.md)** | Master the Linux text processing pipeline — the combination of `grep`, `awk`, `sed`, `sort`, `uniq`, and pipes that lets you analyze logs, extract… |
+
+**Portfolio project:**
+
+- [Project: Linux Server Health Report Generator](./projects/project-01-health-report.md)
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:
@@ -1211,6 +1243,6 @@ You now have solid Linux fundamentals. Next, we tackle the network layer — und
 
 **Module 01 Complete** ✅
 
-[← Back to Foundations](../00-foundations/) | [Next: Networking →](../02-networking/)
+[← Back to Foundations](../00-foundations/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: Networking →](../02-networking/)
 
 </div>

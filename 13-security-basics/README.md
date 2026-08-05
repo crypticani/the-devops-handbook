@@ -4,11 +4,18 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 A single misconfigured S3 bucket, a leaked secret in git, or an unpatched container image can end careers and companies. Security in DevOps is **not a bolt-on** — it's embedded in every tool and workflow you've learned so far. This module consolidates security practices across the entire stack.
 
 **In real-world DevOps work**, you will:
+
 - Manage secrets securely across CI/CD, containers, and cloud
 - Harden Linux servers and SSH configurations
 - Scan container images for vulnerabilities
@@ -650,6 +657,24 @@ INCIDENT DETECTED!
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[Security Scanning](./labs/lab-01-security-scanning.md)** | Integrate security scanning into your DevOps workflow. |
+| 2 | **[Secrets Management](./labs/lab-02-secrets-management.md)** | Stop putting secrets where they can be read. |
+| 3 | **[Supply Chain Security](./labs/lab-03-supply-chain-security.md)** | Answer three questions about the software you ship: **what is actually in it**, **did we really build it**, and **can anything else get deployed**. |
+
+**Portfolio project:**
+
+- [Project: Security Scan and Triage Report](./projects/project-01-security-scan-triage.md) — Run security scans against a small application, container image, or infrastructure config.
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:
@@ -680,6 +705,6 @@ With security practices consolidated, you're ready to think at the system level 
 
 **Module 13 Complete** ✅
 
-[← Back to Kubernetes](../12-kubernetes/) | [Next: System Design →](../14-system-design-devops/)
+[← Back to Kubernetes](../12-kubernetes/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: System Design →](../14-system-design-devops/)
 
 </div>

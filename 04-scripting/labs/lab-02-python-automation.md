@@ -29,6 +29,22 @@ Treat the validation section as the minimum proof that the lab worked.
 
 ---
 
+## 📂 Lab Files
+
+Every file this lab creates also exists as a real, CI-validated file in
+[`../code/lab-02/`](../code/lab-02/) (2 files).
+
+```bash
+# Option A — type them out yourself (recommended the first time; that's the learning)
+# Option B — start from the reference copies
+cp -r /path/to/the-devops-handbook/04-scripting/code/lab-02/. .
+```
+
+Use Option B when you're comparing against a known-good version, or when something
+won't start and you need to rule out a typo. See [`../code/README.md`](../code/README.md).
+
+---
+
 ## 🔬 Exercise 1: Multi-Service Health Checker
 
 ```bash
@@ -254,6 +270,263 @@ fi
 
 ---
 
+## 🧨 Break It: Four Ways an Automation Script Bites You
+
+Both scripts work against friendly inputs. Production inputs are not friendly.
+
+### Scenario 1: The Hang With No Timeout
+
+**Break it:**
+
+```bash
+cd ~/devops-labs/module-04/python
+
+# Add an endpoint that accepts the connection then never responds.
+# 10.255.255.1 is non-routable — the connection attempt just hangs.
+python3 - <<'EOF'
+import re, pathlib
+p = pathlib.Path("health_checker.py")
+s = p.read_text()
+s = s.replace(
+    '{"name": "Google DNS",',
+    '{"name": "Black Hole", "url": "http://10.255.255.1:8080", "timeout": None},\n    {"name": "Google DNS",'
+)
+pathlib.Path("health_checker_broken.py").write_text(s)
+EOF
+
+time python3 health_checker_broken.py       # Ctrl-C when you get bored
+```
+
+**Symptom:** The script never returns. In cron, the next scheduled run starts anyway — after an hour you have 12 hung Python processes holding sockets.
+
+**Investigate:**
+
+```bash
+# In another terminal, while it hangs:
+ps aux | grep health_checker
+ss -tnp | grep python                 # stuck in SYN-SENT
+py-spy dump --pid <PID> 2>/dev/null   # or: kill -QUIT <PID> for a traceback
+```
+
+**Root cause:** `timeout=None` means "wait forever". `requests` has **no default timeout** — omitting the argument is exactly as dangerous as passing `None`. `ThreadPoolExecutor` will not force a worker to stop, so one hung request pins a thread indefinitely.
+
+**Fix:**
+
+```python
+# Always pass an explicit tuple: (connect_timeout, read_timeout)
+response = requests.get(url, timeout=(3.05, 10))
+
+# And bound the whole batch, not just each request
+for future in as_completed(futures, timeout=60):
+    ...
+# plus, in cron:  timeout 120 python3 health_checker.py
+```
+
+```bash
+rm -f health_checker_broken.py
+```
+
+---
+
+### Scenario 2: The Log Line That Doesn't Match
+
+**Break it:**
+
+```bash
+mkdir -p /tmp/pylab && cd /tmp/pylab
+cat > messy.log <<'EOF'
+10.0.0.1 - - [04/Aug/2026:09:00:00 +0000] "GET /api/users HTTP/1.1" 200 512
+this line is not a log line at all
+10.0.0.2 - - [04/Aug/2026:09:00:01 +0000] "POST /api/orders HTTP/1.1" 500 128
+::1 - - [04/Aug/2026:09:00:02 +0000] "GET /health HTTP/1.1" 200 -
+10.0.0.3 - - [04/Aug/2026:09:00:03 +0000] "GET /a b c HTTP/1.1" 404 0
+
+EOF
+
+python3 ~/devops-labs/module-04/python/log_analyzer.py /tmp/pylab/messy.log
+```
+
+**Symptom:** Either a traceback (`IndexError`, `ValueError: invalid literal for int()`), or — worse — it completes and silently reports numbers that are wrong because malformed lines were dropped without a word.
+
+**Investigate:**
+
+```bash
+python3 -c "
+import re
+pat = re.compile(r'(\S+) \S+ \S+ \[([^]]+)\] \"(\S+) (\S+)[^\"]*\" (\d{3}) (\S+)')
+for i, line in enumerate(open('/tmp/pylab/messy.log'), 1):
+    if not pat.match(line.strip()):
+        print(f'line {i} did NOT match: {line.strip()[:60]!r}')
+"
+```
+
+**Root cause:** Real logs contain blank lines, IPv6 addresses, `-` where a byte count should be, request paths with spaces, and truncated writes. A regex tuned to clean sample data throws or silently skips.
+
+**Fix — count what you skip, and never let a parse failure be invisible:**
+
+```python
+parsed = skipped = 0
+for lineno, line in enumerate(fh, 1):
+    line = line.strip()
+    if not line:
+        continue
+    m = LOG_PATTERN.match(line)
+    if not m:
+        skipped += 1
+        if skipped <= 5:
+            log.warning("line %d unparseable: %.60s", lineno, line)
+        continue
+    size = m.group(6)
+    bytes_sent = int(size) if size.isdigit() else 0    # handle '-'
+    parsed += 1
+
+if skipped:
+    log.warning("skipped %d of %d lines (%.1f%%)", skipped, parsed + skipped,
+                100 * skipped / (parsed + skipped))
+    if skipped > 0.1 * (parsed + skipped):
+        raise SystemExit("more than 10% of lines unparseable — wrong log format?")
+```
+
+> 💡 A parser that silently drops 40% of your log lines produces a beautiful, confident, completely wrong report. **Always emit the skip count.**
+
+---
+
+### Scenario 3: The Memory Blow-Up
+
+**Break it:**
+
+```bash
+cd /tmp/pylab
+# Generate a 500 MB log
+python3 -c "
+import random
+with open('huge.log','w') as f:
+    for i in range(4_000_000):
+        f.write(f'10.0.0.{i%254+1} - - [04/Aug/2026:09:00:00 +0000] \"GET /p/{i} HTTP/1.1\" {random.choice([200,200,200,404,500])} {random.randint(100,5000)}\n')
+"
+ls -lh huge.log
+
+# The anti-pattern — watch RSS climb
+/usr/bin/time -v python3 -c "
+lines = open('/tmp/pylab/huge.log').readlines()   # ❌ whole file into a list
+print(len(lines))
+" 2>&1 | grep -E 'Maximum resident|Elapsed'
+```
+
+**Symptom:** Several GB of RSS for a 500 MB file, or the process is **OOMKilled** (exit 137) on a small container.
+
+**Investigate:**
+
+```bash
+/usr/bin/time -v python3 -c "
+total = 0
+with open('/tmp/pylab/huge.log') as fh:
+    for line in fh:            # ✅ streams, constant memory
+        total += 1
+print(total)
+" 2>&1 | grep -E 'Maximum resident|Elapsed'
+```
+
+Compare the two `Maximum resident set size` values.
+
+**Root cause:** `.readlines()`, `.read()`, and `list(fh)` materialise the whole file. Python string objects carry ~49 bytes of overhead each, so a list of 4M lines costs far more than the file on disk.
+
+**Fix:** iterate the file object directly; use `collections.Counter` for aggregation instead of accumulating rows; if you must hold results, cap them (`heapq.nlargest`) rather than sorting everything.
+
+```bash
+rm -f /tmp/pylab/huge.log
+```
+
+---
+
+### Scenario 4: The Exception That Ate the Error
+
+**Break it:**
+
+```bash
+cd /tmp/pylab
+cat > swallow.py <<'EOF'
+#!/usr/bin/env python3
+import requests
+
+def get_status(url):
+    try:
+        r = requests.get(url, timeout=5)
+        return r.json()["status"]
+    except Exception:
+        return "unknown"        # ❌ every failure looks identical
+
+for url in ["https://www.githubstatus.com/api/v2/status.json",
+            "https://httpbin.org/status/500",
+            "http://does-not-exist.invalid"]:
+    print(f"{url:<55} → {get_status(url)}")
+EOF
+python3 swallow.py
+```
+
+**Symptom:** Everything reports `unknown`. You cannot tell a DNS failure from a 500 from a JSON schema change — and your health check reports "unknown" as if it were a normal state, so nothing alerts.
+
+**Investigate:**
+
+```bash
+python3 - <<'EOF'
+import requests, traceback
+for url in ["https://httpbin.org/status/500", "http://does-not-exist.invalid"]:
+    try:
+        r = requests.get(url, timeout=5); r.raise_for_status(); print(r.json())
+    except Exception:
+        print(f"--- {url}"); traceback.print_exc()
+EOF
+```
+
+**Root cause:** A bare `except Exception` with a generic fallback converts every distinct failure into one indistinguishable value. It also swallows `KeyError` from a changed API schema — a bug in *your* code, disguised as a service being down.
+
+**Fix — catch specifically, and always call `raise_for_status()`:**
+
+```python
+def get_status(url):
+    try:
+        r = requests.get(url, timeout=(3.05, 10))
+        r.raise_for_status()
+        return {"state": "up", "status": r.json()["status"]}
+    except requests.exceptions.Timeout:
+        return {"state": "down", "reason": "timeout"}
+    except requests.exceptions.ConnectionError as e:
+        return {"state": "down", "reason": f"connection: {e.__class__.__name__}"}
+    except requests.exceptions.HTTPError as e:
+        return {"state": "down", "reason": f"http {e.response.status_code}"}
+    except (ValueError, KeyError) as e:      # bad JSON / schema change = OUR bug
+        log.exception("unexpected response shape from %s", url)
+        return {"state": "error", "reason": f"parse: {e}"}
+```
+
+```bash
+cd ~ && rm -rf /tmp/pylab
+```
+
+---
+
+### Prevention Checklist
+
+```bash
+cd ~/devops-labs/module-04/python
+ruff check .                       # catches bare excepts, unused vars, more
+mypy health_checker.py             # catches None where a number is expected
+bandit -r .                        # flags requests-without-timeout, among others
+```
+
+| Failure mode | Guard |
+|--------------|-------|
+| Hang forever | Explicit `timeout=(connect, read)` on **every** network call |
+| Malformed input | Count and report skipped records; fail if the skip rate is high |
+| Memory blow-up | Stream files; aggregate with `Counter`; never `.readlines()` a log |
+| Swallowed error | Catch specific exceptions; `raise_for_status()`; log the traceback |
+| Silent partial success | Distinguish "healthy", "unhealthy", and "could not determine" |
+
+**Write this up** in `failure-notes.md` — symptom, investigation, root cause, fix for each.
+
+---
+
 ## ✅ Validation
 
 - [ ] Health checker runs and reports status for all services
@@ -266,7 +539,6 @@ fi
 ---
 
 [← Previous Lab](./lab-01-bash-scripting.md) | [Back to Module README](../README.md)
-
 
 ## 📝 What to Commit
 

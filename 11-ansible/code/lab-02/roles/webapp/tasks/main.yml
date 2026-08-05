@@ -1,0 +1,89 @@
+---
+- name: Install runtime prerequisites
+  ansible.builtin.apt:
+    name: [python3-minimal, curl, procps]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  register: webapp_apt
+  retries: 3
+  delay: 5
+  until: webapp_apt is succeeded
+
+- name: Create the service group
+  ansible.builtin.group:
+    name: "{{ webapp_group }}"
+    system: true
+    state: present
+
+- name: Create the service account
+  ansible.builtin.user:
+    name: "{{ webapp_user }}"
+    group: "{{ webapp_group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    home: "{{ webapp_root }}"
+    create_home: false
+    state: present
+
+- name: Create the application directory
+  ansible.builtin.file:
+    path: "{{ webapp_root }}"
+    state: directory
+    owner: "{{ webapp_user }}"
+    group: "{{ webapp_group }}"
+    mode: "0750"              # ⭐ quoted — unquoted 0750 is decimal 750
+
+- name: Deploy the application
+  ansible.builtin.template:
+    src: app.py.j2
+    dest: "{{ webapp_root }}/app.py"
+    owner: "{{ webapp_user }}"
+    group: "{{ webapp_group }}"
+    mode: "0640"
+    validate: "python3 -m py_compile %s"     # ⭐ never write a file that won't parse
+  notify: restart webapp
+
+- name: Render the configuration
+  ansible.builtin.template:
+    src: config.ini.j2
+    dest: "{{ _webapp_config_path }}"
+    owner: "{{ webapp_user }}"
+    group: "{{ webapp_group }}"
+    mode: "0600"              # contains secrets
+  no_log: true                # ⭐ --diff would otherwise print the rendered secrets
+  notify: restart webapp
+
+- name: Install the start script
+  ansible.builtin.template:
+    src: start.sh.j2
+    dest: "{{ webapp_root }}/start.sh"
+    owner: "{{ webapp_user }}"
+    group: "{{ webapp_group }}"
+    mode: "0750"
+  notify: restart webapp
+
+- name: Ensure the application is running
+  ansible.builtin.shell:
+    cmd: |
+      if [ -f {{ _webapp_pid_file }} ] && kill -0 "$(cat {{ _webapp_pid_file }})" 2>/dev/null; then
+        echo "already-running"
+      else
+        setsid {{ webapp_root }}/start.sh >/var/log/webapp.log 2>&1 &
+        echo $! > {{ _webapp_pid_file }}
+        echo "started"
+      fi
+    executable: /bin/bash
+  register: webapp_start
+  changed_when: "'started' in webapp_start.stdout"     # ⭐ honest change reporting
+
+- name: Wait for the application to become healthy
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ webapp_port }}{{ webapp_health_path }}"
+    status_code: 200
+  register: webapp_health_result
+  retries: "{{ webapp_health_retries }}"
+  delay: "{{ webapp_health_delay }}"
+  until: _health.status == 200
+  changed_when: false          # ⭐ a check must never report changed
+  check_mode: false            # and must run even under --check

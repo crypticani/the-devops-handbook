@@ -1,0 +1,26 @@
+# ⭐ A top-level extension field: shared settings without a duplicate `hostname` key
+x-web: &web
+  image: python:3.12-slim
+  command: sleep infinity
+  networks: [labnet]
+
+services:
+  web1:
+    <<: *web
+    hostname: web1        # the role's health endpoint reports this; tests assert on it
+  web2:
+    <<: *web
+    hostname: web2
+  web3:
+    <<: *web
+    hostname: web3
+  lb:
+    image: haproxy:2.9-alpine
+    hostname: lb
+    ports: ["8080:8080", "8404:8404"]
+    volumes:
+      - ./files/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    networks: [labnet]
+    depends_on: [web1, web2, web3]
+networks:
+  labnet:

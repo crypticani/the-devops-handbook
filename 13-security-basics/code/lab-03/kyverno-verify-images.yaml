@@ -1,0 +1,51 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-signatures
+spec:
+  validationFailureAction: Enforce        # Audit first, then Enforce
+  background: false
+  rules:
+    - name: require-signature
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: ["production", "staging"]
+      verifyImages:
+        - imageReferences: ["ghcr.io/myorg/*"]
+          mutateDigest: true              # ⭐ rewrites the tag to the verified digest
+          required: true
+          attestors:
+            - entries:
+                - keyless:
+                    subject: "https://github.com/myorg/*"
+                    issuer: "https://token.actions.githubusercontent.com"
+
+    - name: require-sbom-attestation
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: ["production"]
+      verifyImages:
+        - imageReferences: ["ghcr.io/myorg/*"]
+          attestations:
+            - predicateType: https://spdx.dev/Document
+              attestors:
+                - entries:
+                    - keyless:
+                        subject: "https://github.com/myorg/*"
+                        issuer: "https://token.actions.githubusercontent.com"
+
+    - name: no-latest-tag
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: "Deploy an immutable digest, not a mutable tag."
+        pattern:
+          spec:
+            containers:
+              - image: "*@sha256:*"

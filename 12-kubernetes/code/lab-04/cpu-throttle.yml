@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: cpu-throttle}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: cpu-throttle}}
+  template:
+    metadata: {labels: {app: cpu-throttle}}
+    spec:
+      containers:
+        - name: burner
+          image: python:3.12-alpine
+          command: ["python3","-u","-c"]
+          args:
+            - |
+              import time
+              while True:
+                  t0 = time.time()
+                  x = 0
+                  for _ in range(3_000_000):
+                      x += 1
+                  print(f"work unit took {time.time()-t0:.3f}s", flush=True)
+          resources:
+            requests: {cpu: 50m,  memory: 32Mi}
+            limits:   {cpu: 100m, memory: 64Mi}    # ⭐ 10% of one core

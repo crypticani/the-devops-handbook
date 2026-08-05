@@ -7,12 +7,15 @@ Compile your DevOps learning journey into an interview-ready portfolio. This is 
 ## Deliverables
 
 ### 1. Portfolio Repository
+
 - A public GitHub repo with pinned visibility
 - Professional README with links to each project
 - Consistent structure across all project directories
 
 ### 2. Technical Talking Points
+
 For each capstone project (Module 15), prepare written answers to:
+
 - What problem does this solve?
 - Why did you choose this architecture?
 - What was the hardest debugging challenge?
@@ -20,13 +23,17 @@ For each capstone project (Module 15), prepare written answers to:
 - How does it handle failure?
 
 ### 3. STAR Stories (Minimum 3)
+
 Write out 3 behavioral stories from your learning experience:
+
 - A time you debugged a difficult production-like issue
 - A time you learned a new technology under time pressure
 - A time you improved a process or automation
 
 ### 4. System Design Practice
+
 Pick one system from your projects and prepare a 10-minute whiteboard-style walkthrough:
+
 - Requirements and constraints
 - High-level architecture
 - Deep dive on one component
@@ -34,7 +41,9 @@ Pick one system from your projects and prepare a 10-minute whiteboard-style walk
 - Operational concerns (monitoring, deployment, DR)
 
 ### 5. Technical Cheat Sheet
+
 A personal reference document covering:
+
 - Key commands you use frequently (kubectl, docker, terraform, git)
 - Common debugging workflows (pod won't start, service unreachable, disk full)
 - Architecture patterns you can reference (HA, caching, scaling)
@@ -50,6 +59,7 @@ A personal reference document covering:
 ## Failure Scenario
 
 Have someone ask you an unexpected question about one of your projects — something you didn't prepare for. Document:
+
 - The question
 - How you handled it in the moment
 - What you'd research afterward

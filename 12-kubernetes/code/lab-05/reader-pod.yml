@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata: {name: reader}
+spec:
+  serviceAccountName: app-reader
+  containers:
+    - name: kubectl
+      image: bitnami/kubectl:latest
+      command: ["sleep", "3600"]
+      resources:
+        requests: {cpu: 25m, memory: 32Mi}
+        limits:   {memory: 128Mi}

@@ -85,24 +85,31 @@ A simple application for practicing Git workflows.
 ```bash
 python3 src/app.py
 ```
+
 README
 
 # Check status — all files are "untracked"
+
 git status
 
 # Stage files individually (understand what you're committing)
+
 git add README.md
 git status
+
 # README.md is now in "Changes to be committed" (staged)
 
 git add src/app.py
 git add config/settings.yaml
 
 # Commit
+
 git commit -m "feat: initial project structure with app and config"
 
 # View the commit
+
 git log --oneline
+
 ```
 
 ### Step 3: Making Changes and Seeing Diffs
@@ -384,7 +391,6 @@ git diff HEAD~2..HEAD -- config/settings.yaml
 - [ ] Use `git reflog` to recover lost work
 - [ ] Use `git blame` and `git log` to investigate changes
 - [ ] Explain when to use merge vs rebase
-
 
 ## 📝 What to Commit
 

@@ -1,0 +1,5 @@
+FROM alpine:3.20
+ENV API_TOKEN=sk-live-baked-into-the-image-forever
+ARG BUILD_SECRET=arg-secrets-are-also-visible
+RUN echo "using $BUILD_SECRET during build" > /tmp/build.log
+CMD ["sleep", "3600"]

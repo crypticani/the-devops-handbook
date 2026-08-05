@@ -9,6 +9,7 @@
 You have the skills. Now you need to **communicate them under pressure**. DevOps interviews combine technical depth, operational judgment, and the ability to think through ambiguous problems in real time. This module prepares you for all three.
 
 **DevOps interviews typically include**:
+
 - Technical knowledge questions (tools, concepts, protocols)
 - Scenario-based problems (debug this, design that)
 - System design discussions (architecture trade-offs)
@@ -79,6 +80,7 @@ KEY PRINCIPLE:
 ### Networking
 
 **Q: What happens when you type a URL in a browser?**
+>
 > 1) DNS resolution: browser cache → OS cache → recursive resolver → authoritative DNS. 2) TCP connection: three-way handshake (SYN, SYN-ACK, ACK). 3) TLS handshake if HTTPS. 4) HTTP request sent. 5) Server processes and returns response. 6) Browser renders the page. In DevOps context, issues can occur at any layer — DNS misconfiguration, firewall blocking ports, expired TLS certificates, application errors.
 
 **Q: Explain the difference between TCP and UDP.**
@@ -117,6 +119,7 @@ KEY PRINCIPLE:
 > A Deployment manages a ReplicaSet, which manages Pods. When you update a Deployment, K8s creates a new ReplicaSet with updated pods while scaling down the old one (rolling update). If the new pods fail health checks, the rollout pauses. You can rollback with `kubectl rollout undo`. The Deployment controller ensures the desired state matches actual state continuously.
 
 **Q: How do you debug a pod that won't start?**
+>
 > 1) `kubectl get pods` — check status (Pending, CrashLoopBackOff, ImagePullBackOff). 2) `kubectl describe pod <name>` — check events for errors (scheduling, image pull, volume mount). 3) `kubectl logs <name>` — check application logs (add `--previous` for crashed containers). 4) Common causes: wrong image tag, insufficient resources, failed readiness probe, missing ConfigMap/Secret, node scheduling constraints.
 
 ### Monitoring & Logging
@@ -179,11 +182,13 @@ FRAMEWORK: Symptom → Scope → Isolate → Root Cause → Fix → Prevent
 ### Scenario 3: Security Incident
 
 **Q: "You discover that database credentials were committed to a public GitHub repo 3 hours ago. What do you do?"**
+>
 > 1) Immediately rotate the database credentials. 2) Revoke the old credentials. 3) Check database audit logs for unauthorized access in the 3-hour window. 4) Update all services that use those credentials. 5) Remove credentials from git history (BFG or git filter-repo). 6) Force-push (coordinate with team). 7) Add pre-commit hooks (gitleaks) to prevent recurrence. 8) Document the incident and conduct a blameless review.
 
 ### Scenario 4: Capacity Planning
 
 **Q: "Your application currently handles 1,000 requests per second. Marketing says traffic will 5x in 3 months due to a product launch. How do you prepare?"**
+>
 > 1) Load test current capacity — find the actual breaking point, not the theoretical one. 2) Identify bottlenecks: database connection limits, CPU-bound processing, memory per connection. 3) Plan horizontal scaling for stateless tiers (app servers behind load balancer, auto-scaling). 4) Plan vertical scaling or read replicas for the database. 5) Add caching where appropriate (Redis for hot data, CDN for static assets). 6) Set up auto-scaling policies with appropriate metrics. 7) Run load tests at 5x and 10x to validate. 8) Set up alerting at 60% capacity so you know before users do.
 
 ---
@@ -341,6 +346,22 @@ GOOD: "First I'd check if the issue is isolated to one server
 - [ ] Discuss trade-offs, not just solutions
 - [ ] Say "I don't know, but here's how I'd find out" when stuck
 - [ ] Be specific — use real numbers, real tool names, real experiences
+
+---
+
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[Mock Incident Debugging](./labs/lab-01-mock-incident-debugging.md)** | Practice diagnosing and resolving simulated production incidents using Docker. |
+
+**Portfolio project:**
+
+- [Project: Interview Portfolio](./projects/project-01-interview-portfolio.md) — Compile your DevOps learning journey into an interview-ready portfolio.
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 
 ---
 

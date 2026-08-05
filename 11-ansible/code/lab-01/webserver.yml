@@ -1,0 +1,49 @@
+---
+- name: Configure Web Servers
+  hosts: webservers
+  gather_facts: true
+
+  tasks:
+    - name: Update apt cache on Debian/Ubuntu
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+    - name: Install required packages on any supported Linux family
+      package:
+        name:
+          - nginx
+          - curl
+          - htop
+        state: present
+
+    - name: Deploy custom index page
+      copy:
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <body>
+            <h1>Hello from Ansible!</h1>
+            <p>Server: {{ inventory_hostname }}</p>
+            <p>OS: {{ ansible_distribution }} {{ ansible_distribution_version }}</p>
+            <p>Managed by Ansible</p>
+          </body>
+          </html>
+        dest: /var/www/html/index.html
+        mode: "0644"
+
+    - name: Start Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Verify Nginx is running
+      command: curl -s http://localhost
+      register: result
+      changed_when: false
+
+    - name: Show web page content
+      debug:
+        var: result.stdout_lines

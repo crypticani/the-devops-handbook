@@ -4,11 +4,18 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 Metrics (Module 07) tell you a service has a 5% error rate. Logs tell you **exactly which requests failed and why** — a stack trace, a malformed payload, a database timeout. Without centralized logging, debugging production issues means SSH-ing into individual servers and grep-ing through files — it doesn't scale.
 
 **In real-world DevOps work**, you will:
+
 - Set up centralized logging so all services ship logs to one place
 - Use the ELK Stack (Elasticsearch, Logstash, Kibana) for enterprise logging
 - Use Loki + Grafana as a lightweight alternative
@@ -78,6 +85,7 @@ Without centralized logging:
 ```
 
 **Benefits:**
+
 - **One place** to search all logs across all services
 - **Persistence** — logs survive container restarts and server failures
 - **Correlation** — find all logs for a specific request ID across services
@@ -184,6 +192,7 @@ logger.error("Payment failed", extra={"_order_id": 4521, "_error": "card_decline
 ```
 
 **Production rules:**
+
 - Default level: **INFO** (captures business events + errors)
 - Enable **DEBUG** temporarily for troubleshooting specific issues
 - Every **ERROR** should be actionable — if nothing to do, it's a WARNING
@@ -577,6 +586,23 @@ Alert fires: "High error rate on order-service"
 
 ---
 
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[Loki + Grafana](./labs/lab-01-loki-grafana.md)** | Set up a centralized logging stack using Grafana Loki, Promtail, and Grafana. |
+| 2 | **[ELK Stack](./labs/lab-02-elk-stack.md)** | Set up the ELK Stack (Elasticsearch, Logstash, Kibana) with Filebeat using Docker Compose. |
+
+**Portfolio project:**
+
+- [Project: Centralized Logging Investigation](./projects/project-01-log-investigation.md) — Collect application or container logs into a logging stack and use queries to investigate a realistic failure.
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:
@@ -607,6 +633,6 @@ With observability (metrics) and logging in place, you can now see and debug you
 
 **Module 08 Complete** ✅
 
-[← Back to Observability](../07-observability/) | [Next: Cloud Fundamentals →](../09-cloud-fundamentals/)
+[← Back to Observability](../07-observability/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: Cloud Fundamentals →](../09-cloud-fundamentals/)
 
 </div>

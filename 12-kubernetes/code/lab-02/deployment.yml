@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-demo
+  labels: {app: config-demo}
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: config-demo}
+  template:
+    metadata:
+      labels: {app: config-demo}
+    spec:
+      containers:
+        - name: app
+          image: nginx:1.27-alpine
+          ports:
+            - {containerPort: 80, name: http}
+
+          # (1) Every key in a ConfigMap/Secret becomes an env var
+          envFrom:
+            - configMapRef: {name: app-settings}
+            - secretRef:    {name: db-credentials}
+
+          env:
+            # (2) One specific key, optionally renamed
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: db-credentials, key: password}
+            # (3) The downward API — pod metadata as env vars
+            - name: POD_NAME
+              valueFrom:
+                fieldRef: {fieldPath: metadata.name}
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef: {fieldPath: metadata.namespace}
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef: {fieldPath: spec.nodeName}
+            - name: MEMORY_LIMIT
+              valueFrom:
+                resourceFieldRef: {containerName: app, resource: limits.memory}
+
+          # (4) Mounted as files
+          volumeMounts:
+            - {name: config-volume, mountPath: /etc/app,     readOnly: true}
+            - {name: secret-volume, mountPath: /etc/secrets, readOnly: true}
+
+          resources:
+            requests: {cpu: 50m,  memory: 64Mi}
+            limits:   {memory: 128Mi}
+
+      volumes:
+        - name: config-volume
+          configMap:
+            name: app-settings
+            items:
+              - {key: app.properties, path: application.properties}
+        - name: secret-volume
+          secret:
+            secretName: db-credentials
+            defaultMode: 0400        # ⭐ read-only, owner only

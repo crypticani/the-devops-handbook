@@ -4,6 +4,12 @@
 
 ---
 
+> 📋 **Command reference**: [`cheatsheet.md`](./cheatsheet.md) — every command in this module, grouped by task, with the gotchas.
+>
+> ⚡ **Cross-module lookup**: [Quick Reference](../QUICK-REFERENCE.md)
+
+---
+
 ## 🎯 Why This Module Matters
 
 **Every DevOps problem is a networking problem — until proven otherwise.**
@@ -11,6 +17,7 @@
 When a service is "down," when containers can't talk to each other, when a deployment fails, when latency spikes, when a database connection times out — the first thing you investigate is the network.
 
 **In real-world DevOps work**, you will:
+
 - Debug "connection refused" and "connection timed out" errors
 - Configure DNS records for domain management
 - Set up reverse proxies (Nginx) to route traffic
@@ -188,6 +195,7 @@ Given: 10.0.0.0/20
 ```
 
 **CIDR in practice:**
+
 ```bash
 # A /24 network: 192.168.1.0/24
 # Network:   192.168.1.0
@@ -233,49 +241,67 @@ cat /etc/resolv.conf
 
 ### TCP — Transmission Control Protocol
 
+TCP is reliable delivery — like registered mail. Every connection starts with a **three-way handshake** and ends with an orderly teardown.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Client
+    participant S as Server
+
+    Note over C,S: Connection setup — three-way handshake
+    C->>S: SYN (seq=x)  "I want to connect"
+    S->>C: SYN-ACK (seq=y, ack=x+1)  "OK, I acknowledge"
+    C->>S: ACK (ack=y+1)  "Great, we're connected"
+
+    Note over C,S: ESTABLISHED — data transfer
+    C->>S: Data
+    S->>C: ACK
+    S->>C: Data
+    C->>S: ACK
+
+    Note over C,S: Teardown — four-way close
+    C->>S: FIN  "I'm done sending"
+    S->>C: ACK
+    S->>C: FIN  "I'm done too"
+    C->>S: ACK
+    Note over C: TIME_WAIT (~60s)<br/>then CLOSED
 ```
-TCP = Reliable delivery (like registered mail)
 
-Three-Way Handshake:
-Client              Server
-  │── SYN ────────────▶│    "I want to connect"
-  │◀── SYN-ACK ────────│    "OK, I acknowledge"
-  │── ACK ────────────▶│    "Great, we're connected"
-  │                     │
-  │── Data ───────────▶│    Data transfer begins
-  │◀── ACK ────────────│    "Got it"
-  │                     │
-  │── FIN ────────────▶│    "I'm done"
-  │◀── ACK ────────────│    "OK, goodbye"
+**Features:**
 
-Features:
-✅ Guaranteed delivery (retransmits lost packets)
-✅ Ordered delivery (packets arrive in order)
-✅ Error checking (checksums)
-✅ Flow control (doesn't overwhelm receiver)
+- ✅ Guaranteed delivery (retransmits lost packets)
+- ✅ Ordered delivery (packets arrive in order)
+- ✅ Error checking (checksums)
+- ✅ Flow control (doesn't overwhelm receiver)
 
-Used by: HTTP, HTTPS, SSH, FTP, SMTP, databases
-```
+**Used by**: HTTP, HTTPS, SSH, FTP, SMTP, databases
+
+> **💡 DevOps Impact**: That `TIME_WAIT` state at the end is why a busy load balancer can exhaust local ports. If `ss -tan | grep TIME-WAIT | wc -l` returns tens of thousands, you're looking at connection churn — fix it with keep-alive/connection pooling, not by tuning kernel timeouts first.
 
 ### UDP — User Datagram Protocol
 
+UDP is fast delivery with no guarantees — like dropping postcards in a mailbox. No handshake, no acknowledgement, no retransmission.
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+
+    C-)S: Datagram 1
+    C-)S: Datagram 2
+    C-)S: Datagram 3
+    Note over C,S: No handshake, no ACK, no retransmit.<br/>Datagram 2 may be lost or arrive after 3 —<br/>the application must cope.
 ```
-UDP = Fast delivery, no guarantees (like regular mail)
 
-Client              Server
-  │── Data ───────────▶│    "Here's some data"
-  │── Data ───────────▶│    "Here's more data"
-  │── Data ───────────▶│    "And more"
-  (No acknowledgment, no retransmission)
+**Features:**
 
-Features:
-✅ Fast (no handshake, no waiting for ACKs)
-✅ Low overhead
-❌ No delivery guarantee
-❌ No ordering guarantee
+- ✅ Fast (no handshake, no waiting for ACKs)
+- ✅ Low overhead
+- ❌ No delivery guarantee
+- ❌ No ordering guarantee
 
-Used by: DNS (queries), video streaming, gaming, VoIP, monitoring (StatsD)
-```
+**Used by**: DNS (queries), video streaming, gaming, VoIP, monitoring (StatsD)
 
 ### Why This Matters for DevOps
 
@@ -346,41 +372,39 @@ sudo lsof -i :8080
 
 ### How DNS Works
 
+Every name lookup walks a cache chain first. Only a **cache miss** goes out to the internet — and that path is a *referral chain*, not a single question.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant App as Browser / App
+    participant OS as OS Resolver<br/>(/etc/hosts, nsswitch, stub cache)
+    participant R as Recursive Resolver<br/>(ISP, 8.8.8.8, CoreDNS)
+    participant Root as Root Servers<br/>(a-m.root-servers.net)
+    participant TLD as .com TLD Servers
+    participant Auth as Authoritative NS<br/>(ns1.example.com)
+
+    App->>OS: Resolve www.example.com
+    Note over OS: /etc/hosts wins if it matches.<br/>Then the local cache.
+    OS->>R: Recursive query (RD=1)
+
+    alt Cached and TTL not expired
+        R-->>OS: Cached answer — done
+    else Cache miss — full walk
+        R->>Root: Who serves .com?
+        Root-->>R: Referral → .com TLD servers
+        R->>TLD: Who serves example.com?
+        TLD-->>R: Referral → ns1.example.com (NS record)
+        R->>Auth: What is www.example.com?
+        Auth-->>R: A 93.184.216.34 (TTL 3600)
+        Note over R: Caches the answer for TTL seconds
+        R-->>OS: A 93.184.216.34
+    end
+
+    OS-->>App: 93.184.216.34
 ```
-You type: www.example.com
-                │
-                ▼
-    ┌─── Browser DNS Cache ───┐
-    │  Do I already know this? │
-    │  YES → Use cached IP     │
-    │  NO  → Ask OS resolver   │
-    └──────────┬───────────────┘
-               │
-    ┌──── OS Resolver ────────┐
-    │  Check /etc/hosts first  │
-    │  Check local DNS cache  │
-    │  NO → Ask DNS server     │
-    └──────────┬───────────────┘
-               │
-    ┌─── Recursive Resolver ──┐
-    │  (Your ISP or 8.8.8.8)  │
-    │  Ask Root → TLD → Auth  │
-    └──────────┬───────────────┘
-               │
-    ┌── Root Servers (.com?) ─┐
-    │  "Ask the .com servers" │
-    └──────────┬───────────────┘
-               │
-    ┌── TLD Servers ──────────┐
-    │  example.com NS →       │
-    │  ns1.example.com        │
-    └──────────┬───────────────┘
-               │
-    ┌── Auth NS (ns1.example) ┐
-    │  www.example.com        │
-    │  → 93.184.216.34        │
-    └──────────────────────────┘
-```
+
+> **💡 DevOps Impact**: Each box is a place a lookup can break *and* a place a stale answer can hide. When "the DNS change didn't take effect," identify **which** cache is stale: your browser, the OS stub, the recursive resolver, or a downstream CDN. `dig +trace` bypasses the recursive cache and walks the chain yourself — that's how you tell "record is wrong" from "record is right but cached."
 
 ### DNS Record Types
 
@@ -678,19 +702,32 @@ curl --connect-timeout 5 --max-time 10 http://httpbin.org/delay/30
 
 ### HTTPS and TLS
 
-```
-HTTPS = HTTP + TLS (Transport Layer Security)
+**HTTPS = HTTP + TLS (Transport Layer Security).** TLS runs *on top of* an already-established TCP connection — so a TLS error always means the TCP handshake already succeeded.
 
-TLS Handshake:
-Client                          Server
-  │── ClientHello ───────────────▶│  "I support TLS 1.3, these ciphers..."
-  │◀── ServerHello ───────────────│  "Let's use TLS 1.3, this cipher"
-  │◀── Certificate ───────────────│  "Here's my certificate (proves identity)"
-  │── Verify Certificate          │  (Client checks with CA)
-  │── Key Exchange ──────────────▶│  (Establish shared secret)
-  │◀── Finished ──────────────────│
-  │── Encrypted Data ────────────▶│  (Everything is now encrypted)
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Client
+    participant S as Server
+    participant CA as Trust Store<br/>(local CA bundle)
+
+    Note over C,S: TCP three-way handshake already completed on port 443
+
+    C->>S: ClientHello<br/>(TLS versions, cipher suites, SNI: example.com)
+    S->>C: ServerHello<br/>(chosen version + cipher)
+    S->>C: Certificate chain (leaf → intermediate)
+    C->>CA: Is this chain signed by a CA I trust?
+    CA-->>C: Verify signature, expiry, hostname (SAN), revocation
+    Note over C: Any failure here =<br/>"certificate verify failed"
+    C->>S: Key exchange (ECDHE) → shared secret
+    S->>C: Finished
+    C->>S: Finished
+    Note over C,S: 🔒 Encrypted — HTTP request finally sent
+    C->>S: GET /api/v1/users HTTP/1.1
+    S->>C: 200 OK
 ```
+
+> **💡 DevOps Impact**: Three failures look identical to a user and are completely different to you. **Expired certificate** → renew. **Hostname mismatch** → the SAN list doesn't include the name you requested (common after adding a new subdomain to a load balancer). **Incomplete chain** → the server didn't send the intermediate; it works in your browser (which caches intermediates) but fails from `curl` and inside containers. `openssl s_client -connect host:443 -servername host` tells you which one it is.
 
 ```bash
 # Check TLS certificate details
@@ -787,25 +824,45 @@ sudo iptables -L -n -v | head -30
 
 ### The Troubleshooting Ladder
 
+**"I can't reach the server!"** is never one problem. Climb the layers bottom-up — each rung eliminates half the possible causes. Never skip a rung because you "know" it works.
+
+```mermaid
+flowchart TD
+    START(["❌ Can't reach api.example.com"]) --> DNS
+
+    DNS{"Does the name resolve?<br/><code>dig +short api.example.com</code>"}
+    DNS -->|"No answer"| DNSFIX["<b>Layer 7 — DNS</b><br/>• Check /etc/resolv.conf<br/>• Try another resolver: dig @8.8.8.8<br/>• dig +trace to find the broken delegation<br/>• Wrong record? TTL still cached?"]
+
+    DNS -->|"Resolves to an IP"| PING
+
+    PING{"Is the host reachable?<br/><code>ping IP</code>"}
+    PING -->|"100% loss"| PINGFIX["<b>Layer 3 — Routing / ICMP</b><br/>• ICMP may just be blocked — don't stop here<br/>• traceroute IP to find where it dies<br/>• Check route table: ip route<br/>• Wrong VPC / subnet / security group?"]
+    PINGFIX --> PORT
+
+    PING -->|"Replies"| PORT
+
+    PORT{"Is the port open?<br/><code>nc -zv IP 443</code>"}
+    PORT -->|"Connection refused"| REFUSED["<b>Nothing is listening</b><br/>• Service is down — check on the host:<br/>&nbsp;&nbsp;ss -tlnp | grep 443<br/>• Bound to 127.0.0.1 instead of 0.0.0.0?<br/>• systemctl status the-service"]
+    PORT -->|"Timeout / no response"| TIMEOUT["<b>Something is dropping packets</b><br/>• Firewall: ufw status / firewall-cmd --list-all<br/>• Cloud security group or NACL<br/>• Wrong subnet routing"]
+    PORT -->|"Connected"| TLS
+
+    TLS{"HTTPS?"}
+    TLS -->|"No — plain HTTP"| APP
+    TLS -->|"Yes"| TLSCHECK{"Does the TLS handshake succeed?<br/><code>openssl s_client -connect IP:443 -servername host</code>"}
+    TLSCHECK -->|"Fails"| TLSFIX["<b>Certificate problem</b><br/>• Expired → renew<br/>• Hostname not in SAN → reissue<br/>• Incomplete chain → serve the intermediate<br/>• Protocol/cipher mismatch → check TLS version"]
+    TLSCHECK -->|"Succeeds"| APP
+
+    APP{"What does the app say?<br/><code>curl -v https://api.example.com</code>"}
+    APP -->|"5xx"| SERVER["<b>Server-side fault</b><br/>→ Read the app logs — Module 08<br/>→ Check upstream/backend health"]
+    APP -->|"4xx"| CLIENT["<b>Request problem</b><br/>• 401 → not authenticated<br/>• 403 → authenticated, not allowed<br/>• 404 → wrong path or wrong vhost<br/>• 502/504 → proxy can't reach the backend"]
+    APP -->|"2xx but slow"| SLOW["<b>Latency, not reachability</b><br/><code>curl -w '@curl-format.txt'</code><br/>Split DNS vs connect vs TLS vs TTFB"]
+    APP -->|"2xx and fast"| OK(["✅ The network is fine —<br/>the problem is elsewhere"])
+
+    style START fill:#ffe0e0,stroke:#c00
+    style OK fill:#e0ffe0,stroke:#0a0
 ```
-Problem: "I can't reach the server!"
 
-Step 1: Can I resolve the DNS name?
-   dig api.example.com
-
-Step 2: Can I reach the IP? (Layer 3)
-   ping 93.184.216.34
-
-Step 3: Can I reach the port? (Layer 4)
-   telnet 93.184.216.34 443
-   nc -zv 93.184.216.34 443
-
-Step 4: Does the application respond? (Layer 7)
-   curl -v https://api.example.com
-
-Step 5: Is the path correct?
-   traceroute 93.184.216.34
-```
+> **💡 The one rule**: *Connection refused* and *connection timeout* mean completely different things. **Refused** = a machine answered and said "nothing here" — the packet arrived, so routing and firewalls are fine; the service is down or bound to the wrong interface. **Timeout** = nobody answered at all — a firewall, security group, or route is silently dropping you. Reading that distinction correctly saves hours.
 
 ### ping — Basic Connectivity
 
@@ -955,13 +1012,26 @@ server {
 
 ### Load Balancing Concepts
 
+```mermaid
+flowchart LR
+    C1["Client A"] --> LB
+    C2["Client B"] --> LB
+    C3["Client C"] --> LB
+
+    LB["<b>Nginx / ALB</b><br/>TLS termination<br/>Health checks<br/>Algorithm: round robin"]
+
+    LB -->|"healthy"| A1["App Server 1<br/>10.0.1.10:8080"]
+    LB -->|"healthy"| A2["App Server 2<br/>10.0.1.11:8080"]
+    LB -.->|"❌ failed health check —<br/>removed from pool"| A3["App Server 3<br/>10.0.1.12:8080"]
+
+    A1 --> DB[("Database")]
+    A2 --> DB
+
+    style LB fill:#e8f0ff,stroke:#3366cc,stroke-width:2px
+    style A3 fill:#ffe8e8,stroke:#cc3333,stroke-dasharray: 5 5
 ```
-                    ┌──── App Server 1 (10.0.1.10)
-                    │
-Client ── Nginx ────┼──── App Server 2 (10.0.1.11)
-          (LB)      │
-                    └──── App Server 3 (10.0.1.12)
-```
+
+The health check is the whole point: the load balancer keeps a **pool** of backends and continuously removes the ones that stop answering. A load balancer without health checks is just a slower single point of failure.
 
 **Load Balancing Algorithms:**
 
@@ -1113,6 +1183,7 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 ### Frequently Asked Questions
 
 **Q: What happens when you type `google.com` in your browser?**
+>
 > 1. Browser checks its DNS cache
 > 2. OS checks `/etc/hosts`, then DNS resolver cache
 > 3. DNS query to configured nameserver (recursive resolution)
@@ -1139,6 +1210,7 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 ### Scenario-Based Questions
 
 **Q: Users report the website is slow for the past hour. How do you investigate?**
+>
 > 1. Check monitoring dashboards for latency/error spikes
 > 2. Use curl timing to pinpoint where latency is (DNS? TCP? TLS? Server?)
 > 3. Check server resources (CPU, memory, disk, network)
@@ -1149,6 +1221,24 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
 **Q: Your Nginx returns 502 Bad Gateway. What do you do?**
 > 502 means Nginx can't reach the backend. Check: Is the backend process running? (`ps`, `systemctl status`). Is it on the correct port? (`ss -tlnp`). Can Nginx reach it? (`curl -v http://localhost:8080`). Check Nginx error logs (`/var/log/nginx/error.log`). Check backend application logs.
+
+---
+
+## 🧪 Labs and Projects
+
+Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
+
+| # | Lab | What you'll do |
+|---|-----|----------------|
+| 1 | **[DNS Deep Dive](./labs/lab-01-dns-deep-dive.md)** | Master DNS resolution, understand how domain names work in practice, and learn to diagnose the most common networking issue in DevOps: DNS failures. |
+| 2 | **[TCP, Ports & Connectivity Testing](./labs/lab-02-tcp-ports-connectivity.md)** | Master TCP connectivity testing, port scanning, and the debugging techniques you'll use daily to diagnose "I can't connect to X" issues in production. |
+| 3 | **[Nginx Reverse Proxy Setup](./labs/lab-03-nginx-reverse-proxy.md)** | Set up Nginx as a reverse proxy — the standard production pattern used in nearly every web deployment. |
+
+**Portfolio project:**
+
+- [Project: DNS and HTTP Troubleshooting Runbook](./projects/project-01-network-troubleshooting-runbook.md) — Create a practical runbook for diagnosing why a user cannot reach a web service.
+
+**Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
 
 ---
 
@@ -1182,6 +1272,6 @@ You now understand how data moves across networks and how to debug connectivity 
 
 **Module 02 Complete** ✅
 
-[← Back to Linux](../01-linux/) | [Next: Git →](../03-git/)
+[← Back to Linux](../01-linux/) | [📋 Cheat Sheet](./cheatsheet.md) | [Next: Git →](../03-git/)
 
 </div>

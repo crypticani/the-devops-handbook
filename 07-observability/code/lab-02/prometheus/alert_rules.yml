@@ -1,0 +1,34 @@
+groups:
+  - name: flask-app
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(app_http_requests_total{status=~"5.."}[2m]))
+          /
+          sum(rate(app_http_requests_total[2m]))
+          > 0.10
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Error rate above 10%"
+          description: "Current error rate: {{ $value | humanizePercentage }}"
+
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            rate(app_http_request_duration_seconds_bucket[2m])
+          ) > 1.0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 latency above 1 second"
+
+      - alert: AppDown
+        expr: up{job="flask-app"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Flask app is down"

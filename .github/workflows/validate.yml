@@ -1,0 +1,120 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly — catches external links rotting and tool versions drifting
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  content:
+    name: Links, diagrams, and lab contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+
+      - name: Install the Mermaid parser
+        run: npm install --no-save --no-audit --no-fund mermaid jsdom
+
+      - name: Internal links
+        run: ./scripts/validate.sh links
+
+      - name: Mermaid diagrams
+        run: ./scripts/validate.sh mermaid
+
+      - name: Lab contract
+        run: ./scripts/validate.sh labs
+
+      - name: Module lab indexes are current
+        run: python3 scripts/update-lab-index.py --check
+
+      # Config lives in .markdownlint-cli2.yaml — tuned so findings are real,
+      # which is why this is blocking rather than advisory.
+      - name: Markdown lint
+        uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24.2.0
+
+  code:
+    name: Lab code
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.tf-plugin-cache
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.22'
+          cache: false
+
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+        with:
+          terraform_wrapper: false
+
+      # Terraform providers are hundreds of MB and every config downloads the
+      # same ones. Without this the terraform check dominates the whole run.
+      - name: Cache Terraform providers
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: tf-providers-${{ runner.os }}-${{ hashFiles('**/code/**/*.tf') }}
+          restore-keys: tf-providers-${{ runner.os }}-
+
+      - name: Install linters
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq shellcheck
+          pip install --quiet pyyaml ruff ansible-lint
+
+      - name: Fast checks
+        run: ./scripts/validate.sh yaml json python bash compose ansible go
+
+      - name: Terraform
+        run: |
+          mkdir -p "$TF_PLUGIN_CACHE_DIR"
+          ./scripts/validate.sh terraform
+
+  external-links:
+    name: External links
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Third-party sites go down for reasons that are not our problem —
+    # report, don't block the build.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.6.1
+        with:
+          args: >-
+            --no-progress
+            --max-concurrency 8
+            --timeout 20
+            --retry-wait-time 4
+            --max-retries 2
+            --accept 200,206,429
+            --exclude-path .remember
+            --exclude 'example\.com'
+            --exclude 'localhost'
+            --exclude '127\.0\.0\.1'
+            --exclude 'myorg|myapp|my-bucket|my-tf-state'
+            './**/*.md'
+          fail: false

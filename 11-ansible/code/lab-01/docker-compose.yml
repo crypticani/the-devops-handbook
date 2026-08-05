@@ -1,0 +1,36 @@
+services:
+  web1:
+    image: ubuntu:22.04
+    container_name: web1
+    command: >
+      bash -c "apt-get update && apt-get install -y openssh-server python3 &&
+      mkdir /run/sshd &&
+      echo 'root:ansible' | chpasswd &&
+      sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config &&
+      /usr/sbin/sshd -D"
+    ports:
+      - "2221:22"
+
+  web2:
+    image: ubuntu:22.04
+    container_name: web2
+    command: >
+      bash -c "apt-get update && apt-get install -y openssh-server python3 &&
+      mkdir /run/sshd &&
+      echo 'root:ansible' | chpasswd &&
+      sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config &&
+      /usr/sbin/sshd -D"
+    ports:
+      - "2222:22"
+
+  db1:
+    image: ubuntu:22.04
+    container_name: db1
+    command: >
+      bash -c "apt-get update && apt-get install -y openssh-server python3 &&
+      mkdir /run/sshd &&
+      echo 'root:ansible' | chpasswd &&
+      sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config &&
+      /usr/sbin/sshd -D"
+    ports:
+      - "2223:22"

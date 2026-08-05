@@ -1,0 +1,46 @@
+---
+- name: Verify the deployed state
+  hosts: webservers
+  gather_facts: false
+  tasks:
+    - name: Fetch the health endpoint
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ webapp_port }}/health"
+        return_content: true
+      register: health
+      changed_when: false
+
+    - name: Assert the application reports correctly
+      ansible.builtin.assert:
+        that:
+          - health.status == 200
+          - health.json.app == webapp_name
+          - health.json.version == webapp_version
+          - health.json.secret_loaded            # ⭐ the secret arrived, without printing it
+          - health.json.host == inventory_hostname
+        fail_msg: "health check mismatch on {{ inventory_hostname }}: {{ health.json }}"
+        success_msg: "{{ inventory_hostname }} healthy on {{ health.json.version }}"
+
+    - name: Check file permissions
+      ansible.builtin.stat:
+        path: "{{ item.path }}"
+      register: st
+      loop:
+        - { path: "/srv/webapp/config.ini", mode: "0600" }
+        - { path: "/srv/webapp/app.py", mode: "0640" }
+        - { path: "/srv/webapp", mode: "0750" }
+      changed_when: false
+
+    - name: Assert permissions are correct
+      ansible.builtin.assert:
+        that: item.stat.mode == item.item.mode
+        fail_msg: "{{ item.item.path }} is {{ item.stat.mode }}, expected {{ item.item.mode }}"
+      loop: "{{ st.results }}"
+      loop_control:
+        label: "{{ item.item.path }}"
+
+    - name: Assert the service account cannot log in
+      ansible.builtin.command: getent passwd appuser
+      register: pw
+      changed_when: false
+      failed_when: "'nologin' not in pw.stdout"
