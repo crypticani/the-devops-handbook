@@ -19,6 +19,7 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 - **API server** — The Kubernetes control plane component that every request passes through and the only one that talks to etcd. [12]
 - **Argo CD** — Kubernetes GitOps controller: it watches a Git repository, reports whether live state matches it (`Synced` / `OutOfSync`), and applies the difference when configured to. `selfHeal` and `prune` both default to off. [12]
 - **Artifact** — The built output a pipeline produces and promotes: a container image, a binary, a package. Build it once, deploy that exact thing everywhere. [06]
+- **Attribute (span)** — Key-value metadata on a span. Searchable, and the right home for unique values like an order id — unlike the span *name*, which must stay low-cardinality. [07]
 - **Autoscaling** — Adding and removing capacity automatically in response to a signal (CPU, queue depth, request rate). Requires stateless workloads to be useful. [09] [14]
 - **Availability Zone (AZ)** — An isolated datacenter within a cloud region. Spanning two AZs is the cheapest meaningful step up in availability. [09]
 
@@ -47,9 +48,11 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 - **CI (Continuous Integration)** — Every commit is merged to shared main and automatically built and tested. The practice long-lived branches quietly abandon. [06]
 - **CD (Continuous Delivery / Deployment)** — Delivery: every green build is releasable and a human decides. Deployment: that decision is automated. [06]
 - **ClusterIP** — Default Kubernetes Service type: a stable virtual IP reachable only inside the cluster. [12]
+- **Collector (OpenTelemetry)** — Standalone process that receives telemetry, processes it (batching, sampling, redaction), and exports it onward. Where you change sampling or add a backend without redeploying a single application. [07]
 - **ConfigMap** — Kubernetes object holding non-secret configuration, consumed as environment variables or mounted files. [12]
 - **Container** — A process isolated with namespaces and constrained with cgroups, sharing the host kernel. Not a small VM. [05]
 - **Container runtime** — The component that actually starts containers (containerd, CRI-O, runc underneath). Docker is a toolchain on top of one. [05] [12]
+- **Context propagation** — Carrying trace context across a process boundary, in HTTP via the W3C `traceparent` header. Every "our traces are broken" is a boundary where this didn't happen. [07]
 - **Control plane** — The components that make cluster-wide decisions: API server, etcd, scheduler, controller manager. Distinct from the nodes that run workloads. [12]
 - **Correlation ID** — An identifier generated at ingress and propagated through every downstream call, so one request's log lines can be joined across services. [08]
 - **Counter** — Prometheus metric type that only increases and resets on restart. Always query it through `rate()`. [07]
@@ -83,6 +86,7 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 - **Ephemeral** — Designed to be destroyed and recreated rather than repaired. The property that makes autoscaling and immutable deploys possible. [05] [14]
 - **Error budget** — The failure your SLO permits (99.9% means 43 minutes a month). While budget remains you ship; when it is spent you fix reliability. [14]
 - **etcd** — The distributed key-value store holding all Kubernetes state. Back it up; losing it is losing the cluster. [12]
+- **Exemplar** — A trace ID attached to a Prometheus histogram bucket, so a latency spike on a graph links to a request that was actually that slow. [07]
 - **Exit code** — A process's numeric result. `0` is success, `137` is SIGKILL (usually OOM), `139` is a segfault. The cheapest diagnostic there is. [01] [12]
 - **Exponential backoff** — Waiting progressively longer between retries, with jitter, so a recovering service is not immediately flattened again. [14]
 
@@ -130,6 +134,7 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 
 ## J
 
+- **Jaeger** — CNCF distributed tracing backend: stores traces and serves the waterfall UI. Tempo is the Grafana-stack alternative; OpenTelemetry is how you get spans into either. [07]
 - **Jenkins** — Long-established self-hosted automation server, pipelines defined in a `Jenkinsfile`. Still everywhere in enterprises. [06]
 - **Jitter** — Deliberate randomness added to timers (retries, TTLs, scrape offsets) so many clients stop synchronizing into a thundering herd. [14]
 - **Job / CronJob (Kubernetes)** — Workloads that run to completion, once or on a schedule, rather than staying up. [12]
@@ -182,6 +187,7 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 - **OpenTelemetry** — Vendor-neutral standard and SDK set for emitting traces, metrics, and logs. The current answer to the tracing pillar. [07]
 - **Orchestration** — Scheduling, scaling, healing, and networking containers across many machines. The problem Kubernetes exists to solve. [12]
 - **OSI model** — Seven-layer network reference model. Its practical value is giving you an order to debug in. [02]
+- **OTLP** — OpenTelemetry's wire protocol (gRPC or HTTP). One protocol every SDK, collector, and backend speaks, which is what ended per-vendor agents. [07]
 
 ## P
 
@@ -230,6 +236,7 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 
 ## S
 
+- **Sampling (head vs tail)** — Head sampling decides at the start of a trace, in the SDK: cheap, and blind to whether the request will fail or be slow. Tail sampling decides in the collector once the trace is complete, so you can keep every error and every slow trace. [07]
 - **SAST** — Static analysis of your own source for dangerous patterns, run in the pipeline. [13]
 - **SBOM** — Software bill of materials: the inventory of everything in your artefact. What makes "are we affected?" answerable in minutes. [13]
 - **SCA** — Software composition analysis: checking your dependencies against known vulnerabilities. Most of your code is someone else's. [13]
@@ -246,6 +253,7 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 - **Shift left** — Moving checks earlier — tests, scans, review — because defects get more expensive the further right they surface. [00] [13]
 - **Sidecar** — A helper container in the same pod as the application: log shipper, proxy, credential refresher. [12]
 - **SLA / SLO / SLI** — The contract with consequences / your internal target / the actual measurement. The SLA is always looser than the SLO. [14]
+- **Span** — One timed operation in a trace: name, duration, parent, status, attributes. A trace is the tree of them; the tree is what tells you which hop was slow. [07]
 - **SPOF** — Single point of failure: the component whose loss takes everything with it. Finding them is the point of an HA review. [14]
 - **`ss`** — Modern replacement for `netstat`. `ss -ltnp` answers "what is listening on that port". [01] [02]
 - **STAR method** — Situation, Task, Action, Result: the structure for behavioural interview answers. The Result, with a number in it, is the part most people skip. [16]
@@ -259,10 +267,12 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 
 - **Taint / toleration** — Node marking that repels pods unless they explicitly tolerate it. How you reserve nodes for particular workloads. [12]
 - **TCP vs UDP** — Ordered, reliable, connection-oriented versus fire-and-forget with lower latency. HTTP and SSH versus DNS and metrics. [02]
+- **Tempo** — Grafana's trace backend: stores traces in object storage and is queried with TraceQL. Cheap because it indexes almost nothing. [07]
 - **Terraform** — Declarative infrastructure-as-code tool that plans a diff against recorded state and applies it through providers. [10]
 - **Three pillars** — Metrics, logs, and traces. Most teams have the first two and improvise the third. [07]
 - **TLS** — Encryption and server identity for connections. `openssl s_client -connect` is how you debug the handshake instead of guessing. [02] [13]
 - **Toil** — Manual, repetitive operational work that scales with traffic and produces no lasting value. The thing automation is for. [00]
+- **TraceQL** — Tempo's query language for finding traces by span attributes, duration, and status — `{ status = error && duration > 500ms }`. [07]
 - **`trap`** — Bash builtin that runs a command on a signal or on exit. `trap 'rm -rf "$tmp"' EXIT` is how cleanup happens even when the script fails. [04]
 - **Trunk-based development** — Everyone integrates into main constantly behind short-lived branches and feature flags. What makes CI actually continuous. [03] [06]
 - **TTL** — How long a cached record stays valid. Short TTLs make DNS cutovers fast; long ones survive an outage of the authority. [02] [14]

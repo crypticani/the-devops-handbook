@@ -1,0 +1,67 @@
+services:
+  # Both app services are the SAME image. Environment variables decide which one it is.
+  checkout:
+    build: ./app
+    container_name: checkout
+    environment:
+      OTEL_SERVICE_NAME: checkout
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      DOWNSTREAM_URL: http://payment:8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - otel-collector
+    restart: unless-stopped
+
+  payment:
+    build: ./app
+    container_name: payment
+    environment:
+      OTEL_SERVICE_NAME: payment
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    ports:
+      - "8081:8080"
+    depends_on:
+      - otel-collector
+    restart: unless-stopped
+
+  # The collector sits between the apps and the backend so the apps never need to know
+  # what the backend is. Swap Tempo for Jaeger, or add a second exporter, and no
+  # application gets rebuilt.
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.104.0
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol/config.yml"]
+    volumes:
+      - ./otel-collector:/etc/otelcol
+    ports:
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+      - "8888:8888" # ⭐ the collector's OWN metrics — where dropped spans show up
+    restart: unless-stopped
+
+  tempo:
+    image: grafana/tempo:2.5.0
+    container_name: tempo
+    command: ["-config.file=/etc/tempo/tempo.yml"]
+    volumes:
+      - ./tempo:/etc/tempo
+    ports:
+      - "3200:3200" # Tempo API — Grafana talks to this
+    restart: unless-stopped
+    # No volume for /var/tempo: traces live in the container and vanish with it. Correct
+    # for a lab, wrong for anything else — production Tempo writes to object storage.
+
+  grafana:
+    image: grafana/grafana:10.3.1
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - tempo
+    restart: unless-stopped

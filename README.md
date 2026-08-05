@@ -100,7 +100,7 @@ Everything under `code/` is automatically tested whenever it changes, so the fil
 | **Phase 2: Core Tools** ||||||
 | 05 | [Containers & Docker](./05-containers-docker/) | Images, containers, Compose, registries | 2 weeks | [📋](./05-containers-docker/cheatsheet.md) | [📁](./05-containers-docker/code/) |
 | 06 | [CI/CD](./06-ci-cd/) | GitHub Actions, Jenkins, pipelines, testing | 2 weeks | [📋](./06-ci-cd/cheatsheet.md) | [📁](./06-ci-cd/code/) |
-| 07 | [Observability](./07-observability/) | Prometheus, Grafana, metrics, alerting | 2 weeks | [📋](./07-observability/cheatsheet.md) | [📁](./07-observability/code/) |
+| 07 | [Observability](./07-observability/) | Prometheus, Grafana, metrics, alerting, tracing | 2 weeks | [📋](./07-observability/cheatsheet.md) | [📁](./07-observability/code/) |
 | 08 | [Logging](./08-logging/) | ELK stack, Loki, centralized logging, debugging | 1.5 weeks | [📋](./08-logging/cheatsheet.md) | [📁](./08-logging/code/) |
 | **Phase 3: Production Skills** ||||||
 | 09 | [Cloud Fundamentals](./09-cloud-fundamentals/) | Cloud-agnostic concepts, then AWS specifics | 2 weeks | [📋](./09-cloud-fundamentals/cheatsheet.md) | [📁](./09-cloud-fundamentals/code/) |
@@ -286,7 +286,7 @@ Use this checklist to track your progress. Copy it to a separate file or use Git
 | 7-8 | 04 - Scripting | Bash + Python for DevOps |
 | 9-10 | 05 - Docker | Containers, images, Compose |
 | 11-12 | 06 - CI/CD | GitHub Actions, Jenkins, pipelines |
-| 13-14 | 07 - Observability | Prometheus, Grafana, alerting |
+| 13-14 | 07 - Observability | Prometheus, Grafana, alerting, distributed tracing |
 | 15-16 | 08 - Logging | ELK, Loki, log debugging |
 | 17-18 | 09 - Cloud | Cloud concepts, AWS fundamentals |
 | 19-20 | 10 - Terraform | Infrastructure as Code |

@@ -1,0 +1,50 @@
+# The three-section shape every collector config has: what comes in (receivers), what
+# happens to it (processors), where it goes (exporters) — then a pipeline wiring them up.
+# Anything not named in `service.pipelines` is dead config, however correct it looks.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 512
+
+  # Tail sampling: decide AFTER the whole trace has arrived, so you can keep the traces
+  # you actually want. Commented out because Break It scenario 2 is where you turn it on
+  # and see what head sampling threw away.
+  #
+  # tail_sampling:
+  #   decision_wait: 5s
+  #   policies:
+  #     - name: keep-errors
+  #       type: status_code
+  #       status_code: { status_codes: [ERROR] }
+  #     - name: keep-slow
+  #       type: latency
+  #       latency: { threshold_ms: 500 }
+  #     - name: keep-a-sample-of-the-rest
+  #       type: probabilistic
+  #       probabilistic: { sampling_percentage: 10 }
+
+exporters:
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true # a lab on a Docker network, not the internet
+
+  # Prints span summaries to the collector's log. Invaluable for answering "is the
+  # collector receiving anything at all", which is the first question every time.
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch] # add tail_sampling here when you uncomment it
+      exporters: [otlp/tempo, debug]

@@ -631,6 +631,60 @@ Use in a panel:  sum by (pod) (rate(x{job="$job", pod=~"$pod"}[5m]))
 
 ---
 
+## Tracing (OpenTelemetry)
+
+Environment variables configure the SDK in every language — you rarely need code changes:
+
+```bash
+OTEL_SERVICE_NAME=checkout                              # ⭐ without it: "unknown_service"
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317  # gRPC; :4318 for OTLP/HTTP
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc                        # or http/protobuf
+OTEL_RESOURCE_ATTRIBUTES=deployment.environment=prod,service.version=1.4.2
+OTEL_TRACES_SAMPLER=parentbased_traceidratio            # ⭐ honour the upstream decision
+OTEL_TRACES_SAMPLER_ARG=0.1
+OTEL_TRACES_EXPORTER=otlp                               # `console` to debug locally
+OTEL_SDK_DISABLED=true                                  # kill switch, no redeploy of code
+OTEL_BSP_MAX_QUEUE_SIZE=2048                            # raise if spans are being dropped
+OTEL_PYTHON_LOG_CORRELATION=true                        # trace_id in log records
+```
+
+```bash
+# Python: run an app with auto-instrumentation, no code changes at all
+pip install opentelemetry-distro opentelemetry-exporter-otlp
+opentelemetry-bootstrap -a install        # ⭐ installs instrumentation for what you import
+opentelemetry-instrument python app.py
+
+# Is anything arriving? The collector's own metrics answer this first, every time
+curl -s localhost:8888/metrics | grep -E 'otelcol_(receiver_accepted|exporter_sent|exporter_send_failed)_spans'
+docker compose logs otel-collector | grep -i 'error\|refused'
+
+# Tempo API — useful without a UI
+curl -s localhost:3200/api/echo                                  # is Tempo up
+curl -s localhost:3200/api/traces/<trace-id> | head -c 400        # fetch one trace
+curl -s 'localhost:3200/api/search?tags=service.name%3Dcheckout'  # search
+curl -s localhost:3200/api/search/tag/name/values | head -c 400   # ⭐ span-name cardinality
+```
+
+```traceql
+{ status = error }                                    # every failed span
+{ resource.service.name = "payment" && duration > 500ms }
+{ span.http.response.status_code >= 500 }
+{ name = "db_write" && duration > 100ms }
+{ span.order.id = "8823" }                            # a custom attribute you set
+```
+
+| Symptom | Likely cause | Where to look |
+|---------|--------------|---------------|
+| Downstream spans are their own root traces | Propagation broken — client not instrumented, header stripped, queue carries no context | Compare trace IDs across services; check the `traceparent` on the outgoing call |
+| Spans arrive as `unknown_service` | No `service.name` on the resource | `OTEL_SERVICE_NAME` / `Resource.create` |
+| The incident's trace doesn't exist | ⭐ Head sampling — it decided before the request was slow | Move the decision to `tail_sampling` in the collector |
+| No traces at all, apps perfectly healthy | Exporter failing; every layer drops rather than blocks | `otelcol_exporter_send_failed_spans`, collector logs |
+| Spans dropped under load | SDK batch queue full | Raise `OTEL_BSP_MAX_QUEUE_SIZE`, or sample earlier |
+| No usable p99 per operation | Unbounded values in span **names** | `api/search/tag/name/values` — names are low-cardinality, use attributes |
+| Nothing exported, no error (Python) | SDK and instrumentation versions mismatched | `pip list \| grep opentelemetry` — 1.25.0 pairs with 0.46b0 |
+
+---
+
 <div align="center">
 
 [← Module 07 README](./README.md) · [Resources](./resources.md) · [Labs](./labs/) · [Handbook Quick Reference](../QUICK-REFERENCE.md)

@@ -1,0 +1,9 @@
+flask==3.0.0
+requests==2.32.3
+# ⭐ The SDK and the instrumentation packages version in lockstep but NOT with the same
+# numbers: SDK 1.25.0 pairs with instrumentation 0.46b0. Mixing pairs is the most common
+# "why is nothing exported" in Python OpenTelemetry.
+opentelemetry-sdk==1.25.0
+opentelemetry-exporter-otlp-proto-grpc==1.25.0
+opentelemetry-instrumentation-flask==0.46b0
+opentelemetry-instrumentation-requests==0.46b0

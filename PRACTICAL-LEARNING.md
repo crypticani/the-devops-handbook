@@ -56,7 +56,7 @@ Use these deliverables to make the existing modules practical:
 | 04 Scripting | Bash or Python automation script with tests or sample inputs |
 | 05 Docker | Containerized app with Compose, healthchecks, and non-root user |
 | 06 CI/CD | Pull request pipeline with lint, test, build, scan, and artifact upload |
-| 07 Observability | Prometheus/Grafana dashboard with one actionable alert |
+| 07 Observability | Prometheus/Grafana dashboard with one actionable alert, plus a trace that explains one slow request end to end |
 | 08 Logging | Centralized logs with a documented query-based investigation |
 | 09 Cloud | Small cloud environment with IAM, network, and cost notes |
 | 10 Terraform | Reproducible infrastructure with remote-state notes and destroy proof |

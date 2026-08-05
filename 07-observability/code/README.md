@@ -1,6 +1,7 @@
 # Module 07: Observability — Lab Code
 
-A complete Prometheus + Grafana + Alertmanager stack, and an instrumented app.
+A complete Prometheus + Grafana + Alertmanager stack, an instrumented app, and a two-service
+OpenTelemetry tracing pipeline.
 
 These are the real, runnable files from this module's labs. They are validated in CI, so
 they stay correct as tool versions move on.
@@ -38,6 +39,23 @@ lab-02/
 ├── docker-compose.yml
 ├── prometheus/alert_rules.yml
 └── prometheus/prometheus.yml
+```
+
+### `lab-03/`
+
+A two-service OpenTelemetry trace pipeline: apps → collector → Tempo → Grafana. `app/` is one
+image run twice — environment variables decide whether it's `checkout` or `payment`, which is
+the smallest thing that produces a trace spanning two services.
+
+```
+lab-03/
+├── app/Dockerfile
+├── app/app.py                  # OTel setup, manual spans, trace-id log filter
+├── app/requirements.txt        # ⭐ SDK 1.25.0 pairs with instrumentation 0.46b0
+├── docker-compose.yml
+├── grafana/provisioning/datasources/tempo.yml
+├── otel-collector/config.yml   # receivers → processors → exporters (tail_sampling ready)
+└── tempo/tempo.yml
 ```
 
 ---
