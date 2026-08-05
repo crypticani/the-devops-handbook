@@ -6,7 +6,7 @@
 # Usage:  ./scripts/validate.sh [check ...]
 #   with no arguments, runs every check that has its tool available
 #
-# Checks:  links  mermaid  yaml  json  python  bash  compose  terraform  go  labs
+# Checks:  links  mermaid  yaml  json  python  bash  compose  terraform  ansible  go  labs
 #
 set -uo pipefail
 
@@ -172,6 +172,26 @@ if want terraform; then
     RUN+=(terraform)
   else
     skip "terraform"
+  fi
+fi
+
+# ─────────────────────────────────────────────────────── ansible
+if want ansible; then
+  section "Ansible"
+  if command -v ansible-lint >/dev/null 2>&1; then
+    ok=1
+    while IFS= read -r d; do
+      out=$( cd "$d" && ansible-lint --offline --nocolor 2>&1 )
+      if grep -q 'Passed' <<<"$out"; then :; else
+        fail "ansible-lint: $d"
+        printf '     %s\n' "$(grep -E '^(WARNING|ERROR)|name\[|var-naming|no-changed-when|yaml\[' <<<"$out" | head -8)"
+        ok=0
+      fi
+    done < <(find ./*/code -name 'ansible.cfg' -exec dirname {} \; 2>/dev/null | sort -u)
+    [[ $ok -eq 1 ]] && pass "ansible-lint clean (production profile)"
+    RUN+=(ansible)
+  else
+    skip "ansible-lint"
   fi
 fi
 

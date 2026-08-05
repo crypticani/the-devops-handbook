@@ -84,10 +84,10 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq shellcheck
-          pip install --quiet pyyaml ruff
+          pip install --quiet pyyaml ruff ansible-lint
 
       - name: Fast checks
-        run: ./scripts/validate.sh yaml json python bash compose go
+        run: ./scripts/validate.sh yaml json python bash compose ansible go
 
       - name: Terraform
         run: |

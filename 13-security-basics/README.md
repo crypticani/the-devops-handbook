@@ -663,6 +663,8 @@ Read the sections above first, then work through these **in order**. Every lab e
 | # | Lab | What you'll do |
 |---|-----|----------------|
 | 1 | **[Security Scanning](./labs/lab-01-security-scanning.md)** | Integrate security scanning into your DevOps workflow. |
+| 2 | **[Secrets Management](./labs/lab-02-secrets-management.md)** | Stop putting secrets where they can be read. |
+| 3 | **[Supply Chain Security](./labs/lab-03-supply-chain-security.md)** | Answer three questions about the software you ship: **what is actually in it**, **did we really build it**, and **can anything else get deployed**. |
 
 **Portfolio project:**
 

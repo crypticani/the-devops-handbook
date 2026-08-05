@@ -639,6 +639,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 | # | Lab | What you'll do |
 |---|-----|----------------|
 | 1 | **[Ansible Basics](./labs/lab-01-ansible-basics.md)** | Write and run Ansible playbooks against Docker containers as managed nodes. |
+| 2 | **[Roles, Vault, and Testing](./labs/lab-02-roles-vault-and-testing.md)** | Turn a working playbook into something a team can maintain. |
 
 **Portfolio project:**
 

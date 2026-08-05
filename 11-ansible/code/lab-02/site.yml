@@ -1,0 +1,56 @@
+---
+- name: Deploy the web application with zero downtime
+  hosts: webservers
+  gather_facts: true
+
+  # ⭐ The four keywords that make this a real rolling deploy
+  serial: 1                        # one host at a time
+  max_fail_percentage: 0           # any failure stops the rollout immediately
+  order: inventory
+  any_errors_fatal: false
+
+  pre_tasks:
+    - name: Drain this host from the load balancer
+      ansible.builtin.command:
+        cmd: >
+          docker compose exec -T lb sh -c
+          "echo 'disable server webservers/{{ inventory_hostname }}' | socat stdio /var/run/haproxy.sock"
+      delegate_to: localhost
+      become: false
+      changed_when: true
+      failed_when: false           # the lab HAProxy has no admin socket; the pattern is the point
+
+    - name: Pause so in-flight requests can complete
+      ansible.builtin.pause:
+        seconds: 3
+
+  roles:
+    - role: webapp
+      tags: [deploy]
+
+  post_tasks:
+    - name: Verify this host is serving the new version
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ webapp_port }}/health"
+        return_content: true
+      register: _check
+      retries: 15
+      delay: 1
+      until:
+        - _check.status == 200
+        - _check.json.version == webapp_version      # ⭐ assert the NEW version
+      changed_when: false
+
+    - name: Return this host to the load balancer
+      ansible.builtin.command:
+        cmd: >
+          docker compose exec -T lb sh -c
+          "echo 'enable server webservers/{{ inventory_hostname }}' | socat stdio /var/run/haproxy.sock"
+      delegate_to: localhost
+      become: false
+      changed_when: true
+      failed_when: false
+
+    - name: Report
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} now serving {{ _check.json.version }}"

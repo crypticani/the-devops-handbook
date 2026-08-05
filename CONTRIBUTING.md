@@ -93,7 +93,7 @@ Run the validator. It's the same script CI runs:
 ./scripts/validate.sh links yaml   # or just the checks you care about
 ```
 
-Available checks: `links` · `mermaid` · `yaml` · `json` · `python` · `bash` · `compose` · `terraform` · `go` · `labs`
+Available checks: `links` · `mermaid` · `yaml` · `json` · `python` · `bash` · `compose` · `terraform` · `ansible` · `go` · `labs`
 
 Checks whose tool isn't installed are **skipped, not failed**, so a partial local
 environment still gives you useful signal. To run everything locally:
@@ -102,6 +102,7 @@ environment still gives you useful signal. To run everything locally:
 npm install --no-save mermaid jsdom      # mermaid
 pip install pyyaml ruff                   # yaml, python
 sudo apt-get install shellcheck           # bash
+pip install ansible-lint                  # ansible
 # terraform, docker, and go you probably already have
 ```
 

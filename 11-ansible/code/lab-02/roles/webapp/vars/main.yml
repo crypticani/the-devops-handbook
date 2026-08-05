@@ -1,0 +1,6 @@
+---
+# ⭐ vars/ is INTERNAL. High precedence, hard for a caller to override — which is
+# exactly what you want for values that are implementation details, not options.
+_webapp_service_name: "webapp"
+_webapp_config_path: "{{ webapp_root }}/config.ini"
+_webapp_pid_file: "/run/webapp.pid"

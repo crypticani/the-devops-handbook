@@ -1,16 +1,13 @@
 # Module 13: Security Basics — Lab Code
 
-Deliberately vulnerable and hardened artifacts, for scanner practice.
+Scanner targets, secret-delivery examples, and supply-chain artifacts.
 
-These are the real, runnable files from this module's labs. They are validated in CI, so
-they stay correct as tool versions move on.
+These are the real files from this module's labs, validated in CI.
 
-The labs still show every file inline — **type them out the first time**, that's where the
-learning happens. Use these when you want to skip the transcription, when you're comparing
-your version against a reference, or when something isn't working and you need a known-good
-starting point.
-
-> ⚠️ **The files in `lab-01/` are intentionally insecure.** They contain hardcoded credentials, a world-open security group, a public S3 bucket, and a privileged root pod. They exist so your scanners have something to find. Never copy them into a real project.
+> ⚠️ **Much of this is intentionally insecure.** `lab-01` contains hardcoded credentials, a
+> world-open security group, a public S3 bucket and a privileged root pod. `lab-02` contains
+> Dockerfiles that deliberately bake secrets into image layers. They exist so your scanners
+> have something to find. **Never copy them into a real project.**
 
 ---
 
@@ -18,7 +15,8 @@ starting point.
 
 ### `lab-01/`
 
-An insecure and a hardened Dockerfile, a file with planted secrets, and misconfigured Terraform and Kubernetes manifests.
+An insecure and a hardened Dockerfile, a file with planted secrets, and misconfigured
+Terraform and Kubernetes manifests — all deliberately wrong, for scanner practice.
 
 ```
 lab-01/
@@ -27,20 +25,61 @@ lab-01/
 ├── Dockerfile.good
 ├── config.py
 ├── main.tf
-└── pod.yml
+├── pod.yml
+├── secret-test/config.py
+├── secret-test/gitignore
+├── secret-test/iac-scan/main.tf
+└── secret-test/iac-scan/pod.yml
 ```
+
+### `lab-02/`
+
+The four secret-delivery mechanisms, side by side, plus the Vault + Postgres stack.
+
+```
+lab-02/
+├── Dockerfile.baked
+├── Dockerfile.buildkit
+├── compose.yaml
+└── rotation-drill.md
+```
+
+`Dockerfile.baked` is the ❌ counter-example — it bakes a token into `ENV` and `ARG`, both of
+which survive in the image. `Dockerfile.buildkit` is the ✅ version using
+`--mount=type=secret`. Compare them with `docker history`.
+
+### `lab-03/`
+
+A demo app, a pinned build, a signature-verification gate, and a Kyverno admission policy.
+
+```
+lab-03/
+├── Dockerfile
+├── Dockerfile.evil
+├── Dockerfile.pinned.example
+├── app/main.py
+├── app/requirements.txt
+├── kyverno-verify-images.yaml
+└── verify-before-deploy.sh
+```
+
+`Dockerfile.evil` exists only to demonstrate a tag being repointed — it is what an image
+substitution looks like. `Dockerfile.pinned.example` needs a real base-image digest
+substituted before use.
 
 ---
 
 ## Using these files
 
 ```bash
-# From the repo root — copy a lab's files into your working directory
-mkdir -p ~/devops-labs/13-security-basics && cd ~/devops-labs/13-security-basics
-cp -r /path/to/the-devops-handbook/13-security-basics/code/lab-01/. .
-```
+mkdir -p ~/devops-labs/13-security && cd ~/devops-labs/13-security
+cp -r /path/to/the-devops-handbook/13-security-basics/code/lab-03/. .
 
-Then follow the lab. Every command in the lab assumes these filenames and this layout.
+# Lab 03 needs a real digest for the pinned build
+docker pull python:3.12-slim
+DIGEST=$(docker inspect python:3.12-slim --format '{{index .RepoDigests 0}}' | cut -d@ -f2)
+sed "s|sha256:REPLACE-WITH-THE-REAL-DIGEST|$DIGEST|" Dockerfile.pinned.example > Dockerfile.pinned
+```
 
 ---
 

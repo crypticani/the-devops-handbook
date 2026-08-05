@@ -1,0 +1,23 @@
+---
+- name: Restart webapp
+  ansible.builtin.shell:
+    cmd: |
+      if [ -f {{ _webapp_pid_file }} ]; then
+        kill "$(cat {{ _webapp_pid_file }})" 2>/dev/null || true
+        sleep 1
+      fi
+      setsid {{ webapp_root }}/start.sh >/var/log/webapp.log 2>&1 &
+      echo $! > {{ _webapp_pid_file }}
+    executable: /bin/bash
+  changed_when: true          # a restart is, by definition, a change
+  listen: "restart webapp"
+
+- name: Verify webapp
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ webapp_port }}{{ webapp_health_path }}"
+    status_code: 200
+  register: webapp_verify
+  retries: 20
+  delay: 1
+  until: webapp_verify.status == 200
+  listen: "restart webapp"     # ⭐ same topic — runs after the restart, every time

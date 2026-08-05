@@ -1,0 +1,8 @@
+---
+profile: production        # ⭐ the strictest built-in profile
+exclude_paths:
+  - .cache/
+  - .github/
+skip_list: []
+warn_list:
+  - experimental
