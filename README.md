@@ -111,7 +111,7 @@ Everything under `code/` is automatically tested whenever it changes, so the fil
 | 13 | [Security Basics](./13-security-basics/) | Secrets, RBAC, container security, secure CI/CD | 1.5 weeks | [📋](./13-security-basics/cheatsheet.md) | [📁](./13-security-basics/code/) |
 | 14 | [System Design](./14-system-design-devops/) | Architecture, scaling, HA, load balancing | 1 week | — | [📁](./14-system-design-devops/code/) |
 | 15 | [Projects](./15-projects/) | Beginner → Advanced real-world projects | 3-4 weeks | — | — |
-| 16 | [Interview Prep](./16-interview-prep/) | FAQs, scenarios, debugging questions | 1-2 weeks | — | [📁](./16-interview-prep/code/) |
+| 16 | [Interview Prep](./16-interview-prep/) | FAQs, scenarios, incident response, certs, job search | 1-2 weeks | — | [📁](./16-interview-prep/code/) |
 
 **Total Estimated Duration**: 24-28 weeks (6-7 months) at ~10-15 hours/week
 

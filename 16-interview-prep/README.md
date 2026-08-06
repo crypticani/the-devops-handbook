@@ -28,6 +28,8 @@ You have the skills. Now you need to **communicate them under pressure**. DevOps
 6. [Mock Incident Debugging](#6-mock-incident-debugging)
 7. [Common Mistakes in Interviews](#7-common-mistakes-in-interviews)
 8. [Preparation Checklist](#8-preparation-checklist)
+9. [Certification Map](#9-certification-map)
+10. [Resume, LinkedIn, and the Job Search](#10-resume-linkedin-and-the-job-search)
 
 ---
 
@@ -349,6 +351,122 @@ GOOD: "First I'd check if the issue is isolated to one server
 
 ---
 
+## 9. Certification Map
+
+### What Certifications Do and Don't Do
+
+They get your CV past a filter, they give an unstructured subject a syllabus, and for some employers (consultancies, partners with vendor quotas, public-sector contracts) they are a hard requirement. What they do not do is convince an engineer in a technical interview — that is what your projects are for.
+
+The honest ordering: **projects first, then one certification in the area you want to be hired for.** Three certificates and no repository reads as someone who studies rather than builds, and the follow-up questions expose it in minutes.
+
+### The Map
+
+Each row lists the modules that cover the material. Prices and durations are **illustrative 2026 figures — check current pricing**, and note that most vendor exams are discounted or free through training events.
+
+| Certification | Covers modules | Cost (approx) | Valid | Worth it when |
+|---------------|----------------|--------------:|-------|---------------|
+| **AWS Certified Cloud Practitioner** | 00, 09 | £75 | 3 yr | You need vocabulary and a first credential fast. Skip it if you can pass SAA |
+| **AWS Solutions Architect – Associate** (SAA) | 09, 14 | £120 | 3 yr | ⭐ The highest-signal first cloud cert. Widely recognised, genuinely broad |
+| **AWS SysOps Administrator / DevOps Engineer – Pro** | 06, 07, 09, 10 | £120 / £240 | 3 yr | You already work in AWS and want depth, not breadth |
+| **HashiCorp Terraform Associate** | 10 | £55 | 2 yr | ⭐ Cheap, quick, and maps almost exactly onto Module 10. Excellent value |
+| **CKA — Certified Kubernetes Administrator** | 12 | £300 | 2 yr | ⭐ The strongest technical signal on this list. Hands-on exam in a real cluster — you cannot pass it by memorising |
+| **CKAD — Application Developer** | 12 | £300 | 2 yr | You deploy on Kubernetes more than you operate it |
+| **CKS — Security Specialist** | 12, 13 | £300 | 2 yr | After CKA (it is a prerequisite), and only if security is the direction |
+| **LFCS / RHCSA** | 01, 04 | £250 / £330 | 3 yr | Your Linux is the weak part, or the employer is a RHEL shop. RHCSA is hands-on and well respected |
+| **Azure AZ-104 / AZ-400, Google ACE** | 09 (concepts transfer) | £120–150 | 1–2 yr | The job you want is on that cloud. Concepts transfer; the exam does not |
+| **Certified Jenkins Engineer, Docker DCA** | 05, 06 | varies | varies | Rarely asked for now. Do a project instead |
+
+### Choosing
+
+```
+Career-changer, no professional experience yet
+  → 1 capstone project → AWS SAA → Terraform Associate
+     (breadth + a credential that survives a CV filter)
+
+Sysadmin moving into DevOps
+  → RHCSA or LFCS if Linux is your story → CKA
+     (you already have the ops instinct; prove the platform)
+
+Developer moving into DevOps/platform
+  → CKAD or CKA → Terraform Associate
+     (you can code; prove you can operate)
+
+Already in the role, want the next band
+  → CKA → CKS, or AWS DevOps Pro
+     (depth in the thing you already do)
+```
+
+> 💡 **Two traps.** The first is treating a certificate as a substitute for the lab work in this handbook — a CKA holder who has never debugged a CrashLoopBackOff under pressure gets found out in the first scenario question. The second is letting them expire silently: put the renewal date in a calendar the day you pass, because an expired certification on a CV is worse than none.
+
+---
+
+## 10. Resume, LinkedIn, and the Job Search
+
+Module 15 §8 covers how to *present a project*. This section is about the documents and the search itself.
+
+### The Resume Bullet Formula
+
+**Action verb + what you built + the tool + the measurable outcome.** The outcome is the part almost everyone omits, and it is the only part that distinguishes you.
+
+| ❌ Weak | ✅ Strong |
+|---------|-----------|
+| "Responsible for CI/CD pipelines" | "Built a GitHub Actions pipeline with image scanning that cut mean time from commit to production from 3 days to 40 minutes" |
+| "Used Terraform for infrastructure" | "Codified a two-AZ VPC and EKS cluster in Terraform with remote state and locking; environment rebuild went from a day of console work to a 20-minute apply" |
+| "Monitored systems with Prometheus" | "Instrumented 4 services with RED metrics and replaced 40 threshold alerts with 6 symptom-based ones, ending alert fatigue on the on-call rotation" |
+| "Knowledge of Kubernetes" | "Migrated 3 Compose services to Kubernetes with probes, resource limits, and an HPA; rollbacks went from manual to a single automated step" |
+
+No numbers because it is a personal project? Use the numbers you *do* have: image size before and after, build time, replicas, requests handled in a load test, minutes to rebuild from scratch, cost per month. "Reduced image from 1.2 GB to 78 MB with a multi-stage build" is a real measurement from a personal project.
+
+### Structure and the ATS
+
+Most applications are parsed by software before a human sees them. That imposes boring constraints — accept them:
+
+- **One page** with under ~5 years of experience, two at most beyond that
+- **Order**: contact → 2-line summary → skills → experience → projects → education/certs. Career-changers put **projects above experience**
+- **Plain single-column layout.** No tables, no text boxes, no icons, no photo, no two-column PDF — parsers mangle all of these. Send PDF unless told otherwise
+- **Mirror the posting's vocabulary.** If it says "IaC" and you wrote "infrastructure as code", write both once. This is not gaming the system; it is answering the question they asked
+- **Link your portfolio repository in the header**, and make sure its README is the thing you want read first
+
+### GitHub and LinkedIn
+
+Your GitHub is the artefact a technical reviewer actually opens:
+
+- Pin the portfolio repository; make its README the tour, with the architecture diagram visible without scrolling
+- Commit history that shows iteration beats one "initial commit" of finished work
+- No secrets, anywhere, in any history. This is checked, and it is disqualifying
+
+LinkedIn is a search index, not a CV:
+
+- Headline states the target role, not the current one: "DevOps Engineer — Kubernetes, Terraform, AWS"
+- The About section is the same two-minute project pitch you rehearsed for interviews
+- Turn on "open to work" for recruiters only, and put the tools in the skills list because that is literally what recruiters filter on
+
+### Running the Search
+
+```
+Weekly rhythm that works:
+  5-8 targeted applications  ← tailored, researched, one paragraph of why this company
+  1 project improvement      ← something new to talk about every week
+  2-3 outreach messages      ← engineers at target companies, not recruiters
+  1 mock interview           ← out loud, timed, with someone or recording yourself
+
+What does NOT work:
+  ❌ 50 applications a day with the same CV
+  ❌ Waiting until the portfolio is "finished" — it never is
+  ❌ Only applying to postings; most roles are filled through referrals
+```
+
+Read the posting for what is actually required rather than the wishlist — "5 years Kubernetes" on a mid-level posting is usually aspirational, and applying anyway is free. Do research one level deeper than the job ad: their engineering blog, their public repositories, their stack. One specific sentence about *their* system in a cover note outperforms a page of enthusiasm.
+
+### Take-Homes and Offers
+
+- **Take-home exercises**: timebox them, and if it exceeds four hours, say what you would have done next rather than working the weekend. Include a README with your tradeoffs — that is what is actually being assessed
+- **Salary**: know your range before the first call, from local market data. When asked what you are looking for, give a researched range with a reason attached
+- **Negotiation**: one round is expected and does not cost you the offer. Ask for the whole package in writing before deciding, and ask about the on-call rotation and its compensation — you are interviewing the job too
+- **The questions you ask** are part of the evaluation. "What does your on-call rotation look like?", "How long does a one-line change take to reach production?", and "What happened in your last incident?" tell you more about a DevOps job than any answer they give about culture
+
+---
+
 ## 🧪 Labs and Projects
 
 Read the sections above first, then work through these **in order**. Every lab ends with a 🧨 **Break It** section — those are not optional; they are where the debugging skill actually comes from.
@@ -356,6 +474,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 | # | Lab | What you'll do |
 |---|-----|----------------|
 | 1 | **[Mock Incident Debugging](./labs/lab-01-mock-incident-debugging.md)** | Practice diagnosing and resolving simulated production incidents using Docker. |
+| 2 | **[Incident Response — Running the Process](./labs/lab-02-incident-response.md)** | Get paged with traffic still arriving: declare a severity, communicate before you know the cause, mitigate rather than root-cause, then write the postmortem. |
 
 **Portfolio project:**
 
