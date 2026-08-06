@@ -651,4 +651,4 @@ cd ~ && rm -rf ~/gitops-demo      # keep the GitHub repo — it's portfolio evid
 
 ---
 
-[← Previous Lab: RBAC and Pod Security](./lab-05-rbac-and-security.md) | [Back to Module README](../README.md) | [Module 13: Security Basics →](../../13-security-basics/)
+[← Previous Lab: RBAC and Pod Security](./lab-05-rbac-and-security.md) | [Back to Module README](../README.md) | [Next Lab: Service Mesh with Linkerd →](./lab-07-service-mesh.md)

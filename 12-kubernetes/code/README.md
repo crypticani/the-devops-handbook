@@ -103,6 +103,22 @@ lab-06/
 The two `.example` files need your GitHub username substituted — copy each to the real filename
 and edit it.
 
+### `lab-07/`
+
+Service mesh. Two services that know nothing about a mesh, an identity-based authorization
+policy, and a workload deliberately left outside the mesh to show what that costs you.
+
+```
+lab-07/
+├── apps.yml        # web → api, separate ServiceAccounts (identity comes from these)
+├── policy.yml      # Server + MeshTLSAuthentication + AuthorizationPolicy + probe authz
+└── unmeshed.yml    # a namespace with NO injection annotation
+```
+
+⭐ `policy.yml` includes an explicit authorization for the kubelet's probes. Declaring a `Server`
+makes the port default-deny, and the kubelet has an IP rather than an identity — omit it and
+Kubernetes restarts perfectly healthy pods.
+
 ---
 
 ## Using these files

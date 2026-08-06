@@ -1025,6 +1025,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 | 4 | **[Scaling and Resource Tuning](./labs/lab-04-scaling-and-resources.md)** | Get resource requests and limits right — and learn what each kind of "wrong" looks like from the outside. |
 | 5 | **[RBAC and Pod Security](./labs/lab-05-rbac-and-security.md)** | Lock down a cluster the way a real one is locked down. |
 | 6 | **[GitOps with Argo CD](./labs/lab-06-gitops-argocd.md)** | Stop deploying with `kubectl` — put a workload's desired state in Git and let a controller inside the cluster reconcile toward it. |
+| 7 | **[Service Mesh with Linkerd](./labs/lab-07-service-mesh.md)** | Get mTLS, per-hop golden metrics, and identity-based authorization across two services **without changing either application** — then measure what… |
 
 **Portfolio project:**
 
