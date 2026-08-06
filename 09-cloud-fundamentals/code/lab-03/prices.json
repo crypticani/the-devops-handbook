@@ -1,0 +1,48 @@
+{
+  "_comment": [
+    "ILLUSTRATIVE monthly prices in GBP, eu-west-1, on-demand, 730 hours.",
+    "These are the right ORDER OF MAGNITUDE and the right RANKING, which is what a cost",
+    "review needs. They are not quotes — check current pricing before you commit to anything,",
+    "and use Infracost or the AWS Pricing Calculator when the number has to be defensible.",
+    "Kept as data rather than hardcoded in the script so you can correct it for your region."
+  ],
+  "currency": "GBP",
+  "hours_per_month": 730,
+  "nat_gateway_per_month": 32.85,
+  "nat_gateway_per_gb": 0.045,
+  "public_ipv4_per_month": 3.6,
+  "alb_per_month": 18.4,
+  "instance_per_month": {
+    "t3.micro": 8.3,
+    "t3.small": 16.6,
+    "t3.medium": 33.3,
+    "t3.large": 66.6,
+    "t3.xlarge": 133.2,
+    "m5.large": 78.0,
+    "m5.xlarge": 156.0
+  },
+  "db_instance_per_month": {
+    "db.t3.micro": 14.2,
+    "db.t3.small": 28.5,
+    "db.t3.medium": 57.0,
+    "db.t3.large": 114.0,
+    "db.m5.large": 138.0
+  },
+  "ebs_per_gb_month": {
+    "gp2": 0.11,
+    "gp3": 0.088,
+    "io1": 0.138,
+    "st1": 0.05,
+    "standard": 0.055
+  },
+  "rds_storage_per_gb_month": {
+    "gp2": 0.127,
+    "gp3": 0.115,
+    "io1": 0.144
+  },
+  "cloudwatch_logs_storage_per_gb_month": 0.03,
+  "cloudwatch_logs_assumed_gb_per_month": 20,
+  "spot_discount": 0.7,
+  "savings_plan_discount": 0.35,
+  "off_hours_factor": 0.24
+}

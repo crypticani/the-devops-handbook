@@ -670,6 +670,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 |---|-----|----------------|
 | 1 | **[AWS Fundamentals](./labs/lab-01-aws-fundamentals.md)** | Get hands-on with the four foundational AWS services. |
 | 2 | **[IAM and Least Privilege](./labs/lab-02-iam-least-privilege.md)** | Write IAM policies that grant exactly what's needed and nothing more — and, more importantly, learn to **test** them before they reach production. |
+| 3 | **[FinOps](./labs/lab-03-finops-cost-review.md)** | Do a cost review the way it should happen: on the plan, before apply, with a number attributable to a team. |
 
 **Portfolio project:**
 

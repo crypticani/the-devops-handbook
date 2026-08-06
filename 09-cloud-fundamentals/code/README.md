@@ -44,6 +44,20 @@ lab-02/
 > `policy-arn-trap.json` is **wrong on purpose** — it's the `s3:ListBucket` + `s3:GetObject`
 > ARN mistake from Exercise 1. Compare it against `policy-correct.json`.
 
+### `lab-03/`
+
+A FinOps cost review that needs no cloud account: the Project 03 environment as Terraform, a
+real `terraform show -json` of it, and two scripts that turn a plan into a number somebody owns.
+
+```
+lab-03/
+├── infra/main.tf      the environment, written the way it gets written first (⚠️ markers)
+├── sample-plan.json   a real plan of that config, so the lab runs offline
+├── prices.json        illustrative monthly prices, as DATA you can correct per region
+├── cost-estimate.py   plan + prices → cost by resource and by tag, + ranked optimisations
+└── tag-gate.py        ⭐ blocking: fails a plan that creates unattributable resources
+```
+
 ---
 
 ## Using these files

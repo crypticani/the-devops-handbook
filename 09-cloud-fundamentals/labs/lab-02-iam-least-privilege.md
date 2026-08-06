@@ -934,4 +934,4 @@ aws s3 ls | grep iam-lab || echo "✅ clean"
 
 ---
 
-[← Previous Lab: AWS Fundamentals](./lab-01-aws-fundamentals.md) | [Back to Module README](../README.md) | [Module 10: Terraform →](../../10-terraform/)
+[← Previous Lab: AWS Fundamentals](./lab-01-aws-fundamentals.md) | [Back to Module README](../README.md) | [Next Lab: FinOps Cost Review →](./lab-03-finops-cost-review.md)
