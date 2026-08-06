@@ -870,6 +870,54 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 ---
 
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. What is the actual difference between a container and a VM?</strong></summary>
+
+A container is a process on the host kernel, isolated with namespaces and limited with cgroups: megabytes, starts in milliseconds. A VM runs its own kernel on a hypervisor: gigabytes, starts in seconds, and isolates far more strongly. That shared kernel is both the efficiency and the security caveat.
+
+</details>
+
+<details>
+<summary><strong>2. Why does instruction order in a Dockerfile change your build times so much?</strong></summary>
+
+Each instruction is a cached layer, and a cache miss invalidates everything after it. Copying the whole source tree before installing dependencies means every one-character code change reinstalls all dependencies. Copy the manifest, install, then copy the source.
+
+</details>
+
+<details>
+<summary><strong>3. What does a multi-stage build buy you beyond a smaller image?</strong></summary>
+
+Attack surface. Compilers, package managers, build secrets, and dev dependencies stay in the builder stage and never ship. The final image contains the artefact and its runtime — less to scan, less to exploit, less to pull.
+
+</details>
+
+<details>
+<summary><strong>4. Data written by the container is gone after a restart. Why?</strong></summary>
+
+It went to the container's writable layer, which is created with the container and deleted with it. Anything that must survive belongs in a named volume or a bind mount — and in an image build, anything written after the last layer you keep is equally temporary.
+
+</details>
+
+<details>
+<summary><strong>5. Why run as a non-root user, and what does `USER` not protect you from?</strong></summary>
+
+It limits what an application compromise or a container escape gets: root in the container is root on the host if the boundary breaks. It does nothing about `--privileged`, a mounted Docker socket, host-path mounts, or excess capabilities — those hand over the host regardless of the user.
+
+</details>
+
+<details>
+<summary><strong>6. Two services in the same Compose file need to talk. What address do they use?</strong></summary>
+
+Each other's service name, resolved by Docker's embedded DNS on the shared network, on the container port. Published ports (`ports:`) exist only to reach a container from the host — mapping ports for internal traffic exposes services you meant to keep private.
+
+</details>
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

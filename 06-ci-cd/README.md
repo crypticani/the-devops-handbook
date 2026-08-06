@@ -530,6 +530,24 @@ Configure in GitHub: **Settings → Environments → production**:
 - ✅ Wait timer (e.g., 5 minutes after staging)
 - ✅ Deployment branch restrictions (only `main`)
 
+### The Other Model: Pull-Based Delivery (GitOps)
+
+Everything above is **push**: the pipeline holds production credentials and runs the deployment. That is still the common case, and for anything that isn't Kubernetes it is usually the only case.
+
+The alternative is **pull**: a controller running *inside* the target cluster watches a Git repository of manifests and reconciles the cluster toward it continuously. The pipeline's job stops at building an image and committing a manifest change — it never touches the cluster, and never needs a credential that could deploy to it.
+
+| | Push (this section) | Pull (GitOps) |
+|---|---|---|
+| Who deploys | The CI runner | A controller in the cluster |
+| Prod credentials live in | The CI system | Nowhere outside the cluster |
+| Deployment history | Pipeline run logs | `git log` on the manifests repo |
+| Drift from manual changes | Undetected until something breaks | Detected, and reverted if configured to |
+| Works for | Anything | Kubernetes, essentially |
+
+> **💡 DevOps Impact**: The security argument is the one that wins arguments — a compromised pipeline with no cluster credentials cannot deploy anything. The operational argument is drift detection: push-based delivery has no idea what the cluster looks like between deploys.
+
+Concepts and tradeoffs, including when GitOps is overkill: [Module 14 §9](../14-system-design-devops/README.md). Hands-on with Argo CD, once you know Kubernetes: [Module 12, Lab 06](../12-kubernetes/labs/lab-06-gitops-argocd.md).
+
 ---
 
 ## 6. Jenkins — Secondary Tool
@@ -983,6 +1001,54 @@ Read the sections above first, then work through these **in order**. Every lab e
 - [Project: Pull Request CI Pipeline](./projects/project-01-pull-request-pipeline.md) — Create a CI pipeline that gives fast feedback on every pull request and blocks changes that fail linting, tests, or build checks.
 
 **Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
+
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. In what order should pipeline stages run, and why does that order matter more than total runtime?</strong></summary>
+
+Cheapest and most likely to fail first: lint, unit tests, build, then integration tests, scans, and deploy. Feedback speed is what people actually experience — a forty-minute suite that fails on a formatting error teaches everyone to stop watching CI.
+
+</details>
+
+<details>
+<summary><strong>2. Blue-green or canary?</strong></summary>
+
+Blue-green runs two complete environments and switches traffic at once: instant rollback, double the infrastructure, and one exposed moment. Canary shifts a small share of real traffic first and watches metrics: it catches what only production traffic reveals, but it is slower and needs observability good enough to make the call.
+
+</details>
+
+<details>
+<summary><strong>3. Why should the pipeline build the artefact exactly once?</strong></summary>
+
+Rebuilding per environment means the thing you tested is not the thing you shipped — different base image, different transitive dependency, different timestamp. Build once, then promote that immutable artefact through environments with configuration injected at deploy time.
+
+</details>
+
+<details>
+<summary><strong>4. What do CI secrets actually protect you from, and where do they leak?</strong></summary>
+
+Masking in logs prevents accidental printing, not deliberate exfiltration: any step that can run code can read the secrets exposed to it. Pull requests from forks get none by default — reaching for `pull_request_target` to work around that is how repositories hand write access to strangers.
+
+</details>
+
+<details>
+<summary><strong>5. A test fails intermittently. Why is re-running it the wrong first move?</strong></summary>
+
+Because the retry hides the defect and trains the team to click until green, at which point the suite stops being evidence of anything. Flakiness has causes you can find: shared state between tests, `latest` tags and unpinned dependencies, ordering assumptions, and real race conditions in the code under test.
+
+</details>
+
+<details>
+<summary><strong>6. What has to be true before you let deployment to production happen automatically?</strong></summary>
+
+Tests you actually trust, monitoring that will tell you a release went bad without a human watching, and a rollback that is one automated step. Without those three, automating deployment just means arriving at the outage faster.
+
+</details>
 
 ---
 

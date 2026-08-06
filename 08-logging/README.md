@@ -603,6 +603,54 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 ---
 
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. Why centralize logs at all, when the log file is right there on the host?</strong></summary>
+
+Because with autoscaling and container restarts the host holding the log is frequently gone by the time you look, and one user request now crosses half a dozen services. You cannot grep what no longer exists, and you cannot follow a request through files on twelve machines.
+
+</details>
+
+<details>
+<summary><strong>2. What does structured logging buy you, and what does it cost?</strong></summary>
+
+You get fields you can filter and aggregate on without brittle regex, consistent parsing across services, and a place to attach a request id. The cost is discipline in the application — a log line becomes an event with a schema rather than a sentence.
+
+</details>
+
+<details>
+<summary><strong>3. Elasticsearch or Loki?</strong></summary>
+
+Elasticsearch indexes the whole log body: fast arbitrary full-text queries, expensive in storage and memory. Loki indexes only labels and stores compressed chunks: dramatically cheaper, but a full-text search is a scan, and high-cardinality labels are what actually hurt you.
+
+</details>
+
+<details>
+<summary><strong>4. What is a log level policy, and what happens without one?</strong></summary>
+
+ERROR means a human must act, WARN means suspicious and possibly actionable, INFO records business events, DEBUG is off in production and enabled deliberately. Without a policy everything drifts to one level — and a stream where everything is an error contains no errors.
+
+</details>
+
+<details>
+<summary><strong>5. What is a correlation id and why must it be created at the edge?</strong></summary>
+
+One identifier attached to every log line produced while handling a request, generated at ingress and propagated through every downstream call. Created anywhere later, it cannot join the earlier hops — and reconstructing one user's path across services is the main reason you centralized logs.
+
+</details>
+
+<details>
+<summary><strong>6. When should something be a metric rather than a log-based alert?</strong></summary>
+
+Anything you are counting or thresholding: metrics are cheap, pre-aggregated, and stable to alert on. Reserve log-based alerts for rare specific events whose textual detail is the point — a particular exception, an audit action. "Alert when this log line appears 100 times" is usually a metric the application should be exporting.
+
+</details>
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

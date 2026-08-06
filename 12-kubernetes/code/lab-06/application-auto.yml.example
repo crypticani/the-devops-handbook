@@ -1,0 +1,36 @@
+# Exercise 3: the same Application, now reconciling on its own.
+# Copy to application-auto.yml and replace <your-username>.
+#
+# These three lines are the entire difference between "Argo CD tells me about drift" and
+# "Argo CD fixes drift". Read Break It before you turn them on in anything real.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: web
+  namespace: argocd
+  finalizers:
+    # Delete the Application → delete what it created. Without this finalizer, deleting the
+    # Application orphans the workload and it keeps serving traffic nobody manages.
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/<your-username>/gitops-demo.git
+    targetRevision: main
+    path: manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitops-demo
+  syncPolicy:
+    automated:
+      prune: true # delete resources removed from Git (default false — scenario 2)
+      selfHeal: true # revert changes made in the cluster (default false — scenario 1)
+    syncOptions:
+      - CreateNamespace=true
+  # Uncomment when an HPA owns the replica count — otherwise selfHeal and the HPA fight
+  # each other forever (scenario 3).
+  # ignoreDifferences:
+  #   - group: apps
+  #     kind: Deployment
+  #     jsonPointers:
+  #       - /spec/replicas

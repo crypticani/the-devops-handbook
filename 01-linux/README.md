@@ -1213,6 +1213,54 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 ---
 
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. `df` says the disk is full but `du -sh /` accounts for far less. What is going on?</strong></summary>
+
+Most likely a deleted file still held open by a running process — the space is not released until the file descriptor closes (`lsof +L1` shows them; restarting the holder frees it). The other candidate is inode exhaustion, which `df -i` reveals: plenty of bytes, no free inodes.
+
+</details>
+
+<details>
+<summary><strong>2. What do `644` and `755` actually permit, and why is `chmod 777` never the fix?</strong></summary>
+
+`644` is read/write for the owner, read for everyone else. `755` adds execute, which for a directory means the right to enter it — that is why directories need it and plain files usually should not have it. `777` lets any account on the box rewrite the file; the real problem is almost always wrong ownership, so fix it with `chown`.
+
+</details>
+
+<details>
+<summary><strong>3. A service died with no useful application log. How do you tell an OOM kill from an ordinary crash?</strong></summary>
+
+Check `dmesg -T | grep -i oom` or `journalctl -k` for the oom-killer verdict, and the unit's exit status: 137 means it was SIGKILLed (128+9), which is what the kernel does when it reclaims memory. A non-zero application exit code and a stack trace point at the app's own failure instead.
+
+</details>
+
+<details>
+<summary><strong>4. What is the difference between `systemctl start` and `systemctl enable`, and what does `active (exited)` mean?</strong></summary>
+
+`start` runs it now, `enable` makes it start at boot — doing one and forgetting the other is why a service vanishes after a reboot. `active (exited)` is the normal, healthy state for a `Type=oneshot` unit: its command ran to completion successfully and nothing is meant to stay resident.
+
+</details>
+
+<details>
+<summary><strong>5. Which process is holding port 8080?</strong></summary>
+
+`ss -ltnp | grep 8080` (or `lsof -i :8080`). Run it with privileges — without them the PID and program name columns come back empty, which reads misleadingly like nothing is listening.
+
+</details>
+
+<details>
+<summary><strong>6. The script runs perfectly in your shell and fails under cron. Why?</strong></summary>
+
+Cron gives the job a minimal environment: a short `PATH`, no shell profile, no exported variables from your login session, and a working directory you did not choose. Use absolute paths, source the environment explicitly, and redirect stdout and stderr to a log — a cron job with no output is a cron job you cannot debug.
+
+</details>
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

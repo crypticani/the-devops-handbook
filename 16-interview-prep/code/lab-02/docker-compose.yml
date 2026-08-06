@@ -1,0 +1,40 @@
+# The incident stack. Traffic keeps arriving while you work — that is the point.
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: incident-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  api:
+    build: ./api
+    container_name: checkout-api
+    environment:
+      # LEAK=1 is "the release that shipped this morning". Set it to 0 and recreate the
+      # container to simulate a rollback to yesterday's build.
+      LEAK: "${LEAK:-1}"
+      VERSION: "${VERSION:-v1.4.0}"
+      POOL_SIZE: "20"
+    restart: unless-stopped
+
+  # Continuous customer traffic. Without it you can debug in a quiet system, which is not
+  # the skill this lab is for.
+  load:
+    image: curlimages/curl:8.8.0
+    container_name: incident-load
+    depends_on:
+      - nginx
+    command:
+      - sh
+      - -c
+      - |
+        while true; do
+          curl -s -o /dev/null -w '%{http_code} ' -m 6 http://nginx/checkout
+          sleep 0.5
+        done
+    restart: unless-stopped

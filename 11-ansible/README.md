@@ -650,6 +650,54 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 ---
 
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. Ansible is agentless — so what does a managed node actually need?</strong></summary>
+
+SSH access and Python. The control node copies a module over, runs it, and removes it. Nothing to install, upgrade, or open a firewall port for, which is the main reason Ansible gets adopted into environments that will not tolerate an agent.
+
+</details>
+
+<details>
+<summary><strong>2. What does idempotence mean here, and why do `command` and `shell` break it?</strong></summary>
+
+A module converges toward a declared state, so the second run reports `ok` rather than `changed`. Raw commands cannot know whether the work was already done, so they always report `changed` unless you add `creates:` or `changed_when:` — and since `changed` is what triggers handlers, a careless `shell` task restarts your services on every run.
+
+</details>
+
+<details>
+<summary><strong>3. When does a handler run?</strong></summary>
+
+Only if a task that notified it reported `changed`, and by default at the end of the play rather than at the point of notification. That is precisely how you restart a service once after any of five configuration files changed — and nothing at all when none of them did.
+
+</details>
+
+<details>
+<summary><strong>4. Where does a variable's value come from when it is defined in four places?</strong></summary>
+
+Precedence runs roughly from role defaults (weakest) through inventory, group_vars, host_vars, and play vars, up to `-e` extra vars, which beat everything. The practical rule: overridable defaults go in `defaults/`, environment differences in `group_vars/`, and `-e` is for a deliberate one-off — not for normal configuration.
+
+</details>
+
+<details>
+<summary><strong>5. What does the role directory structure buy you?</strong></summary>
+
+Fixed places for `tasks/`, `handlers/`, `templates/`, `files/`, `defaults/`, `vars/`, and `meta/`, so anyone can find and reuse a role without reading all of it. The distinction that matters: `defaults/` is the weakest precedence and meant to be overridden, `vars/` is high precedence and meant not to be.
+
+</details>
+
+<details>
+<summary><strong>6. How do you rehearse a play safely?</strong></summary>
+
+`--check` runs it without making changes and `--diff` shows what would change in files and templates. Modules that cannot predict their result skip in check mode, and a play built out of `shell` tasks cannot be dry-run at all — which is a design smell, not a limitation of the tool.
+
+</details>
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

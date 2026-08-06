@@ -770,4 +770,4 @@ cd .. && rm -rf k8s-rbac-lab
 
 ---
 
-[← Previous Lab: Scaling and Resource Tuning](./lab-04-scaling-and-resources.md) | [Back to Module README](../README.md) | [Module 13: Security Basics →](../../13-security-basics/)
+[← Previous Lab: Scaling and Resource Tuning](./lab-04-scaling-and-resources.md) | [Back to Module README](../README.md) | [Next Lab: GitOps with Argo CD →](./lab-06-gitops-argocd.md)

@@ -825,6 +825,54 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 ---
 
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. What is state, and why can it not live only on your laptop?</strong></summary>
+
+State maps your configuration to the real resources it created, including their IDs and attributes; without it Terraform cannot tell "create" from "update" and will happily build a second copy of everything. Local state means one person can apply and losing the file orphans live infrastructure — use a remote backend with locking.
+
+</details>
+
+<details>
+<summary><strong>2. Why is the state file treated as a secret?</strong></summary>
+
+Because it stores resource attributes verbatim, including generated passwords, keys, and connection strings — in plain text, whether or not the variable was marked sensitive. Encrypt the backend, restrict who can read it, and never commit it.
+
+</details>
+
+<details>
+<summary><strong>3. `plan` says one thing and `apply` does another. How?</strong></summary>
+
+A plan is a diff against state and the real world at the moment it ran. If someone changes a resource, or another apply lands in between, the world has moved. Lock state, and for anything important save the plan to a file and apply that file rather than re-planning.
+
+</details>
+
+<details>
+<summary><strong>4. Someone changed a resource in the web console. How do you detect it and what are your options?</strong></summary>
+
+`terraform plan` shows it as a diff — that is drift. You either bring the change into code (if it was right) or apply to revert it (if it was not). `terraform plan -refresh-only` updates state to match reality without proposing changes, which is the safe way to look first.
+
+</details>
+
+<details>
+<summary><strong>5. `count` or `for_each`?</strong></summary>
+
+`count` indexes by position, so removing the middle element renumbers everything after it and Terraform destroys and recreates resources you never touched. `for_each` keys by a stable string, so each instance has its own identity and can be removed alone. Prefer `for_each` for anything with a natural key.
+
+</details>
+
+<details>
+<summary><strong>6. How do you force one resource to be rebuilt, and how do you adopt one that already exists?</strong></summary>
+
+`terraform apply -replace=ADDRESS` recreates a single resource (this replaced the deprecated `taint`). `terraform import` brings an existing resource under management — you still have to write matching configuration. Hand-editing the state file is not on the list.
+
+</details>
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

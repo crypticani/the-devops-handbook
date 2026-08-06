@@ -509,4 +509,4 @@ Add these to your portfolio repo as evidence of completed work:
 
 ---
 
-[← Back to Module README](../README.md) | [← Lab 01: Prometheus + Grafana](./lab-01-prometheus-grafana.md)
+[← Back to Module README](../README.md) | [← Lab 01: Prometheus + Grafana](./lab-01-prometheus-grafana.md) | [Next Lab: Distributed Tracing →](./lab-03-distributed-tracing.md)

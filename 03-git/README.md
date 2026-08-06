@@ -894,6 +894,54 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 ---
 
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. Name the three local areas Git moves changes through, plus the fourth place they end up.</strong></summary>
+
+Working directory, staging area (the index), and local repository — then the remote. `add` stages, `commit` writes local history, `push` publishes. Most confusing Git messages become obvious once you can say which of the four a file is currently in.
+
+</details>
+
+<details>
+<summary><strong>2. `git reset` or `git revert` — which one on a branch other people have pulled?</strong></summary>
+
+`revert`. It creates a new commit that undoes the change, so history stays intact and everyone's clone stays consistent. `reset` rewrites history and belongs only on your own unpushed work.
+
+</details>
+
+<details>
+<summary><strong>3. Rebase or merge, and what is the one rule you never break?</strong></summary>
+
+Rebase replays your commits on top of the target for linear history; merge records the join and preserves what actually happened. The rule: never rebase a branch other people have already pulled — you rewrite commits they have, and their next push resurrects the old ones.
+
+</details>
+
+<details>
+<summary><strong>4. You committed a secret and pushed it. What is the first action?</strong></summary>
+
+Rotate or revoke the credential. It was compromised the moment it left your machine, and everything else is cleanup. Then purge it from history with `git-filter-repo` and coordinate the force push with the team. Deleting the file in a new commit changes nothing — the old blob is still reachable.
+
+</details>
+
+<details>
+<summary><strong>5. Why `--force-with-lease` instead of `--force`?</strong></summary>
+
+`--force-with-lease` refuses the push if the remote branch moved since your last fetch, so you cannot silently overwrite a teammate's commit. Plain `--force` will happily destroy work you never saw.
+
+</details>
+
+<details>
+<summary><strong>6. What is `git bisect` for?</strong></summary>
+
+Binary-searching history for the commit that introduced a bug. You mark a known-good and known-bad commit, Git checks out the midpoint, you test and mark it — about ten steps for a thousand commits. It is the fastest tool in Git for "this used to work."
+
+</details>
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

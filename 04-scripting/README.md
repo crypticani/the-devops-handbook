@@ -934,6 +934,54 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 ---
 
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. What does `set -euo pipefail` do, and which failure does each part catch?</strong></summary>
+
+`-e` exits on an unhandled non-zero status, `-u` errors on an unset variable instead of expanding to empty, and `-o pipefail` fails a pipeline when any stage fails — without it only the last command's status counts, so `curl broken | jq .` reports success.
+
+</details>
+
+<details>
+<summary><strong>2. Why must you quote `"$var"`?</strong></summary>
+
+An unquoted expansion is word-split and glob-expanded. A path containing a space becomes two arguments, a value containing `*` becomes a list of filenames, and an empty variable disappears entirely. `rm -rf $dir/` with an empty `dir` is how people delete a root filesystem.
+
+</details>
+
+<details>
+<summary><strong>3. `"$@"` versus `"$*"`?</strong></summary>
+
+`"$@"` expands to each argument as its own word, which is what you want when forwarding arguments. `"$*"` joins them into a single string, which is only right when you genuinely want one value — for a log line, say.
+
+</details>
+
+<details>
+<summary><strong>4. When do you stop writing Bash and switch to Python?</strong></summary>
+
+When you need real data structures, JSON or API handling, retries with error handling, or functions you intend to test. Bash is excellent glue for commands and pipes; the moment it starts parsing structured data it becomes unmaintainable.
+
+</details>
+
+<details>
+<summary><strong>5. What makes a script idempotent, and why does it matter?</strong></summary>
+
+It checks state before acting — does the user exist, is the line already in the file, is the mount already there — so a second run reports nothing to do rather than doubling the change. In automation, being run again is the normal case, not the exception.
+
+</details>
+
+<details>
+<summary><strong>6. How do you guarantee a temporary file is cleaned up even when the script fails?</strong></summary>
+
+`trap 'rm -rf "$tmpdir"' EXIT` — the trap fires on every exit path, including the early exit that `set -e` triggers. Cleanup written as the last line of the script only runs when nothing goes wrong.
+
+</details>
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

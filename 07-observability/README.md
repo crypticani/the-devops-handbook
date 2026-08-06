@@ -35,9 +35,10 @@ Your CI/CD pipeline deploys code to production. But **how do you know it's worki
 6. [Alerting with Alertmanager](#6-alerting-with-alertmanager)
 7. [Metrics Design Patterns](#7-metrics-design-patterns)
 8. [Application Instrumentation](#8-application-instrumentation)
-9. [Common Mistakes and Anti-Patterns](#9-common-mistakes-and-anti-patterns)
-10. [Debugging Mindset](#10-debugging-mindset)
-11. [Interview Insights](#11-interview-insights)
+9. [Distributed Tracing with OpenTelemetry](#9-distributed-tracing-with-opentelemetry)
+10. [Common Mistakes and Anti-Patterns](#10-common-mistakes-and-anti-patterns)
+11. [Debugging Mindset](#11-debugging-mindset)
+12. [Interview Insights](#12-interview-insights)
 
 ---
 
@@ -113,12 +114,13 @@ flowchart TB
 - **Tool**: ELK Stack, Loki
 - **Strength**: Rich context, great for debugging specific issues
 
-### Traces (Mentioned Here, Advanced Topic)
+### Traces (Section 9, and Lab 03)
 
 - **What**: The journey of a single request across multiple services
 - **Example**: Request → API Gateway (12ms) → Auth Service (45ms) → Database (230ms)
-- **Tool**: Jaeger, Zipkin, OpenTelemetry
+- **Tool**: OpenTelemetry for instrumentation; Tempo, Jaeger, or Zipkin for storage
 - **Strength**: Finding bottlenecks in distributed systems
+- **Covered in**: [§9 Distributed Tracing with OpenTelemetry](#9-distributed-tracing-with-opentelemetry) and [Lab 03](./labs/lab-03-distributed-tracing.md)
 
 ---
 
@@ -700,7 +702,198 @@ DON'T instrument:
 
 ---
 
-## 9. Common Mistakes and Anti-Patterns
+## 9. Distributed Tracing with OpenTelemetry
+
+### The Question Metrics Cannot Answer
+
+Everything so far in this module aggregates. `http_request_duration_seconds` tells you the p99 of one service. It cannot tell you that *this* request spent 40 ms in your code and 2 seconds waiting on a downstream call — because the moment you added a request ID to the labels to find out, you destroyed your Prometheus instance with cardinality.
+
+That is not a gap you close with better metrics. One request crossing six services needs a data model where the unit is *the request*, not the aggregate.
+
+### Spans and Traces
+
+A **span** is one timed operation: a name, a start, a duration, a parent, a status, and attributes. A **trace** is the tree of spans belonging to one request. The tree is the point — a flat list of durations tells you nothing about what was waiting on what.
+
+```
+POST /checkout                 checkout   2.11s   ████████████████████████
+├── validate_cart              checkout    14ms   ▌
+└── POST /charge               checkout   2.09s   ███████████████████████
+    └── POST /charge            payment   2.08s   ███████████████████████
+        ├── fraud_check         payment   2.03s   ██████████████████████
+        └── db_write            payment    31ms   ▌
+```
+
+Read that shape, don't just read the numbers:
+
+| What you see | What it means |
+|--------------|---------------|
+| Parent long, all children short | Time is being spent somewhere nobody instrumented |
+| Gap before a child starts | Queueing, connection setup, or lock contention — not work |
+| Children overlapping | Concurrent calls; your latency is the longest one, not the sum |
+| Children strictly sequential | Your latency *is* the sum — a candidate for parallelising |
+| One child dominating | You have found the thing to fix. This is the normal outcome |
+
+> **💡 DevOps Impact**: `checkout` is slow and nothing in `checkout` is slow. Without traces, that conversation ends with two teams each proving their service is fine. With traces it ends in ten seconds, with a span name.
+
+### OpenTelemetry Is a Standard, Not a Tool
+
+This is the part that confuses people coming from Prometheus, where the tool and the format are the same thing. OpenTelemetry (OTel) is a CNCF project that standardises *how telemetry is produced and moved*, and deliberately does not store or display anything.
+
+| Piece | What it is | Why you care |
+|-------|-----------|--------------|
+| **API** | Language-level interface for creating spans | Library authors instrument against it with no dependency on your backend |
+| **SDK** | The implementation: sampling, batching, export | Where you configure behaviour |
+| **Instrumentation libraries** | Auto-instrumentation for Flask, Django, `requests`, gRPC, psycopg, … | Most of your spans should come from here, not hand-written code |
+| **OTLP** | The wire protocol (gRPC or HTTP) | One protocol everything speaks. This is what killed the per-vendor agent |
+| **Collector** | A standalone process that receives, processes, and exports | Batching, sampling, redaction, and fan-out — without redeploying apps |
+| **Semantic conventions** | Agreed attribute names (`http.request.method`, `db.system`) | Dashboards and queries work across services written by different teams |
+
+The practical consequence: applications export OTLP to a collector, and swapping Jaeger for Tempo, or adding a second destination, is a collector config change. Nothing gets rebuilt.
+
+```
+[ app + OTel SDK ] ──OTLP──▶ [ OTel Collector ] ──▶ Tempo / Jaeger  (traces)
+                                     │
+                                     ├──▶ Prometheus   (metrics)
+                                     └──▶ Loki         (logs)
+```
+
+> **💡 DevOps Impact**: the collector is where you put anything you don't want to redeploy fifty services to change — sampling policy, PII redaction, adding `deployment.environment` to every span, or sending a copy of production telemetry to a second backend during a migration.
+
+### Instrumenting an Application
+
+The setup is short, and most of the spans come from libraries rather than your code:
+
+```python
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+provider = TracerProvider(
+    resource=Resource.create({"service.name": "checkout"})   # ⭐ non-negotiable
+)
+provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
+trace.set_tracer_provider(provider)
+tracer = trace.get_tracer(__name__)
+
+FlaskInstrumentor().instrument_app(app)   # a span per incoming request
+RequestsInstrumentor().instrument()       # a span per outgoing call
+
+# Add your own spans only for work worth attributing separately
+with tracer.start_as_current_span("fraud_check") as span:
+    span.set_attribute("fraud.rules_version", 7)
+    ...
+```
+
+Configuration is environment-driven, which is what makes it operable:
+
+```bash
+OTEL_SERVICE_NAME=checkout
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+OTEL_TRACES_SAMPLER=parentbased_traceidratio
+OTEL_TRACES_SAMPLER_ARG=0.1
+OTEL_RESOURCE_ATTRIBUTES=deployment.environment=prod,service.version=1.4.2
+```
+
+### Context Propagation — the Part That Breaks
+
+A trace crosses a process boundary because of one HTTP header, standardised by W3C:
+
+```
+traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+             │  │                                │                │
+             │  └─ trace-id (16 bytes)            └─ parent span   └─ flags
+             └─ version                              id (8 bytes)     (01 = sampled)
+```
+
+Client-side instrumentation writes it; server-side instrumentation reads it and makes the incoming span a child. Everything about "our traces are broken" reduces to a boundary where that didn't happen:
+
+- A service that builds requests with a client you didn't instrument
+- A message queue where nobody put the context in the message attributes
+- A proxy, gateway, or CDN with a header allowlist
+- A thread pool or `async` boundary that loses the context inside one process
+
+The symptom is not an error. It is downstream spans arriving as their own root traces, and upstream latency that suddenly looks excellent — a silent failure by construction, which is why Lab 03 starts there.
+
+### Sampling: Head or Tail
+
+Tracing every request at scale costs more than the system being traced. So you sample — and *where* you decide is the whole question.
+
+| | Head sampling | Tail sampling |
+|---|---|---|
+| Decides | At the start of the trace, in the SDK | After the trace is complete, in the collector |
+| Knows the outcome | No — it cannot know it will fail or be slow | Yes |
+| Cost | Cheapest: unsampled spans are never created | Every span is produced and shipped to the collector |
+| Typical policy | "10% of everything" | "All errors, all traces over 500 ms, 10% of the rest" |
+| Failure mode | ⭐ The incident you were called about isn't there | Collector needs memory and a decision window |
+
+```yaml
+# collector: keep what you'd actually open
+processors:
+  tail_sampling:
+    decision_wait: 5s
+    policies:
+      - name: keep-errors
+        type: status_code
+        status_code: { status_codes: [ERROR] }
+      - name: keep-slow
+        type: latency
+        latency: { threshold_ms: 500 }
+      - name: keep-a-sample-of-the-rest
+        type: probabilistic
+        probabilistic: { sampling_percentage: 10 }
+```
+
+Whatever you choose, the decision must be **consistent across services** — `parentbased_traceidratio` exists so that a downstream service honours the upstream decision instead of independently sampling and giving you half a trace.
+
+### Correlation Is Where the Value Compounds
+
+A trace on its own is a nice waterfall. Wired to the other two pillars it becomes an incident workflow:
+
+| Direction | Mechanism | What it gives you |
+|-----------|-----------|-------------------|
+| Metrics → trace | **Exemplars**: Prometheus histogram buckets carry example trace IDs | Click the p99 spike, land on a request that was actually that slow |
+| Trace → logs | The **trace ID in every log line**, plus a datasource link | Read exactly the logs for this request, across every service |
+| Logs → trace | Same ID, searched the other way | A user pastes an error; you get the full request path |
+
+```python
+# The cheapest correlation you will ever buy — stamp the trace id on every log line
+class TraceContextFilter(logging.Filter):
+    def filter(self, record):
+        ctx = trace.get_current_span().get_span_context()
+        record.trace_id = format(ctx.trace_id, "032x") if ctx.is_valid else "-"
+        return True
+```
+
+> **💡 DevOps Impact**: alert (metrics) → which hop (traces) → why (logs) is the triage path, and each arrow is a click only if you built the links. Teams that instrument all three pillars but connect none of them still debug by timestamp correlation, which is guessing with extra steps.
+
+### What to Trace, and What Not To
+
+```
+DO instrument:
+  ✅ Every inbound request and every outbound call (libraries do this for you)
+  ✅ Database queries, cache lookups, queue publishes and consumes
+  ✅ Expensive internal work worth naming: fraud_check, render_pdf, reindex
+  ✅ Errors — record the exception ON the span, so failures are searchable
+
+DON'T:
+  ❌ Put unique values in SPAN NAMES ("charge order 8823") — names are the
+     low-cardinality dimension, like a metric name. Unique values are attributes
+  ❌ Put PII, tokens, or full request bodies in attributes — spans get exported
+     to a third party and kept for weeks
+  ❌ Wrap every function — a 400-span trace is as unreadable as no trace
+  ❌ Assume no traces means no traffic. Every layer drops telemetry rather than
+     blocking, so a broken pipeline is silent. Monitor the collector itself
+```
+
+Hands-on, including all four of those failure modes: **[Lab 03: Distributed Tracing](./labs/lab-03-distributed-tracing.md)**.
+
+---
+
+## 10. Common Mistakes and Anti-Patterns
 
 ### ❌ Alert Fatigue
 
@@ -747,7 +940,7 @@ GOOD: 3-5 well-maintained dashboards:
 
 ---
 
-## 10. Debugging Mindset
+## 11. Debugging Mindset
 
 ### Incident Triage with Observability
 
@@ -778,7 +971,7 @@ Alert fires!
 
 ---
 
-## 11. Interview Insights
+## 12. Interview Insights
 
 **Q: What is observability and how does it differ from monitoring?**
 > Monitoring tells you *when* something is wrong (predefined checks). Observability lets you ask *why* it's wrong (explore data ad hoc). Monitoring watches known failure modes; observability helps you investigate unknown ones. A well-observed system has metrics, logs, and traces that let any engineer diagnose novel issues.
@@ -808,12 +1001,68 @@ Read the sections above first, then work through these **in order**. Every lab e
 |---|-----|----------------|
 | 1 | **[Prometheus + Grafana](./labs/lab-01-prometheus-grafana.md)** | Set up a complete monitoring stack from scratch using Docker Compose. |
 | 2 | **[Application Monitoring](./labs/lab-02-application-monitoring.md)** | Instrument a Python Flask application with custom Prometheus metrics. |
+| 3 | **[Distributed Tracing with OpenTelemetry](./labs/lab-03-distributed-tracing.md)** | Trace one request across two services with OpenTelemetry, ship the spans through a collector into Tempo, and read the waterfall in Grafana. |
 
 **Portfolio project:**
 
 - [Project: Metrics Dashboard and Alert](./projects/project-01-dashboard-alert.md) — Build a small monitoring setup that scrapes an application or service, visualizes key metrics, and fires one useful alert.
 
 **Reference code** for every lab: [`code/`](./code/) — real files, validated in CI.
+
+---
+
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. Monitoring versus observability — is this more than vocabulary?</strong></summary>
+
+Monitoring answers questions you thought of in advance: dashboards and alerts for known failure modes. Observability is whether your telemetry lets you ask a new question during an incident you never predicted. The dashboard tells you something is wrong; cardinality and correlation are what let you find out why.
+
+</details>
+
+<details>
+<summary><strong>2. Why does Prometheus scrape targets instead of receiving pushes?</strong></summary>
+
+The target needs no knowledge of the monitoring system, configuration lives in one place, and a failed scrape is itself a signal you can alert on (`up == 0`). The exception is short-lived batch jobs that finish before any scrape — those push to the Pushgateway.
+
+</details>
+
+<details>
+<summary><strong>3. Counter, gauge, histogram — when does each apply?</strong></summary>
+
+A counter only ever increases, so you query its `rate()` (requests, errors, bytes). A gauge goes up and down and you read it directly (queue depth, memory in use, temperature). A histogram buckets observations so you can compute quantiles and averages server-side (request duration, payload size).
+
+</details>
+
+<details>
+<summary><strong>4. Why wrap counters in `rate()`, and why not alert on average latency?</strong></summary>
+
+A raw counter's absolute value is meaningless and resets to zero on restart; `rate()` gives per-second change over a window and handles the reset. Averages hide exactly the users who are suffering — one request in a hundred taking ten seconds barely moves the mean, so alert on p95 or p99 from histogram buckets.
+
+</details>
+
+<details>
+<summary><strong>5. What makes an alert worth waking someone for?</strong></summary>
+
+It describes a symptom users feel or an SLO burning down, it names an action, and it has a runbook. Cause-based alerts like "CPU above 80%" page a human for a condition that may be harming nobody — and every such page makes the next real one less likely to be read.
+
+</details>
+
+<details>
+<summary><strong>6. What is the `for:` clause in an alerting rule doing?</strong></summary>
+
+Requiring the condition to hold continuously for that long before the alert fires, which absorbs single bad scrapes and momentary spikes. Set it too short and you page on noise; too long and you find out about the outage after your users do.
+
+</details>
+
+<details>
+<summary><strong>7. You were paged about a slow request, and there is no trace for it — with nothing erroring anywhere. What are the two likely causes?</strong></summary>
+
+Head sampling threw it away: the SDK decided at the start of the trace, before it could know the request would be slow. That is what tail sampling in the collector exists to fix. Or the pipeline is dropping spans — every layer discards telemetry rather than blocking the application, so a failed exporter is invisible from the app's side. Check the collector's own metrics (`otelcol_exporter_send_failed_spans`); absence of traces is not a signal you get for free.
+
+</details>
 
 ---
 

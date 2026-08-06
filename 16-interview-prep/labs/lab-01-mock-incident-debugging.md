@@ -377,4 +377,4 @@ Add these to your portfolio repo as evidence of completed work:
 
 ---
 
-[← Back to Module README](../README.md)
+[← Back to Module README](../README.md) | [Next Lab: Incident Response →](./lab-02-incident-response.md)

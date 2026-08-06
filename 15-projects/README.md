@@ -150,6 +150,8 @@ How to tear down all resources.
 
 **Skills used**: Linux, Git, Docker, CI/CD, basic networking
 
+**Time and cost**: ~1 week, £0. The spec has the target architecture, a repository skeleton, a five-phase build sequence with a gate per phase, and a weighted rubric.
+
 **Detailed spec**: [project-01-static-site-pipeline.md](./projects/project-01-static-site-pipeline.md)
 
 ---
@@ -167,6 +169,8 @@ How to tear down all resources.
 
 **Skills used**: Docker Compose, Nginx, Prometheus, Grafana, Loki, networking
 
+**Time and cost**: ~2 weeks, £0 in cash but ~4 GB of RAM. Phases 1–3 are a Compose tutorial; phases 4–6 (metrics, logs, alerting) are the project — the spec says so explicitly and budgets your time accordingly.
+
 **Detailed spec**: [project-02-microservices-platform.md](./projects/project-02-microservices-platform.md)
 
 ---
@@ -183,6 +187,8 @@ How to tear down all resources.
 - You think about cost, scaling, and disaster recovery
 
 **Skills used**: Terraform, Ansible, Kubernetes, Prometheus, Grafana, security scanning, CI/CD
+
+**Time and cost**: 2–3 weeks. ⚠️ This is the only project that can bill you — roughly £150/month on the managed-cloud path if left running, £0 on the k3s path. Read the spec's cost section and set a budget alert **before** your first `terraform apply`.
 
 **Detailed spec**: [project-03-production-infrastructure.md](./projects/project-03-production-infrastructure.md)
 
@@ -216,6 +222,14 @@ Every project, regardless of difficulty level, must include:
 - Clear teardown instructions
 - All cloud resources, containers, and volumes removed
 - Confirmation output proving cleanup is complete
+
+### How You Know You're Done
+
+Each project spec ends with a **weighted rubric** and a **build sequence** whose phases have
+explicit gates. Score yourself honestly against the rubric before you call a project finished —
+the weights are not decoration, they say which parts a reviewer actually cares about. In all
+three, evidence of failure handling is weighted highest, and in all three it is the part people
+leave out.
 
 ---
 
@@ -259,6 +273,54 @@ Read the sections above first, then work through these **in order**. Every lab e
 - [Static Site Pipeline (Beginner)](./projects/project-01-static-site-pipeline.md) — Build a containerized static website with an automated CI/CD pipeline that lints, builds, scans, and deploys on every push.
 - [Microservices Platform (Intermediate)](./projects/project-02-microservices-platform.md) — Deploy a multi-service application with a reverse proxy, centralized monitoring, and centralized logging.
 - [Production Infrastructure (Advanced)](./projects/project-03-production-infrastructure.md) — Design, provision, and manage a complete production-grade environment using Infrastructure as Code, container orchestration, configuration…
+
+---
+
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. What separates a portfolio project from a replayed tutorial?</strong></summary>
+
+A stated problem with constraints, a decision you can defend, an alternative you rejected and why, and evidence a stranger can reproduce. Following someone else's steps demonstrates that you can follow steps.
+
+</details>
+
+<details>
+<summary><strong>2. Besides working code, what has to be in the repository?</strong></summary>
+
+A README covering the problem, architecture, and how to run it; the infrastructure and pipeline definitions; validation output; failure notes from at least one real break-and-fix; cost notes; and cleanup instructions that actually work.
+
+</details>
+
+<details>
+<summary><strong>3. Why does a reviewer care about your teardown step?</strong></summary>
+
+It shows you think in lifecycles and costs rather than only in creation, and it is the strongest available evidence that the environment is genuinely reproducible instead of a hand-tuned pet you could never rebuild.
+
+</details>
+
+<details>
+<summary><strong>4. Screenshots or reproducible artefacts?</strong></summary>
+
+A screenshot proves that something once looked right on your machine. A reviewer who can clone the repository and get it running in ten minutes is evaluating your work rather than your claims. Keep screenshots as supporting evidence, never as the proof.
+
+</details>
+
+<details>
+<summary><strong>5. Describe a project in two minutes. What order?</strong></summary>
+
+Problem, constraints, what you built, the one hard decision and its tradeoff, how you would know it broke, and what you would change with more time. Starting with the tool list is the mistake — nobody is impressed by a list of technologies.
+
+</details>
+
+<details>
+<summary><strong>6. What should be true of all three projects, regardless of scope?</strong></summary>
+
+Version-controlled from the first commit, a pipeline that runs on every change, infrastructure defined as code rather than clicked together, no secrets in the repository, at least one meaningful signal monitored with an alert, and a documented failure mode you have actually triggered.
+
+</details>
 
 ---
 

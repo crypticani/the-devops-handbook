@@ -1,0 +1,13 @@
+# Provisioned so Grafana comes up already knowing about Tempo — clicking through the UI
+# to add a datasource is not something you want in a reproducible stack.
+apiVersion: 1
+
+datasources:
+  - name: Tempo
+    type: tempo
+    uid: tempo
+    access: proxy
+    url: http://tempo:3200
+    isDefault: true
+    jsonData:
+      httpMethod: GET

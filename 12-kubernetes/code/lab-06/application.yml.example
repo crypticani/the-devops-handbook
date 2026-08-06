@@ -1,0 +1,19 @@
+# Exercise 2: your own repository, still on manual sync.
+# Copy to application.yml and replace <your-username> with your GitHub username.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: web
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/<your-username>/gitops-demo.git
+    targetRevision: main
+    path: manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitops-demo
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

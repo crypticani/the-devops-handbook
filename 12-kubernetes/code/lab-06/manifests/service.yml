@@ -1,0 +1,11 @@
+# This file lives in YOUR GitOps repository, under manifests/.
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  selector:
+    app: web
+  ports:
+    - port: 80
+      targetPort: 80

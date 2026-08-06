@@ -585,6 +585,54 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 ---
 
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. Under the shared responsibility model, who patches what in IaaS, PaaS, and SaaS?</strong></summary>
+
+IaaS: you own the OS and everything above it. PaaS: you own your application and its configuration. SaaS: you own your data and who can reach it. The provider secures the cloud; you are always responsible for what you put in it and for the access you grant.
+
+</details>
+
+<details>
+<summary><strong>2. What actually makes a subnet public or private?</strong></summary>
+
+The route table. A public subnet has a route to an internet gateway; a private one sends egress through a NAT gateway or has no path out at all. Nothing about the subnet's own definition is public or private — and an instance in a public subnet without a public IP still cannot be reached.
+
+</details>
+
+<details>
+<summary><strong>3. Security group versus NACL?</strong></summary>
+
+A security group is stateful, attaches to an interface, and holds allow rules only — return traffic is automatic. A NACL is stateless and subnet-wide, supports deny rules, and needs both directions written out. Forgetting the return rule on a NACL is a classic silent-timeout cause.
+
+</details>
+
+<details>
+<summary><strong>4. Why prefer an IAM role over an access key?</strong></summary>
+
+A role hands a workload short-lived credentials that rotate automatically and cannot be copied into a laptop or a repository. Long-lived keys leak, stay valid indefinitely, and are the root cause of a large share of cloud breaches. Use instance profiles for compute and OIDC federation for CI.
+
+</details>
+
+<details>
+<summary><strong>5. S3, EBS, or EFS?</strong></summary>
+
+S3 is object storage over HTTP: unlimited scale, versioning, lifecycle rules, and not a filesystem. EBS is a block volume attached to one instance in one availability zone. EFS is a managed NFS filesystem several instances can share, at several times the price per gigabyte. Most "we need shared storage" turns out to be S3.
+
+</details>
+
+<details>
+<summary><strong>6. Where do surprise cloud bills come from on a learning account?</strong></summary>
+
+Resources you forgot: an idle NAT gateway, unattached elastic IPs and volumes, orphaned snapshots, a load balancer with no targets. Then data transfer — cross-AZ and egress — which no one estimates. Tag everything, set a budget alert on day one, and run the destroy step of every lab.
+
+</details>
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

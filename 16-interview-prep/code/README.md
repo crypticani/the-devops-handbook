@@ -1,6 +1,7 @@
 # Module 16: Interview Prep — Lab Code
 
-Four pre-broken environments for the mock incident lab.
+Four pre-broken environments for the mock incident lab, plus the incident-response stack and
+its process templates.
 
 These are the real, runnable files from this module's labs. They are validated in CI, so
 they stay correct as tool versions move on.
@@ -38,6 +39,25 @@ lab-01/
 ├── docker-compose-incident3.yml
 ├── docker-compose-incident4.yml
 └── nginx-broken/default.conf
+```
+
+### `lab-02/`
+
+The incident-response stack: nginx in front of a checkout API with a connection-pool leak, plus a
+load generator so customer traffic keeps arriving while you work. `page.sh` delivers the alert and
+starts your clock; the templates are what a real incident produces.
+
+```
+lab-02/
+├── api/Dockerfile
+├── api/app.py                     # ⚠️ the answer key — don't read it before the incident
+├── api/requirements.txt
+├── docker-compose.yml             # LEAK=1 is the bad release; LEAK=0 is the rollback
+├── nginx/nginx.conf               # logs upstream status, so proxy vs backend is one line
+├── page.sh
+└── templates/
+    ├── postmortem.md
+    └── status-update.md
 ```
 
 ---

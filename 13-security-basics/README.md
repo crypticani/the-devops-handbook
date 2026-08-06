@@ -675,6 +675,61 @@ Read the sections above first, then work through these **in order**. Every lab e
 
 ---
 
+## ✅ Self-Check
+
+Answer these from memory before you expand them. If more than two give you trouble, re-read the sections they come from — the labs assume this material is solid.
+
+<details>
+<summary><strong>1. A credential has leaked into a public place. What is the first action?</strong></summary>
+
+Rotate or revoke it. It is compromised from the moment it was exposed and no amount of history rewriting changes that. Then work out the blast radius from access logs, and only then clean up the artefact. Removing the file is not remediation.
+
+</details>
+
+<details>
+<summary><strong>2. How do you actually arrive at a least-privilege policy?</strong></summary>
+
+Start from no permissions, run the workload, and add exactly what it failed on — scoped to specific resources, with short-lived credentials. Starting from a wildcard with a plan to tighten it later produces a permanent wildcard, because nothing ever fails to remind you.
+
+</details>
+
+<details>
+<summary><strong>3. Give a concrete example of defense in depth for one workload.</strong></summary>
+
+A compromised container has to get past: a non-root user, a read-only root filesystem, dropped capabilities, a network policy limiting where it can connect, node-level isolation, and an IAM role scoped to one bucket. Each control is individually bypassable — the point is that they are unlikely to all fail at once.
+
+</details>
+
+<details>
+<summary><strong>4. Why pin base images by digest rather than tag?</strong></summary>
+
+A tag is a mutable pointer: `:3.19` can mean something different tomorrow, so the image you scanned and tested is not necessarily the one that gets pulled. A digest is immutable content addressing. You then update it deliberately, which is the difference between a rebuild and a surprise.
+
+</details>
+
+<details>
+<summary><strong>5. SAST, SCA, secret scanning, DAST — what does each catch?</strong></summary>
+
+SAST reads your source for dangerous patterns. SCA checks your dependencies against known vulnerabilities. Secret scanning looks for credentials in the code and its history. DAST probes the running application from outside. They find genuinely different classes of problem and none substitutes for another.
+
+</details>
+
+<details>
+<summary><strong>6. Why is "fail the build on every critical CVE" not automatically the right policy?</strong></summary>
+
+Because most images carry vulnerabilities in packages the application never invokes, and many have no fix available yet. A gate that blocks everything gets switched off within a month. Triage on reachability and fix availability, and record accepted risks explicitly with an owner and an expiry date.
+
+</details>
+
+<details>
+<summary><strong>7. What does a mounted service account token give an attacker who lands in your pod?</strong></summary>
+
+API access with that account's RBAC — which, if it is over-permissioned, is the whole cluster. Turn off `automountServiceAccountToken` where it is unused, scope roles narrowly, and enforce Pod Security admission: a privileged pod is not a container escape risk, it is node ownership by design.
+
+</details>
+
+---
+
 ## Practical Checkpoint
 
 Before moving on, you should be able to:

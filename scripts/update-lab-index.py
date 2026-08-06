@@ -100,9 +100,11 @@ def main() -> int:
             continue
 
         block = build(mod)
-        existing = re.search(
-            rf"{re.escape(HEADING)}\n.*?\n---\n(?=\n?{re.escape(ANCHOR)})", s, re.S
-        )
+        # The block ends at its OWN trailing `---`. Don't require the anchor to follow it:
+        # sections legitimately sit between the labs table and the Practical Checkpoint
+        # (Self-Check does), and requiring adjacency made this miss the existing block and
+        # insert a second copy of the table.
+        existing = re.search(rf"{re.escape(HEADING)}\n.*?\n---\n", s, re.S)
         new = (
             s[: existing.start()] + block + s[existing.end():]
             if existing

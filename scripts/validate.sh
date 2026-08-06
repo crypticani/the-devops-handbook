@@ -228,6 +228,11 @@ if want labs; then
   done)
   [[ -z "$orphans" ]] && pass "every code/ dir has a matching lab" \
     || { fail "orphaned code directories:"; printf '     %s\n' "$orphans"; }
+
+  # Every module README ends with recall questions (scripts/ is not a module).
+  noquiz=$(grep -L '^## ✅ Self-Check' ./*/README.md | grep -v '^\./scripts/')
+  [[ -z "$noquiz" ]] && pass "every module has a Self-Check section" \
+    || { fail "modules missing a Self-Check section:"; printf '     %s\n' "$noquiz"; }
   RUN+=(labs)
 fi
 
