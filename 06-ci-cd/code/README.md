@@ -38,6 +38,18 @@ lab-02/
 └── docker-compose.yml
 ```
 
+### `lab-03/`
+
+The lab-01 pipeline in GitLab's dialect — same application, same stages. Ships only the CI
+config, because the point is that **the application does not change**: copy `src/`, `tests/`,
+`requirements.txt` and `Dockerfile` from `lab-01/` alongside it.
+
+```
+lab-03/
+└── .gitlab-ci.yml    # workflow rules · cache keyed on requirements · junit report
+                      # · dind build · trivy gate · manual deploy with a secret guard
+```
+
 ---
 
 ## Using these files

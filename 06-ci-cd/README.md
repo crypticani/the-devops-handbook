@@ -787,11 +787,17 @@ deploy:
 
 ```bash
 # Debugging, in the order you'll want it
-gitlab-runner --version
-gitlab-runner verify                          # is the runner registered and reachable
-gitlab-runner exec docker lint                # ⭐ run one job locally — nothing beats this
-# In the UI: CI/CD → Editor tab validates syntax; Lint tab simulates which jobs would run
+npx gitlab-ci-local --list                    # ⭐ WHICH JOBS WOULD EXIST for this ref
+npx gitlab-ci-local lint                      # run one job locally, in Docker, no account
+gitlab-runner verify                          # (self-hosted) is the runner registered
+# In the UI: Build → Pipeline editor → Validate; the Lint tab simulates job creation
 ```
+
+> ⚠️ **`gitlab-runner exec` is gone** — deprecated in Runner 15.7, removed in 17.0. Any tutorial
+> that recommends it predates that. [`gitlab-ci-local`](https://github.com/firecow/gitlab-ci-local)
+> is the current way to execute a job on your machine.
+
+Hands-on, on the same application you built the Actions pipeline for: **[Lab 03: GitLab CI](./labs/lab-03-gitlab-ci.md)**.
 
 > **💡 DevOps Impact**: the transferable skill is not the syntax, it is knowing that every CI system has the same five moving parts — triggers, an execution environment, a dependency graph, caching/artifacts, and a secret store. When you meet CircleCI, Buildkite, or Tekton next, find those five and you can read the config on day one.
 
@@ -1115,6 +1121,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 |---|-----|----------------|
 | 1 | **[GitHub Actions](./labs/lab-01-github-actions.md)** | Go from zero to a working CI/CD pipeline. |
 | 2 | **[Jenkins Pipeline](./labs/lab-02-jenkins-pipeline.md)** | Set up Jenkins from scratch using Docker, create a Declarative Pipeline, configure credentials and triggers, and debug common failures. |
+| 3 | **[GitLab CI](./labs/lab-03-gitlab-ci.md)** | Take the pipeline you built in Lab 01 and run it on GitLab CI, on the same application, so the difference you learn is the *dialect* rather than the… |
 
 **Portfolio project:**
 

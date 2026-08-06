@@ -527,7 +527,7 @@ actionlint                              # ⭐ static analysis for workflow YAML
 
 ## GitLab CI
 
-Same five moving parts as Actions, different names. `gitlab-runner exec` is the killer feature.
+Same five moving parts as Actions, different names. `gitlab-ci-local` runs a job on your machine.
 
 ```yaml
 stages: [lint, test, build, deploy]
@@ -562,10 +562,14 @@ deploy:
 ```
 
 ```bash
-gitlab-runner exec docker test        # ⭐ run one job locally — the fastest debug loop there is
-gitlab-runner verify                  # is the runner registered and reachable
-# UI: CI/CD → Editor (validate syntax) · Lint (which jobs WOULD be created)
+npx gitlab-ci-local --list            # ⭐ which jobs WOULD be created for this ref
+npx gitlab-ci-local test              # run one job locally in Docker — fastest debug loop
+npx gitlab-ci-local --variable CI_COMMIT_BRANCH=main test
+gitlab-runner verify                  # (self-hosted runners) registered and reachable?
+# UI: Build → Pipeline editor → Validate · Lint tab simulates job creation
 ```
+
+⚠️ `gitlab-runner exec` was removed in Runner **17.0** (deprecated in 15.7). Use `gitlab-ci-local`.
 
 | Variable | Is |
 |----------|-----|
