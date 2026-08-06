@@ -1099,4 +1099,4 @@ aws s3 ls | grep -E 'handbook-(appdata|orphan)' || echo "✅ nothing left"
 
 ---
 
-[← Previous Lab: Remote State and Locking](./lab-02-remote-state-and-locking.md) | [Back to Module README](../README.md) | [Module 11: Ansible →](../../11-ansible/)
+[← Previous Lab: Remote State and Locking](./lab-02-remote-state-and-locking.md) | [Back to Module README](../README.md) | [Next Lab: Packer and Golden Images →](./lab-04-packer-golden-images.md)
