@@ -602,6 +602,55 @@ locals {
 
 ---
 
+## Packer — Golden Images
+
+```bash
+packer init .
+packer fmt -check .                       # CI should enforce this, same as terraform fmt
+packer validate -var region=eu-west-1 .
+PACKER_LOG=1 packer build .               # ⭐ the only way to debug a build that hangs
+packer build -only=amazon-ebs.ubuntu .
+jq -r '.builds[-1].artifact_id' manifest.json    # the image id, for the next pipeline stage
+```
+
+```hcl
+source "amazon-ebs" "ubuntu" {
+  source_ami_filter {                     # ⭐ resolve the base image, never hardcode an id
+    filters     = { name = "ubuntu/images/*22.04-amd64-server-*" }
+    owners      = ["099720109477"]
+    most_recent = true
+  }
+  ami_name = "app-base-{{timestamp}}"
+  tags     = { GitCommit = "{{ env `GIT_COMMIT` }}" }   # trace an instance back to a commit
+}
+
+build {
+  sources = ["source.amazon-ebs.ubuntu"]
+  provisioner "shell"   { inline = ["cloud-init status --wait"] }   # ⭐ or apt races it
+  provisioner "ansible" { playbook_file = "../ansible/playbooks/base.yml" }
+  provisioner "shell"   { inline = ["systemctl is-enabled node_exporter"] }  # verify, then ship
+  post-processor "manifest" { output = "manifest.json" }
+}
+```
+
+| Bake into the image | Configure at boot |
+|---------------------|-------------------|
+| Slow installs, agents, OS hardening | Config, secrets, environment names |
+| Anything you want identical fleet-wide | Anything that changes more often than you rebuild |
+
+```bash
+# Old AMIs are free; their snapshots are not
+aws ec2 describe-images --owners self \
+  --query 'sort_by(Images,&CreationDate)[].[CreationDate,ImageId,Name]' --output table
+aws ec2 deregister-image --image-id ami-xxx    # ⚠️ does NOT delete the snapshot
+aws ec2 delete-snapshot --snapshot-id snap-xxx
+```
+
+⚠️ `data "aws_ami"` with `most_recent = true` means a Packer build silently changes your next
+`terraform plan`. Fine in dev; pin production to an explicit id and promote deliberately.
+
+---
+
 ## Testing & Policy
 
 ```bash

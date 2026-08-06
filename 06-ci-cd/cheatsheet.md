@@ -525,6 +525,65 @@ actionlint                              # ⭐ static analysis for workflow YAML
 
 ---
 
+## GitLab CI
+
+Same five moving parts as Actions, different names. `gitlab-runner exec` is the killer feature.
+
+```yaml
+stages: [lint, test, build, deploy]
+
+default:
+  image: python:3.12-slim        # ⭐ every job runs IN a container. No ambient toolchain
+  interruptible: true            # a new push cancels the old pipeline
+
+variables:
+  IMAGE: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
+
+test:
+  stage: test
+  script: [pytest --junitxml=report.xml]
+  artifacts:
+    when: always                 # ⭐ upload the report even when the job failed
+    reports: {junit: report.xml}
+    expire_in: 1 week
+  cache:
+    key: {files: [requirements.txt]}
+    paths: [.cache/pip]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+deploy:
+  stage: deploy
+  script: [./deploy.sh production]
+  environment: {name: production, url: "https://example.com"}
+  when: manual                   # the approval gate
+  dependencies: []               # ⭐ don't download upstream artifacts you don't need
+```
+
+```bash
+gitlab-runner exec docker test        # ⭐ run one job locally — the fastest debug loop there is
+gitlab-runner verify                  # is the runner registered and reachable
+# UI: CI/CD → Editor (validate syntax) · Lint (which jobs WOULD be created)
+```
+
+| Variable | Is |
+|----------|-----|
+| `CI_PIPELINE_SOURCE` | `push` · `merge_request_event` · `schedule` · `web` — the main `rules:` input |
+| `CI_COMMIT_SHA` / `CI_COMMIT_SHORT_SHA` | Tag images with this, never `latest` |
+| `CI_COMMIT_BRANCH` / `CI_DEFAULT_BRANCH` | Branch guards |
+| `CI_REGISTRY*` | Built-in registry host, user, password |
+| `CI_ENVIRONMENT_NAME` | Which environment this job deploys to |
+
+| Symptom | Cause |
+|---------|-------|
+| Job silently never runs | No `rules:` matched — a job with no match isn't created, which looks identical to a broken pipeline |
+| `command not found` | The tool isn't in the job's `image:` |
+| Works locally, fails on a shell runner | `shell` executor leaks state between jobs — no isolation |
+| Stage 4 job downloads 500 MB | Artifacts flow forward automatically — `dependencies: []` |
+
+---
+
 ## Jenkins
 
 ### Declarative pipeline
