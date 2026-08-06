@@ -2,9 +2,11 @@
 
 ## 🎯 Objective
 
+Trace one request across two services with OpenTelemetry, ship the spans through a collector into Tempo, and read the waterfall in Grafana.
+
 Metrics told you the error rate went up. Logs told you what one service printed. Neither tells you *which hop in a request was slow* — that's the question traces answer, and it's the one that matters once more than one service is involved.
 
-You'll instrument two services with OpenTelemetry, ship spans through a collector into Tempo, read a trace waterfall in Grafana, and correlate a slow trace with the exact log lines it produced. Then you'll break it in the four ways tracing is normally broken — every one of which leaves you looking at traces that seem fine.
+You'll also correlate a slow trace with the exact log lines it produced, then break the pipeline in the four ways tracing is normally broken — every one of which leaves you looking at traces that seem fine.
 
 ---
 

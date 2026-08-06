@@ -2,7 +2,9 @@
 
 ## 🎯 Objective
 
-Stop deploying with `kubectl`. You'll install Argo CD, put a workload's desired state in a Git repository, and let a controller in the cluster reconcile toward it — then spend the second half finding out exactly which parts of "GitOps means the cluster matches Git" are true only when you configured them.
+Stop deploying with `kubectl` — put a workload's desired state in Git and let a controller inside the cluster reconcile toward it.
+
+You'll install Argo CD, hand it a repository, and then spend the second half finding out exactly which parts of "GitOps means the cluster matches Git" are true only when you configured them.
 
 By the end you'll be able to say what `Synced` does and does not prove, which is the difference between using Argo CD and trusting it.
 

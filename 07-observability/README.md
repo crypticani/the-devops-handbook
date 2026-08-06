@@ -1001,7 +1001,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 |---|-----|----------------|
 | 1 | **[Prometheus + Grafana](./labs/lab-01-prometheus-grafana.md)** | Set up a complete monitoring stack from scratch using Docker Compose. |
 | 2 | **[Application Monitoring](./labs/lab-02-application-monitoring.md)** | Instrument a Python Flask application with custom Prometheus metrics. |
-| 3 | **[Distributed Tracing](./labs/lab-03-distributed-tracing.md)** | Trace one request across two services with OpenTelemetry, Tempo, and Grafana — then break propagation, sampling, span naming, and the pipeline itself. |
+| 3 | **[Distributed Tracing with OpenTelemetry](./labs/lab-03-distributed-tracing.md)** | Trace one request across two services with OpenTelemetry, ship the spans through a collector into Tempo, and read the waterfall in Grafana. |
 
 **Portfolio project:**
 

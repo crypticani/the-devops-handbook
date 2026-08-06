@@ -474,7 +474,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 | # | Lab | What you'll do |
 |---|-----|----------------|
 | 1 | **[Mock Incident Debugging](./labs/lab-01-mock-incident-debugging.md)** | Practice diagnosing and resolving simulated production incidents using Docker. |
-| 2 | **[Incident Response — Running the Process](./labs/lab-02-incident-response.md)** | Get paged with traffic still arriving: declare a severity, communicate before you know the cause, mitigate rather than root-cause, then write the postmortem. |
+| 2 | **[Incident Response](./labs/lab-02-incident-response.md)** | Run an incident end to end: get paged, declare a severity, communicate before you know the cause, mitigate, and write the postmortem. |
 
 **Portfolio project:**
 

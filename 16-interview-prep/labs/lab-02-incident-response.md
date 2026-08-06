@@ -2,6 +2,8 @@
 
 ## 🎯 Objective
 
+Run an incident end to end: get paged, declare a severity, communicate before you know the cause, mitigate, and write the postmortem.
+
 Lab 01 was about finding the fault. This one is about everything else: declaring a severity, communicating while you still don't know the cause, choosing mitigation over root cause, and writing a postmortem that produces action items rather than apologies.
 
 You will be paged, with traffic still arriving, and you will produce the artefacts a real incident produces — a timeline, status updates, and a postmortem. Those artefacts are the deliverable. The bug is easy; the process is what interviews are actually probing when they ask "walk me through an incident you handled".
