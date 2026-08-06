@@ -1,0 +1,42 @@
+# A queue, a producer, and consumers you can scale. Everything the lab breaks is an
+# environment variable, so no scenario needs a code edit.
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: mq
+    ports:
+      - "5672:5672" # AMQP
+      - "15672:15672" # management UI — guest / guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  producer:
+    build: ./app
+    container_name: producer
+    environment:
+      MODE: producer
+      RATE: "${RATE:-5}" # messages per second
+      POISON_RATE: "${POISON_RATE:-0.05}" # 1 in 20 can never be processed
+    depends_on:
+      rabbitmq:
+        condition: service_healthy # ⭐ started != ready
+    restart: unless-stopped
+
+  # No container_name: that's what lets you run `docker compose up -d --scale consumer=3`
+  consumer:
+    build: ./app
+    environment:
+      MODE: consumer
+      WORK_MS: "${WORK_MS:-50}" # raise above 1000/RATE and the backlog grows
+      PREFETCH: "${PREFETCH:-5}" # 0 disables basic_qos — scenario 3
+      IDEMPOTENT: "${IDEMPOTENT:-1}" # 0 removes duplicate protection — scenario 2
+      CRASH_AFTER_WORK: "${CRASH_AFTER_WORK:-0}" # 1 loses the ack after doing the work
+      DELIVERY_LIMIT: "${DELIVERY_LIMIT:-3}" # 0 removes the retry cap — scenario 1
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped

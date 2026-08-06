@@ -1,0 +1,52 @@
+# The four golden signals, created WITH the service instead of requested afterwards.
+# Every alert names an owner and points at a runbook, because an alert without an action
+# is a page nobody can resolve.
+groups:
+  - name: ${SERVICE_NAME}
+    rules:
+      - alert: ${SERVICE_NAME}HighErrorRate
+        expr: |
+          sum(rate(http_errors_total{service="${SERVICE_NAME}"}[5m]))
+            / sum(rate(http_requests_total{service="${SERVICE_NAME}"}[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: page
+          tier: "${TIER}"
+          owner: ${OWNER}
+        annotations:
+          summary: "${SERVICE_NAME}: error rate above 5% for 5 minutes"
+          runbook: "docs/runbook.md#higherrorrate"
+
+      - alert: ${SERVICE_NAME}HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(http_request_duration_seconds_bucket{service="${SERVICE_NAME}"}[5m]))) > 1
+        for: 10m
+        labels:
+          severity: page
+          tier: "${TIER}"
+          owner: ${OWNER}
+        annotations:
+          summary: "${SERVICE_NAME}: p95 latency above 1s"
+          runbook: "docs/runbook.md#highlatency"
+
+      - alert: ${SERVICE_NAME}NoTraffic
+        expr: sum(rate(http_requests_total{service="${SERVICE_NAME}"}[10m])) == 0
+        for: 10m
+        labels:
+          severity: ticket
+          owner: ${OWNER}
+        annotations:
+          summary: "${SERVICE_NAME}: no requests for 10 minutes — is it reachable?"
+          runbook: "docs/runbook.md#notraffic"
+
+      - alert: ${SERVICE_NAME}Down
+        expr: up{job="${SERVICE_NAME}"} == 0
+        for: 2m
+        labels:
+          severity: page
+          tier: "${TIER}"
+          owner: ${OWNER}
+        annotations:
+          summary: "${SERVICE_NAME}: target not scrapeable"
+          runbook: "docs/runbook.md#down"
