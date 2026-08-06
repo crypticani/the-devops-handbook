@@ -71,6 +71,20 @@ lab-03/
 └── modules/bucket/versions.tf
 ```
 
+### `lab-04/`
+
+The bake-and-consume loop, free and local: Packer's **Docker** builder produces a verified base
+image, and Terraform (Docker provider) resolves the tag to a digest and runs it. Every concept
+maps onto `amazon-ebs` + a launch template — same shape, no cloud bill.
+
+```
+lab-04/
+├── packer/base.pkr.hcl        # source → provisioners → post-processors
+├── packer/scripts/install.sh  # what gets baked: packages, agent, non-root user
+├── packer/scripts/verify.sh   # ⭐ asserts the promises before the image may exist
+└── terraform/main.tf          # consumes by DIGEST; refuses a mutable tag
+```
+
 ---
 
 ## Using these files

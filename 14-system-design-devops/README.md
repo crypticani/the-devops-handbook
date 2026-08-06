@@ -27,11 +27,13 @@ Every production outage, every scaling failure, and every "it works on my machin
 4. [Caching](#4-caching)
 5. [Database Considerations for DevOps](#5-database-considerations-for-devops)
 6. [CDN and Edge Architecture](#6-cdn-and-edge-architecture)
-7. [SLAs, SLOs, and SLIs](#7-slas-slos-and-slis)
-8. [Disaster Recovery](#8-disaster-recovery)
-9. [Architecture Decision Framework](#9-architecture-decision-framework)
-10. [Common Mistakes and Anti-Patterns](#10-common-mistakes-and-anti-patterns)
-11. [Interview Insights](#11-interview-insights)
+7. [Async Communication and Message Queues](#7-async-communication-and-message-queues)
+8. [SLAs, SLOs, and SLIs](#8-slas-slos-and-slis)
+9. [Disaster Recovery](#9-disaster-recovery)
+10. [Architecture Decision Framework](#10-architecture-decision-framework)
+11. [Platform Engineering — Building the Paved Road](#11-platform-engineering--building-the-paved-road)
+12. [Common Mistakes and Anti-Patterns](#12-common-mistakes-and-anti-patterns)
+13. [Interview Insights](#13-interview-insights)
 
 ---
 
@@ -355,7 +357,117 @@ CDN PROVIDERS: CloudFront (AWS), Cloudflare, Akamai, Fastly
 
 ---
 
-## 7. SLAs, SLOs, and SLIs
+## 7. Async Communication and Message Queues
+
+### Why Anything Is Asynchronous
+
+A synchronous call couples two services in availability and in latency: if payment is down, checkout is down, and if payment is slow, checkout is slow. A queue between them converts that into a different trade — checkout stays up and the work happens later, which is only acceptable if "later" is acceptable.
+
+That is the whole decision. Not "queues are more scalable", but *can this work be done later, and can the caller tolerate not knowing the outcome yet?*
+
+```mermaid
+flowchart LR
+    subgraph sync["Synchronous — request/response"]
+        C1["checkout"] -->|"HTTP, waits"| P1["payment"]
+        P1 -.->|"payment down<br/>= checkout down"| C1
+    end
+
+    subgraph async["Asynchronous — queue"]
+        C2["checkout"] -->|"publish"| Q[("queue")]
+        Q -->|"consume"| W1["worker 1"]
+        Q --> W2["worker 2"]
+        W1 & W2 -.->|"failed N times"| DLQ[("dead letter queue<br/><i>where you look first</i>")]
+    end
+
+    style Q fill:#fff4e0,stroke:#cc8800
+    style DLQ fill:#ffe8e8,stroke:#cc3333
+```
+
+> **💡 DevOps Impact**: the queue does not remove the failure, it relocates it. Payment being down no longer shows up as checkout errors — it shows up as queue depth climbing and orders that are accepted but never fulfilled. That is a better failure, but only if you alert on queue depth and consumer lag. A queue with no monitoring is a silent backlog.
+
+### Queue, Pub/Sub, or Stream
+
+Three shapes get called "messaging" and they are not interchangeable:
+
+| | Queue | Pub/Sub | Log / Stream |
+|---|-------|---------|--------------|
+| Model | One message → one consumer | One message → every subscriber | An ordered, replayable log; consumers track an offset |
+| Message after delivery | Deleted | Deleted per subscription | ⭐ Retained for a window — you can rewind |
+| Typical use | Work distribution: emails, thumbnails, charges | Fan-out: "order placed" to 4 teams | Event sourcing, analytics, replay, CDC |
+| Ordering | Usually best-effort, or per group | Not guaranteed | Guaranteed per partition |
+| Examples | SQS, RabbitMQ, Celery+Redis | SNS, Google Pub/Sub, RabbitMQ fanout | Kafka, Kinesis, Redpanda, Redis Streams |
+
+Two consequences worth remembering: **ordering is per partition, never global** — so "process this customer's events in order" means partitioning by customer ID, and it caps your parallelism for that customer at one. And a stream's replayability is what makes it the right choice when a consumer bug means you need yesterday's events again.
+
+### The Five Things That Bite
+
+**1. At-least-once means duplicates.** Nearly every broker guarantees at-least-once, not exactly-once: a consumer that crashes after doing the work but before acknowledging will see the message again. Design for it with an idempotency key — a natural one (`order_id`) checked against a store before acting.
+
+```python
+# Idempotent consumer: the pattern, in eight lines
+def handle(msg):
+    key = msg["order_id"]
+    if store.setnx(f"processed:{key}", 1):        # atomic claim, TTL a few days
+        try:
+            charge(msg)                           # the actual work
+        except Exception:
+            store.delete(f"processed:{key}")      # ⭐ release the claim so a retry can work
+            raise
+    else:
+        log.info("duplicate, skipping", extra={"order_id": key})
+    ack(msg)
+```
+
+**2. Retries need a dead letter queue.** A message that will never succeed — malformed, or referencing a deleted record — retried forever is a *poison message*: it blocks a partition or burns your consumers indefinitely. Cap the attempts and route the failures to a DLQ. Then alert on the DLQ, because an unmonitored DLQ is a folder of work nobody is doing.
+
+**3. Consumer lag is your real health metric.** Not CPU, not queue length alone: the gap between what has been produced and what has been consumed, and whether it is growing. If lag grows, consumers are losing the race and every downstream promise is now late.
+
+**4. Backpressure has to go somewhere.** When consumers cannot keep up, either the queue grows (memory, disk, cost, and eventually a broker refusing writes) or the producer must be slowed down. Decide which deliberately, and set a retention/quota so you find out on your terms rather than at the broker's hard limit.
+
+**5. Visibility timeouts and long-running work.** If handling a message takes longer than the invisibility window, the broker redelivers it and two workers do the same job. Either extend the timeout while working (heartbeating) or split the work into smaller messages.
+
+### Operating One
+
+```bash
+# Kafka: lag is the number that matters — check it before anything else
+kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group orders
+#   TOPIC  PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG   ⭐ is LAG growing?
+kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic orders
+
+# RabbitMQ
+rabbitmqctl list_queues name messages messages_unacknowledged consumers
+#   messages_unacknowledged high with few consumers = handlers are stuck, not slow
+
+# SQS
+aws sqs get-queue-attributes --queue-url "$Q" \
+  --attribute-names ApproximateNumberOfMessages ApproximateAgeOfOldestMessage
+#   ⭐ AgeOfOldestMessage is the SLO-relevant one; a count of 10 that is 4 hours old is worse
+#   than a count of 10,000 that is 5 seconds old
+```
+
+Four alerts cover most of it: **consumer lag growing over N minutes**, **age of oldest message beyond your SLO**, **any DLQ depth above zero**, and **zero consumers on a queue with messages** — the last being the one that catches a deployment that quietly stopped starting workers.
+
+### Choosing
+
+```
+USE A QUEUE WHEN:
+  ✅ The work can be done later, and the caller doesn't need the result now
+  ✅ You want to survive a downstream outage without failing the user's request
+  ✅ Load is spiky and you want to smooth it into steady consumer throughput
+  ✅ Several teams need the same event and you don't want N synchronous calls
+
+STAY SYNCHRONOUS WHEN:
+  ❌ The caller needs the answer to continue (auth, payment authorisation, validation)
+  ❌ The workflow is simple and a queue would add a broker to operate for no gain
+  ❌ You cannot make the consumer idempotent — duplicates will hurt you
+  ❌ Debuggability matters more than decoupling; async traces are harder to follow
+```
+
+> ⭐ **The interview trap** is "we'll use a queue for scalability". Say instead what the queue *decouples* and what it *costs*: a broker to operate, at-least-once duplicates to handle, a DLQ to monitor, and end-to-end tracing that now has to propagate context through message attributes rather than HTTP headers (Module 07 §9 — this is the boundary where trace propagation is most often lost).
+
+---
+
+## 8. SLAs, SLOs, and SLIs
 
 ```
 SLI — Service Level Indicator
@@ -398,7 +510,7 @@ Budget exhausted:
 
 ---
 
-## 8. Disaster Recovery
+## 9. Disaster Recovery
 
 ### Recovery Objectives
 
@@ -444,7 +556,7 @@ MULTI-REGION ACTIVE-ACTIVE (Most expensive, fastest):
 
 ---
 
-## 9. Architecture Decision Framework
+## 10. Architecture Decision Framework
 
 ### How to Evaluate Architecture Trade-Offs
 
@@ -539,7 +651,92 @@ EXAMPLE:
 
 ---
 
-## 10. Common Mistakes and Anti-Patterns
+## 11. Platform Engineering — Building the Paved Road
+
+### The Problem It Answers
+
+"You build it, you run it" is right, and taken literally it does not scale. Fifty product engineers cannot each become expert in Terraform, Kubernetes RBAC, Prometheus, and your cloud account's IAM model — and if they try, you get fifty subtly different deployment patterns, and the person who can debug any given service is whoever wrote it.
+
+Platform engineering is the response: a small team builds the **paved road** — a well-lit default path from code to production — and product teams stay responsible for what they ship. The platform is a product, and its users are engineers.
+
+The distinction that matters, and the one interviews probe:
+
+| | A DevOps team (anti-pattern) | A platform team |
+|---|---|---|
+| Requests | "Raise a ticket, we'll deploy it" | "Here's the pipeline; you deploy it" |
+| Responsibility for prod | Theirs | The service team's |
+| Output | Completed tickets | Self-service capabilities |
+| Failure mode | Becomes the queue everything waits in | Builds something nobody adopts |
+| Measured by | Tickets closed | ⭐ Adoption, lead time, and how often the road is bypassed |
+
+### Golden Paths, Not Golden Cages
+
+A golden path is the supported way to do a common thing: create a service, get a database, ship to production, get a dashboard. It should be so much easier than the alternative that people choose it — not so mandatory that they resent it.
+
+```
+A GOLDEN PATH FOR "NEW SERVICE" GIVES YOU, IN ONE STEP:
+  ✅ A repository from a template: Dockerfile, healthz, structured logs, tests
+  ✅ A CI pipeline that already lints, tests, scans, and publishes a SHA-tagged image
+  ✅ Deployment manifests with probes, limits, and a rollback path
+  ✅ A dashboard and the four golden-signal alerts, wired up
+  ✅ An entry in the service catalogue with an owner and an on-call rotation
+  ✅ Secrets wiring that does not involve pasting anything into a UI
+
+WHAT MAKES IT A CAGE INSTEAD:
+  ❌ No escape hatch when a team genuinely needs something different
+  ❌ The abstraction hides the failure but not the failure's consequences
+     ("your deploy failed" with no way to see the underlying rollout)
+  ❌ It only works for the ideal service the platform team imagined
+```
+
+> **💡 DevOps Impact**: the escape hatch is not a weakness, it is what keeps the platform honest. If a team can drop down to raw manifests when they must, they will tell you why they had to — and that is your roadmap. If they cannot, they build a shadow platform instead and you find out a year later.
+
+### What a Platform Is Made Of
+
+Nothing here is new to this handbook; the platform is these modules assembled into defaults:
+
+| Layer | Concretely |
+|-------|-----------|
+| **Infrastructure** | Terraform modules teams consume — a database, a queue, a bucket — with sane, secure defaults baked in (Module 10 §7) |
+| **Delivery** | A reusable CI pipeline and a GitOps repository, so deploying is a merge (Modules 06, 12 lab 06) |
+| **Runtime** | The cluster, with limits, probes, policy, and RBAC already enforced (Modules 12, 13) |
+| **Observability** | Dashboards and alerts created *with* the service, not requested afterwards (Module 07) |
+| **Interface** | A CLI, a repository template, a pull request, or a portal (Backstage and friends) |
+| **Catalogue** | What services exist, who owns them, who is on call, what they depend on |
+
+Note that the portal is *last* and optional. A polished UI over a platform nobody wants is the most common expensive mistake in this space; a repository template plus a `Makefile` that works is a real platform.
+
+### Measuring It
+
+A platform team without metrics drifts into building what is interesting rather than what is needed:
+
+- **Adoption** — what share of services are on the golden path? Falling adoption is the earliest warning you get.
+- **Lead time for a new service** — from "we need a service" to "it serves traffic in production". Days to hours is the usual goal.
+- **DORA metrics for the teams you serve** — the platform exists to move these (Module 00 §8). If deployment frequency has not moved, the platform has not worked.
+- **Bypass rate** — how often teams go around the road. Each instance is a requirement you missed.
+- **Time to first successful deploy for a new engineer** — the honest measure of your documentation.
+
+### When You Do Not Need a Platform Team
+
+```
+TOO EARLY WHEN:
+  ❌ Under ~4 teams — a shared repository template and a good README is your platform
+  ❌ You have not standardised anything yet; there is no road to pave
+  ❌ It would be one person, part-time. That is a bottleneck with a job title
+  ❌ The real problem is that nobody owns production. A platform does not fix ownership
+
+WORTH IT WHEN:
+  ✅ Multiple teams solve the same delivery problem differently, badly
+  ✅ Onboarding a service takes weeks, mostly waiting on other people
+  ✅ Security and reliability requirements are impossible to meet per-team by hand
+  ✅ You can staff it as a product team, with users, feedback, and a roadmap
+```
+
+> ⭐ **The interview answer**: "Platform engineering is treating internal tooling as a product with engineers as its users. The point is a golden path — the supported way to create, deploy, and observe a service — that is easier than doing it yourself, with an escape hatch for teams that need something else. It is not a DevOps team that deploys on your behalf; the service team still owns production. I would measure it on adoption, lead time for a new service, and whether the DORA metrics of the teams it serves actually moved."
+
+---
+
+## 12. Common Mistakes and Anti-Patterns
 
 ### ❌ Premature Optimization
 
@@ -575,7 +772,7 @@ GOOD: Metrics, logging, and tracing are part of the architecture
 
 ---
 
-## 11. Interview Insights
+## 13. Interview Insights
 
 **Q: How would you design a system for high availability?**
 > Eliminate single points of failure at every layer. Use multiple application servers behind a load balancer with health checks. Deploy across multiple availability zones. Use database replication with automated failover. Implement health checks and circuit breakers. Define RTO/RPO and choose a DR strategy that matches. Monitor everything and alert on SLO violations, not just server metrics.
@@ -604,6 +801,8 @@ Read the sections above first, then work through these **in order**. Every lab e
 | # | Lab | What you'll do |
 |---|-----|----------------|
 | 1 | **[High Availability and Load Balancing](./labs/lab-01-ha-load-balancing.md)** | Build a load-balanced, highly available web application using Nginx as a reverse proxy with health checks, and simulate real-world failure scenarios… |
+| 2 | **[Message Queues and Async Failure](./labs/lab-02-message-queues.md)** | Operate a queue the way you will have to on call: watch a backlog form, drain it by scaling consumers, and deal with the message that can never… |
+| 3 | **[Platform Engineering](./labs/lab-03-golden-path.md)** | Build the paved road: one command that takes a team from "we need a service" to a repository with probes, limits, a pipeline, alerts, and a named… |
 
 **Portfolio project:**
 

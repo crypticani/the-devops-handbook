@@ -649,6 +649,48 @@ kubectl get applications -n argocd -o wide                   # no CLI? the CRD i
 
 ---
 
+## Service Mesh
+
+Only after limits, probes, and NetworkPolicies are right — a mesh on shaky basics adds a second
+place for bugs to hide.
+
+```bash
+# Istio
+istioctl install --set profile=demo          # ⚠️ never `demo` in production
+kubectl label namespace app istio-injection=enabled    # injection is per NAMESPACE
+istioctl analyze -n app                      # ⭐ finds misconfiguration before it bites
+istioctl proxy-status                        # are sidecars in sync with the control plane
+istioctl proxy-config routes deploy/checkout # what this proxy actually believes
+istioctl proxy-config secret deploy/checkout # mTLS certs the sidecar holds
+
+# Linkerd — the best preflight of any mesh
+linkerd check
+linkerd viz stat deploy -n app               # success rate + p99 per deployment
+linkerd viz tap deploy/checkout              # live requests, no app changes
+linkerd viz edges deploy -n app              # who actually talks to whom
+```
+
+| Gives you | Instead of |
+|-----------|-----------|
+| mTLS everywhere, certs rotated hourly | Per-language TLS config and cert distribution you built |
+| Retries, timeouts, circuit breaking as policy | A different client library per language |
+| Traffic splitting by weight (real canaries) | Replica arithmetic across two Deployments |
+| Golden metrics for every service pair | Instrumenting every service and hoping for consistency |
+| L7 authorization by workload identity | NetworkPolicy at L3/L4 — IP and port only |
+
+| Costs you | Roughly |
+|-----------|---------|
+| Memory + CPU per pod (sidecar) | ~50–100 MB each × every pod |
+| Latency | Single-digit ms, on both sides of every call |
+| A control plane | HA, upgraded, and able to break all service traffic when misconfigured |
+| Debugging surface | "App or proxy?" — startup ordering, `PERMISSIVE` vs `STRICT`, sidecars outliving Jobs |
+
+**Models**: sidecar (per pod, full L7, priciest) · ambient/sidecarless (per node for L4+mTLS,
+L7 opt-in) · eBPF (Cilium — least latency, tied to your CNI).
+**Under ~10 services**: Ingress + NetworkPolicies + a retry library. Skip the mesh.
+
+---
+
 ## Manifest Templates
 
 ```yaml

@@ -1,0 +1,845 @@
+{
+ "format_version": "1.2",
+ "terraform_version": "1.15.8",
+ "planned_values": {
+  "outputs": {
+   "nat_gateway_count": {
+    "sensitive": false,
+    "type": "number",
+    "value": 2
+   }
+  },
+  "root_module": {
+   "resources": [
+    {
+     "address": "aws_cloudwatch_log_group.app",
+     "mode": "managed",
+     "type": "aws_cloudwatch_log_group",
+     "name": "app",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "kms_key_id": null,
+      "name": "/aws/app/prod",
+      "retention_in_days": 0,
+      "skip_destroy": false,
+      "tags": {
+       "Name": "app"
+      },
+      "tags_all": {
+       "Name": "app",
+       "env": "prod",
+       "managed-by": "terraform"
+      }
+     },
+     "sensitive_values": {
+      "tags": {},
+      "tags_all": {}
+     }
+    },
+    {
+     "address": "aws_db_instance.main",
+     "mode": "managed",
+     "type": "aws_db_instance",
+     "name": "main",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 2,
+     "values": {
+      "allocated_storage": 100,
+      "allow_major_version_upgrade": null,
+      "apply_immediately": false,
+      "auto_minor_version_upgrade": true,
+      "backup_retention_period": 7,
+      "blue_green_update": [],
+      "copy_tags_to_snapshot": false,
+      "custom_iam_instance_profile": null,
+      "customer_owned_ip_enabled": null,
+      "dedicated_log_volume": false,
+      "delete_automated_backups": true,
+      "deletion_protection": null,
+      "domain": null,
+      "domain_auth_secret_arn": null,
+      "domain_dns_ips": null,
+      "domain_iam_role_name": null,
+      "domain_ou": null,
+      "enabled_cloudwatch_logs_exports": null,
+      "engine": "postgres",
+      "engine_version": "16",
+      "final_snapshot_identifier": null,
+      "iam_database_authentication_enabled": null,
+      "identifier": "app-db",
+      "instance_class": "db.t3.medium",
+      "manage_master_user_password": null,
+      "max_allocated_storage": null,
+      "monitoring_interval": 0,
+      "multi_az": true,
+      "password": "CHANGE_ME_use_secrets_manager",
+      "password_wo": null,
+      "password_wo_version": null,
+      "performance_insights_enabled": false,
+      "publicly_accessible": false,
+      "replicate_source_db": null,
+      "restore_to_point_in_time": [],
+      "s3_import": [],
+      "skip_final_snapshot": true,
+      "storage_encrypted": null,
+      "storage_type": "gp2",
+      "tags": {
+       "Name": "app-db"
+      },
+      "tags_all": {
+       "Name": "app-db",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "timeouts": null,
+      "upgrade_storage_config": null,
+      "username": "appuser"
+     },
+     "sensitive_values": {
+      "blue_green_update": [],
+      "listener_endpoint": [],
+      "master_user_secret": [],
+      "password": true,
+      "password_wo": true,
+      "replicas": [],
+      "restore_to_point_in_time": [],
+      "s3_import": [],
+      "tags": {},
+      "tags_all": {},
+      "vpc_security_group_ids": []
+     }
+    },
+    {
+     "address": "aws_ebs_volume.data",
+     "mode": "managed",
+     "type": "aws_ebs_volume",
+     "name": "data",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "availability_zone": "eu-west-1a",
+      "final_snapshot": false,
+      "multi_attach_enabled": null,
+      "outpost_arn": null,
+      "size": 200,
+      "tags": {
+       "Name": "app-data"
+      },
+      "tags_all": {
+       "Name": "app-data",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "timeouts": null,
+      "type": "gp2"
+     },
+     "sensitive_values": {
+      "tags": {},
+      "tags_all": {}
+     }
+    },
+    {
+     "address": "aws_eip.nat[0]",
+     "mode": "managed",
+     "type": "aws_eip",
+     "name": "nat",
+     "index": 0,
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "address": null,
+      "associate_with_private_ip": null,
+      "customer_owned_ipv4_pool": null,
+      "domain": "vpc",
+      "tags": {
+       "Name": "nat-eu-west-1a"
+      },
+      "tags_all": {
+       "Name": "nat-eu-west-1a",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "timeouts": null
+     },
+     "sensitive_values": {
+      "tags": {},
+      "tags_all": {}
+     }
+    },
+    {
+     "address": "aws_eip.nat[1]",
+     "mode": "managed",
+     "type": "aws_eip",
+     "name": "nat",
+     "index": 1,
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "address": null,
+      "associate_with_private_ip": null,
+      "customer_owned_ipv4_pool": null,
+      "domain": "vpc",
+      "tags": {
+       "Name": "nat-eu-west-1b"
+      },
+      "tags_all": {
+       "Name": "nat-eu-west-1b",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "timeouts": null
+     },
+     "sensitive_values": {
+      "tags": {},
+      "tags_all": {}
+     }
+    },
+    {
+     "address": "aws_instance.app[0]",
+     "mode": "managed",
+     "type": "aws_instance",
+     "name": "app",
+     "index": 0,
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 1,
+     "values": {
+      "ami": "ami-0abcdef1234567890",
+      "credit_specification": [],
+      "get_password_data": false,
+      "hibernation": null,
+      "instance_type": "t3.large",
+      "launch_template": [],
+      "root_block_device": [
+       {
+        "delete_on_termination": true,
+        "tags": null,
+        "volume_size": 50,
+        "volume_type": "gp2"
+       }
+      ],
+      "source_dest_check": true,
+      "tags": {
+       "Name": "app-0"
+      },
+      "tags_all": {
+       "Name": "app-0",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "timeouts": null,
+      "user_data_replace_on_change": false,
+      "volume_tags": null
+     },
+     "sensitive_values": {
+      "capacity_reservation_specification": [],
+      "cpu_options": [],
+      "credit_specification": [],
+      "ebs_block_device": [],
+      "enclave_options": [],
+      "ephemeral_block_device": [],
+      "instance_market_options": [],
+      "ipv6_addresses": [],
+      "launch_template": [],
+      "maintenance_options": [],
+      "metadata_options": [],
+      "network_interface": [],
+      "private_dns_name_options": [],
+      "root_block_device": [
+       {
+        "tags_all": {}
+       }
+      ],
+      "secondary_private_ips": [],
+      "security_groups": [],
+      "tags": {},
+      "tags_all": {},
+      "vpc_security_group_ids": []
+     }
+    },
+    {
+     "address": "aws_instance.app[1]",
+     "mode": "managed",
+     "type": "aws_instance",
+     "name": "app",
+     "index": 1,
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 1,
+     "values": {
+      "ami": "ami-0abcdef1234567890",
+      "credit_specification": [],
+      "get_password_data": false,
+      "hibernation": null,
+      "instance_type": "t3.large",
+      "launch_template": [],
+      "root_block_device": [
+       {
+        "delete_on_termination": true,
+        "tags": null,
+        "volume_size": 50,
+        "volume_type": "gp2"
+       }
+      ],
+      "source_dest_check": true,
+      "tags": {
+       "Name": "app-1"
+      },
+      "tags_all": {
+       "Name": "app-1",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "timeouts": null,
+      "user_data_replace_on_change": false,
+      "volume_tags": null
+     },
+     "sensitive_values": {
+      "capacity_reservation_specification": [],
+      "cpu_options": [],
+      "credit_specification": [],
+      "ebs_block_device": [],
+      "enclave_options": [],
+      "ephemeral_block_device": [],
+      "instance_market_options": [],
+      "ipv6_addresses": [],
+      "launch_template": [],
+      "maintenance_options": [],
+      "metadata_options": [],
+      "network_interface": [],
+      "private_dns_name_options": [],
+      "root_block_device": [
+       {
+        "tags_all": {}
+       }
+      ],
+      "secondary_private_ips": [],
+      "security_groups": [],
+      "tags": {},
+      "tags_all": {},
+      "vpc_security_group_ids": []
+     }
+    },
+    {
+     "address": "aws_internet_gateway.main",
+     "mode": "managed",
+     "type": "aws_internet_gateway",
+     "name": "main",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "tags": {
+       "Name": "main"
+      },
+      "tags_all": {
+       "Name": "main",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "timeouts": null
+     },
+     "sensitive_values": {
+      "tags": {},
+      "tags_all": {}
+     }
+    },
+    {
+     "address": "aws_lb.app",
+     "mode": "managed",
+     "type": "aws_lb",
+     "name": "app",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "access_logs": [],
+      "client_keep_alive": 3600,
+      "connection_logs": [],
+      "customer_owned_ipv4_pool": null,
+      "desync_mitigation_mode": "defensive",
+      "dns_record_client_routing_policy": null,
+      "drop_invalid_header_fields": false,
+      "enable_cross_zone_load_balancing": null,
+      "enable_deletion_protection": false,
+      "enable_http2": true,
+      "enable_tls_version_and_cipher_suite_headers": false,
+      "enable_waf_fail_open": false,
+      "enable_xff_client_port": false,
+      "enable_zonal_shift": false,
+      "idle_timeout": 60,
+      "ipam_pools": [],
+      "load_balancer_type": "application",
+      "minimum_load_balancer_capacity": [],
+      "name": "app",
+      "preserve_host_header": false,
+      "tags": {
+       "Name": "app"
+      },
+      "tags_all": {
+       "Name": "app",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "timeouts": null,
+      "xff_header_processing_mode": "append"
+     },
+     "sensitive_values": {
+      "access_logs": [],
+      "connection_logs": [],
+      "ipam_pools": [],
+      "minimum_load_balancer_capacity": [],
+      "security_groups": [],
+      "subnet_mapping": [],
+      "subnets": [],
+      "tags": {},
+      "tags_all": {}
+     }
+    },
+    {
+     "address": "aws_lb_target_group.app",
+     "mode": "managed",
+     "type": "aws_lb_target_group",
+     "name": "app",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "deregistration_delay": "300",
+      "health_check": [
+       {
+        "enabled": true,
+        "healthy_threshold": 2,
+        "interval": 30,
+        "path": "/healthz",
+        "port": "traffic-port",
+        "protocol": "HTTP",
+        "unhealthy_threshold": 3
+       }
+      ],
+      "lambda_multi_value_headers_enabled": false,
+      "name": "app",
+      "port": 8080,
+      "protocol": "HTTP",
+      "proxy_protocol_v2": false,
+      "slow_start": 0,
+      "tags": {
+       "Name": "app"
+      },
+      "tags_all": {
+       "Name": "app",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "target_type": "instance"
+     },
+     "sensitive_values": {
+      "health_check": [
+       {}
+      ],
+      "load_balancer_arns": [],
+      "stickiness": [],
+      "tags": {},
+      "tags_all": {},
+      "target_failover": [],
+      "target_group_health": [],
+      "target_health_state": []
+     }
+    },
+    {
+     "address": "aws_nat_gateway.main[0]",
+     "mode": "managed",
+     "type": "aws_nat_gateway",
+     "name": "main",
+     "index": 0,
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "connectivity_type": "public",
+      "secondary_allocation_ids": null,
+      "tags": {
+       "Name": "nat-eu-west-1a"
+      },
+      "tags_all": {
+       "Name": "nat-eu-west-1a",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "timeouts": null
+     },
+     "sensitive_values": {
+      "secondary_private_ip_addresses": [],
+      "tags": {},
+      "tags_all": {}
+     }
+    },
+    {
+     "address": "aws_nat_gateway.main[1]",
+     "mode": "managed",
+     "type": "aws_nat_gateway",
+     "name": "main",
+     "index": 1,
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "connectivity_type": "public",
+      "secondary_allocation_ids": null,
+      "tags": {
+       "Name": "nat-eu-west-1b"
+      },
+      "tags_all": {
+       "Name": "nat-eu-west-1b",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "timeouts": null
+     },
+     "sensitive_values": {
+      "secondary_private_ip_addresses": [],
+      "tags": {},
+      "tags_all": {}
+     }
+    },
+    {
+     "address": "aws_route_table.private[0]",
+     "mode": "managed",
+     "type": "aws_route_table",
+     "name": "private",
+     "index": 0,
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "route": [
+       {
+        "carrier_gateway_id": "",
+        "cidr_block": "0.0.0.0/0",
+        "core_network_arn": "",
+        "destination_prefix_list_id": "",
+        "egress_only_gateway_id": "",
+        "gateway_id": "",
+        "ipv6_cidr_block": "",
+        "local_gateway_id": "",
+        "network_interface_id": "",
+        "transit_gateway_id": "",
+        "vpc_endpoint_id": "",
+        "vpc_peering_connection_id": ""
+       }
+      ],
+      "tags": {
+       "Name": "private-eu-west-1a"
+      },
+      "tags_all": {
+       "Name": "private-eu-west-1a",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "timeouts": null
+     },
+     "sensitive_values": {
+      "propagating_vgws": [],
+      "route": [
+       {}
+      ],
+      "tags": {},
+      "tags_all": {}
+     }
+    },
+    {
+     "address": "aws_route_table.private[1]",
+     "mode": "managed",
+     "type": "aws_route_table",
+     "name": "private",
+     "index": 1,
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 0,
+     "values": {
+      "route": [
+       {
+        "carrier_gateway_id": "",
+        "cidr_block": "0.0.0.0/0",
+        "core_network_arn": "",
+        "destination_prefix_list_id": "",
+        "egress_only_gateway_id": "",
+        "gateway_id": "",
+        "ipv6_cidr_block": "",
+        "local_gateway_id": "",
+        "network_interface_id": "",
+        "transit_gateway_id": "",
+        "vpc_endpoint_id": "",
+        "vpc_peering_connection_id": ""
+       }
+      ],
+      "tags": {
+       "Name": "private-eu-west-1b"
+      },
+      "tags_all": {
+       "Name": "private-eu-west-1b",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "timeouts": null
+     },
+     "sensitive_values": {
+      "propagating_vgws": [],
+      "route": [
+       {}
+      ],
+      "tags": {},
+      "tags_all": {}
+     }
+    },
+    {
+     "address": "aws_security_group.app",
+     "mode": "managed",
+     "type": "aws_security_group",
+     "name": "app",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 1,
+     "values": {
+      "description": "App instances",
+      "egress": [
+       {
+        "cidr_blocks": [
+         "0.0.0.0/0"
+        ],
+        "description": "",
+        "from_port": 0,
+        "ipv6_cidr_blocks": [],
+        "prefix_list_ids": [],
+        "protocol": "-1",
+        "security_groups": [],
+        "self": false,
+        "to_port": 0
+       }
+      ],
+      "ingress": [
+       {
+        "cidr_blocks": [
+         "10.0.0.0/16"
+        ],
+        "description": "",
+        "from_port": 8080,
+        "ipv6_cidr_blocks": [],
+        "prefix_list_ids": [],
+        "protocol": "tcp",
+        "security_groups": [],
+        "self": false,
+        "to_port": 8080
+       }
+      ],
+      "name": "app",
+      "revoke_rules_on_delete": false,
+      "tags": {
+       "Name": "app"
+      },
+      "tags_all": {
+       "Name": "app",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "timeouts": null
+     },
+     "sensitive_values": {
+      "egress": [
+       {
+        "cidr_blocks": [
+         false
+        ],
+        "ipv6_cidr_blocks": [],
+        "prefix_list_ids": [],
+        "security_groups": []
+       }
+      ],
+      "ingress": [
+       {
+        "cidr_blocks": [
+         false
+        ],
+        "ipv6_cidr_blocks": [],
+        "prefix_list_ids": [],
+        "security_groups": []
+       }
+      ],
+      "tags": {},
+      "tags_all": {}
+     }
+    },
+    {
+     "address": "aws_subnet.private[0]",
+     "mode": "managed",
+     "type": "aws_subnet",
+     "name": "private",
+     "index": 0,
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 1,
+     "values": {
+      "assign_ipv6_address_on_creation": false,
+      "availability_zone": "eu-west-1a",
+      "cidr_block": "10.0.10.0/24",
+      "customer_owned_ipv4_pool": null,
+      "enable_dns64": false,
+      "enable_lni_at_device_index": null,
+      "enable_resource_name_dns_a_record_on_launch": false,
+      "enable_resource_name_dns_aaaa_record_on_launch": false,
+      "ipv6_cidr_block": null,
+      "ipv6_native": false,
+      "map_customer_owned_ip_on_launch": null,
+      "map_public_ip_on_launch": false,
+      "outpost_arn": null,
+      "tags": {
+       "Name": "private-eu-west-1a"
+      },
+      "tags_all": {
+       "Name": "private-eu-west-1a",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "timeouts": null
+     },
+     "sensitive_values": {
+      "tags": {},
+      "tags_all": {}
+     }
+    },
+    {
+     "address": "aws_subnet.private[1]",
+     "mode": "managed",
+     "type": "aws_subnet",
+     "name": "private",
+     "index": 1,
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 1,
+     "values": {
+      "assign_ipv6_address_on_creation": false,
+      "availability_zone": "eu-west-1b",
+      "cidr_block": "10.0.11.0/24",
+      "customer_owned_ipv4_pool": null,
+      "enable_dns64": false,
+      "enable_lni_at_device_index": null,
+      "enable_resource_name_dns_a_record_on_launch": false,
+      "enable_resource_name_dns_aaaa_record_on_launch": false,
+      "ipv6_cidr_block": null,
+      "ipv6_native": false,
+      "map_customer_owned_ip_on_launch": null,
+      "map_public_ip_on_launch": false,
+      "outpost_arn": null,
+      "tags": {
+       "Name": "private-eu-west-1b"
+      },
+      "tags_all": {
+       "Name": "private-eu-west-1b",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "timeouts": null
+     },
+     "sensitive_values": {
+      "tags": {},
+      "tags_all": {}
+     }
+    },
+    {
+     "address": "aws_subnet.public[0]",
+     "mode": "managed",
+     "type": "aws_subnet",
+     "name": "public",
+     "index": 0,
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 1,
+     "values": {
+      "assign_ipv6_address_on_creation": false,
+      "availability_zone": "eu-west-1a",
+      "cidr_block": "10.0.0.0/24",
+      "customer_owned_ipv4_pool": null,
+      "enable_dns64": false,
+      "enable_lni_at_device_index": null,
+      "enable_resource_name_dns_a_record_on_launch": false,
+      "enable_resource_name_dns_aaaa_record_on_launch": false,
+      "ipv6_cidr_block": null,
+      "ipv6_native": false,
+      "map_customer_owned_ip_on_launch": null,
+      "map_public_ip_on_launch": true,
+      "outpost_arn": null,
+      "tags": {
+       "Name": "public-eu-west-1a"
+      },
+      "tags_all": {
+       "Name": "public-eu-west-1a",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "timeouts": null
+     },
+     "sensitive_values": {
+      "tags": {},
+      "tags_all": {}
+     }
+    },
+    {
+     "address": "aws_subnet.public[1]",
+     "mode": "managed",
+     "type": "aws_subnet",
+     "name": "public",
+     "index": 1,
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 1,
+     "values": {
+      "assign_ipv6_address_on_creation": false,
+      "availability_zone": "eu-west-1b",
+      "cidr_block": "10.0.1.0/24",
+      "customer_owned_ipv4_pool": null,
+      "enable_dns64": false,
+      "enable_lni_at_device_index": null,
+      "enable_resource_name_dns_a_record_on_launch": false,
+      "enable_resource_name_dns_aaaa_record_on_launch": false,
+      "ipv6_cidr_block": null,
+      "ipv6_native": false,
+      "map_customer_owned_ip_on_launch": null,
+      "map_public_ip_on_launch": true,
+      "outpost_arn": null,
+      "tags": {
+       "Name": "public-eu-west-1b"
+      },
+      "tags_all": {
+       "Name": "public-eu-west-1b",
+       "env": "prod",
+       "managed-by": "terraform"
+      },
+      "timeouts": null
+     },
+     "sensitive_values": {
+      "tags": {},
+      "tags_all": {}
+     }
+    },
+    {
+     "address": "aws_vpc.main",
+     "mode": "managed",
+     "type": "aws_vpc",
+     "name": "main",
+     "provider_name": "registry.terraform.io/hashicorp/aws",
+     "schema_version": 1,
+     "values": {
+      "assign_generated_ipv6_cidr_block": null,
+      "cidr_block": "10.0.0.0/16",
+      "enable_dns_hostnames": true,
+      "enable_dns_support": true,
+      "instance_tenancy": "default",
+      "ipv4_ipam_pool_id": null,
+      "ipv4_netmask_length": null,
+      "ipv6_ipam_pool_id": null,
+      "ipv6_netmask_length": null,
+      "tags": {
+       "Name": "main"
+      },
+      "tags_all": {
+       "Name": "main",
+       "env": "prod",
+       "managed-by": "terraform"
+      }
+     },
+     "sensitive_values": {
+      "tags": {},
+      "tags_all": {}
+     }
+    }
+   ]
+  }
+ }
+}

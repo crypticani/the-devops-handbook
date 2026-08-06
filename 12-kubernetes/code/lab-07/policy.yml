@@ -1,0 +1,90 @@
+# L7 authorization by workload IDENTITY, which is the thing a NetworkPolicy cannot express.
+#
+# NetworkPolicy says "this pod IP may reach that pod on port 80".
+# This says "the workload holding web's cryptographic identity may call api" — and after a
+# pod is compromised, that difference is the whole ballgame.
+apiVersion: policy.linkerd.io/v1beta1
+kind: Server
+metadata:
+  name: api-http
+  namespace: meshlab
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  port: http
+  proxyProtocol: HTTP/1
+  # ⭐ Declaring a Server switches this port to DEFAULT DENY. Nothing reaches it until an
+  # AuthorizationPolicy allows something — including your own probes, which is scenario 2.
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: MeshTLSAuthentication
+metadata:
+  name: web-identity
+  namespace: meshlab
+spec:
+  identities:
+    # The identity is derived from the ServiceAccount, not from an IP or a label.
+    - "web.meshlab.serviceaccount.identity.linkerd.cluster.local"
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: api-allow-web
+  namespace: meshlab
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: api-http
+  requiredAuthenticationRefs:
+    - group: policy.linkerd.io
+      kind: MeshTLSAuthentication
+      name: web-identity
+---
+# Probes come from the kubelet, which is NOT in the mesh and has no identity. Without this
+# the Server denies them and Kubernetes restarts a perfectly healthy pod — the mistake that
+# makes people conclude "the mesh broke our app".
+apiVersion: policy.linkerd.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: api-probes
+  namespace: meshlab
+spec:
+  parentRefs:
+    - name: api-http
+      kind: Server
+      group: policy.linkerd.io
+      namespace: meshlab
+  rules:
+    - matches:
+        - path:
+            value: "/"
+            type: Exact
+          method: GET
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: NetworkAuthentication
+metadata:
+  name: kubelet
+  namespace: meshlab
+spec:
+  networks:
+    # Node CIDRs — the kubelet's source addresses. Narrow this to your actual node subnet;
+    # it is deliberately broad here because minikube's node IP varies.
+    - cidr: 0.0.0.0/0
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: api-allow-probes
+  namespace: meshlab
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: HTTPRoute
+    name: api-probes
+  requiredAuthenticationRefs:
+    - group: policy.linkerd.io
+      kind: NetworkAuthentication
+      name: kubelet

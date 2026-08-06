@@ -33,12 +33,13 @@ CI/CD is the **backbone of modern software delivery**. Without it, every deploym
 4. [Building a CI Pipeline](#4-building-a-ci-pipeline)
 5. [Building a CD Pipeline](#5-building-a-cd-pipeline)
 6. [Jenkins — Secondary Tool](#6-jenkins--secondary-tool)
-7. [Testing in CI/CD](#7-testing-in-cicd)
-8. [Deployment Strategies](#8-deployment-strategies)
-9. [Common Mistakes and Anti-Patterns](#9-common-mistakes-and-anti-patterns)
-10. [Debugging Mindset](#10-debugging-mindset)
-11. [Security Considerations](#11-security-considerations)
-12. [Interview Insights](#12-interview-insights)
+7. [GitLab CI — Translating What You Know](#7-gitlab-ci--translating-what-you-know)
+8. [Testing in CI/CD](#8-testing-in-cicd)
+9. [Deployment Strategies](#9-deployment-strategies)
+10. [Common Mistakes and Anti-Patterns](#10-common-mistakes-and-anti-patterns)
+11. [Debugging Mindset](#11-debugging-mindset)
+12. [Security Considerations](#12-security-considerations)
+13. [Interview Insights](#13-interview-insights)
 
 ---
 
@@ -677,7 +678,132 @@ pipeline {
 
 ---
 
-## 7. Testing in CI/CD
+## 7. GitLab CI — Translating What You Know
+
+### Why Bother, When You Know Actions
+
+Because roughly a third of the jobs you apply for run GitLab CI, and the interview question is never "write me a `.gitlab-ci.yml`" — it is "you've used GitHub Actions; how quickly can you be useful on GitLab?" The concepts are the same. The vocabulary is not.
+
+GitLab's distinguishing feature is that CI is part of the same product as the repository, the registry, the issue tracker, and the environments. There is no marketplace of third-party actions to lean on, which means more of the pipeline is shell commands you wrote — a fair trade for some teams, a dealbreaker for others.
+
+### The Concept Map
+
+Learn this table and you can read any `.gitlab-ci.yml`:
+
+| GitHub Actions | GitLab CI | Notes |
+|----------------|-----------|-------|
+| `.github/workflows/*.yml` (many files) | `.gitlab-ci.yml` (one file, `include:` for more) | GitLab defaults to one entry point |
+| Workflow | Pipeline | |
+| Job | Job | Same idea, same isolation |
+| Step | Script line | ⭐ No `uses:` — no action marketplace. You write shell, or use a container image that already has the tool |
+| `runs-on: ubuntu-latest` | `tags:` selecting a runner, plus `image:` | Every job runs *in* a container image you name |
+| `needs:` | `needs:` (DAG) or `stage:` (ordered groups) | `stages` are the default mental model; `needs` unlocks the same DAG parallelism |
+| `uses: actions/cache` | `cache:` key + paths | Built in, not an action |
+| `upload-artifact` | `artifacts: paths:` | Built in, and artifacts pass to later stages automatically |
+| `secrets.FOO` | CI/CD variables (masked, protected) | ⭐ "Protected" means only protected branches see it — the closest thing to environment approvals |
+| `environment:` | `environment:` | Both give deployment history and approval gates |
+| `if:` conditions | `rules:` / `only:` / `except:` | `rules:` is current; `only/except` is legacy you will still meet |
+| Reusable workflows | `include:` + `extends:` | Composition is templating rather than a call |
+| GitHub-hosted runners | Shared or self-hosted runners | Self-hosting is far more common on GitLab, so runner debugging is your problem |
+
+### The Same Pipeline, Translated
+
+This is the CI pipeline from §4, expressed in GitLab:
+
+```yaml
+# .gitlab-ci.yml
+stages: [lint, test, build, scan, deploy]
+
+default:
+  image: python:3.12-slim          # every job runs in this unless it says otherwise
+  interruptible: true             # ⭐ a new push cancels the old pipeline; saves runner minutes
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  IMAGE: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"     # SHA-tagged, built once
+
+cache:
+  key:
+    files: [requirements.txt]     # cache invalidates when dependencies change
+  paths: [.cache/pip]
+
+lint:
+  stage: lint
+  script:
+    - pip install ruff
+    - ruff check .
+
+test:
+  stage: test
+  script:
+    - pip install -r requirements.txt pytest pytest-cov
+    - pytest --junitxml=report.xml --cov=. --cov-report=term
+  artifacts:
+    when: always                  # ⭐ upload the report even when the job fails
+    reports:
+      junit: report.xml           # GitLab renders failures in the merge request itself
+    expire_in: 1 week
+
+build:
+  stage: build
+  image: docker:27
+  services: [docker:27-dind]      # Docker-in-Docker: the usual way to build images here
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker build -t "$IMAGE" .
+    - docker push "$IMAGE"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+scan:
+  stage: scan
+  image:
+    name: aquasec/trivy:0.54.1
+    entrypoint: [""]              # ⭐ images with their own entrypoint need this override
+  script:
+    - trivy image --exit-code 1 --severity CRITICAL "$IMAGE"
+
+deploy:
+  stage: deploy
+  script: ./deploy.sh production "$CI_COMMIT_SHA"
+  environment:
+    name: production
+    url: https://example.com
+  when: manual                    # the approval gate
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+```
+
+### The Four Things That Will Surprise You
+
+**1. Every job runs inside an image you choose.** There is no ambient toolchain. If `terraform` is not in the image, the job cannot see it. This is stricter and more reproducible than a hosted runner with everything preinstalled — and it is the most common source of "works on GitHub, fails here".
+
+**2. Runners are yours to operate.** Self-hosted runners mean an executor choice (`docker`, `shell`, `kubernetes`) and real failure modes: a full disk on the runner host, a stale Docker cache, a `shell` executor leaking state between jobs. `shell` executors in particular break the isolation you assumed.
+
+**3. `rules:` evaluate in order and the first match wins.** A job with no matching rule is silently *not created*, which reads exactly like a broken pipeline. `CI_PIPELINE_SOURCE` (`push`, `merge_request_event`, `schedule`, `web`) is the variable you will reach for most.
+
+**4. Artifacts flow forward automatically.** Later stages get earlier stages' artifacts without asking, which is convenient until a 500 MB artifact from stage one is downloaded by every job in stage four. Use `dependencies: []` to opt out.
+
+```bash
+# Debugging, in the order you'll want it
+npx gitlab-ci-local --list                    # ⭐ WHICH JOBS WOULD EXIST for this ref
+npx gitlab-ci-local lint                      # run one job locally, in Docker, no account
+gitlab-runner verify                          # (self-hosted) is the runner registered
+# In the UI: Build → Pipeline editor → Validate; the Lint tab simulates job creation
+```
+
+> ⚠️ **`gitlab-runner exec` is gone** — deprecated in Runner 15.7, removed in 17.0. Any tutorial
+> that recommends it predates that. [`gitlab-ci-local`](https://github.com/firecow/gitlab-ci-local)
+> is the current way to execute a job on your machine.
+
+Hands-on, on the same application you built the Actions pipeline for: **[Lab 03: GitLab CI](./labs/lab-03-gitlab-ci.md)**.
+
+> **💡 DevOps Impact**: the transferable skill is not the syntax, it is knowing that every CI system has the same five moving parts — triggers, an execution environment, a dependency graph, caching/artifacts, and a secret store. When you meet CircleCI, Buildkite, or Tekton next, find those five and you can read the config on day one.
+
+---
+
+## 8. Testing in CI/CD
 
 ### Test Pyramid in Pipelines
 
@@ -720,7 +846,7 @@ pipeline {
 
 ---
 
-## 8. Deployment Strategies
+## 9. Deployment Strategies
 
 All three strategies achieve zero downtime. They differ in **how much infrastructure you pay for** and **how fast you can undo a bad release**.
 
@@ -825,7 +951,7 @@ flowchart LR
 
 ---
 
-## 9. Common Mistakes and Anti-Patterns
+## 10. Common Mistakes and Anti-Patterns
 
 ### ❌ Hardcoding Secrets
 
@@ -882,7 +1008,7 @@ Always plan for failure:
 
 ---
 
-## 10. Debugging Mindset
+## 11. Debugging Mindset
 
 ### CI/CD Debugging Framework
 
@@ -927,7 +1053,7 @@ act --secret-file .env.secrets  # With secrets
 
 ---
 
-## 11. Security Considerations
+## 12. Security Considerations
 
 > 🔐 Your CI/CD pipeline has access to production — it's a prime attack target.
 
@@ -964,7 +1090,7 @@ permissions:
 
 ---
 
-## 12. Interview Insights
+## 13. Interview Insights
 
 **Q: What's the difference between Continuous Delivery and Continuous Deployment?**
 > Continuous Delivery means every change is *deployable* to production but requires manual approval. Continuous Deployment means every change that passes tests goes to production *automatically*. Delivery is the safer choice for most teams; Deployment requires very mature testing.
@@ -995,6 +1121,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 |---|-----|----------------|
 | 1 | **[GitHub Actions](./labs/lab-01-github-actions.md)** | Go from zero to a working CI/CD pipeline. |
 | 2 | **[Jenkins Pipeline](./labs/lab-02-jenkins-pipeline.md)** | Set up Jenkins from scratch using Docker, create a Declarative Pipeline, configure credentials and triggers, and debug common failures. |
+| 3 | **[GitLab CI](./labs/lab-03-gitlab-ci.md)** | Take the pipeline you built in Lab 01 and run it on GitLab CI, on the same application, so the difference you learn is the *dialect* rather than the… |
 
 **Portfolio project:**
 
@@ -1047,6 +1174,13 @@ Because the retry hides the defect and trains the team to click until green, at 
 <summary><strong>6. What has to be true before you let deployment to production happen automatically?</strong></summary>
 
 Tests you actually trust, monitoring that will tell you a release went bad without a human watching, and a rollback that is one automated step. Without those three, automating deployment just means arriving at the outage faster.
+
+</details>
+
+<details>
+<summary><strong>7. You know GitHub Actions and the job runs GitLab CI. What are the five things you look for in any CI system, and what is the one GitLab difference that breaks pipelines most often?</strong></summary>
+
+Triggers, the execution environment, the dependency graph, caching/artifacts, and the secret store — find those five and you can read any CI config on day one. The GitLab difference that bites: every job runs inside an image you name, with no ambient toolchain, so a missing binary is a config error rather than a preinstalled convenience. Second place goes to `rules:` — a job whose rules don't match is never created, which looks exactly like a broken pipeline.
 
 </details>
 

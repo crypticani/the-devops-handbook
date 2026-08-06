@@ -1,0 +1,122 @@
+# Two services: web calls api. Nothing here knows anything about a service mesh — that is
+# the whole point. mTLS, retries, and per-hop metrics arrive without an application change.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: meshlab
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: web
+  namespace: meshlab
+# ⭐ A distinct ServiceAccount per workload. The mesh derives workload IDENTITY from it, so
+# "web may call api" is only expressible if web has its own account.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: api
+  namespace: meshlab
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: meshlab
+  labels:
+    app: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      serviceAccountName: api
+      containers:
+        - name: api
+          image: nginx:1.27-alpine
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: meshlab
+spec:
+  selector:
+    app: api
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http # ⭐ name it: the mesh uses the port name to infer the protocol
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: meshlab
+  labels:
+    app: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      serviceAccountName: web
+      containers:
+        - name: web
+          image: curlimages/curl:8.8.0
+          # Continuous traffic, so every mesh view has something to show.
+          command:
+            - sh
+            - -c
+            - |
+              while true; do
+                curl -s -o /dev/null -w '%{http_code} ' -m 5 http://api.meshlab.svc.cluster.local/
+                sleep 1
+              done
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 32Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]

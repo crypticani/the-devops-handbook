@@ -36,7 +36,7 @@ Every DevOps role requires cloud knowledge. Whether it's AWS, GCP, or Azure, the
 7. [Identity & Access Management (IAM)](#7-identity--access-management-iam)
 8. [DNS & Load Balancing](#8-dns--load-balancing)
 9. [Managed Services Overview](#9-managed-services-overview)
-10. [Cost Management](#10-cost-management)
+10. [Cost Management and FinOps](#10-cost-management-and-finops)
 11. [Common Mistakes and Anti-Patterns](#11-common-mistakes-and-anti-patterns)
 12. [Interview Insights](#12-interview-insights)
 
@@ -476,7 +476,7 @@ Lambda mental model for DevOps:
 
 ---
 
-## 10. Cost Management
+## 10. Cost Management and FinOps
 
 ### Cost Optimization Strategies
 
@@ -511,6 +511,100 @@ AWS Budgets           → Set alerts when spending exceeds threshold
 AWS Trusted Advisor   → Recommendations for cost, security, performance
 Billing Dashboard     → Monthly cost breakdown by service
 ```
+
+### FinOps — Cost as an Engineering Metric
+
+The list above is a set of *tactics*. FinOps is the practice of making them happen continuously, by treating spend the same way you treat latency: measured, attributed to an owner, and reviewed. The cloud moved cost from a procurement decision made yearly to an engineering decision made on every pull request, and nobody in that loop is a finance person.
+
+```
+THE FINOPS LOOP
+  1. INFORM    Everyone can see what their own thing costs.
+               No allocation → no accountability → no change.
+  2. OPTIMIZE  Rightsize, commit, tier, delete. The tactics above.
+  3. OPERATE   Budgets, anomaly alerts, cost in the definition of done,
+               and a monthly review that has an owner.
+```
+
+> **💡 DevOps Impact**: the single highest-leverage step is step 1. An engineer who can see that their staging environment costs £400/month will usually fix it that week; a central team asking them to "reduce cloud spend" achieves nothing, because the person who can act cannot see the number.
+
+### Allocation: Tag or Guess
+
+You cannot attribute cost without tags, and tags applied after the fact never get applied. Enforce them at creation:
+
+| Tag | Answers | Enforced by |
+|-----|---------|-------------|
+| `owner` / `team` | Who do I ask about this? | Terraform `default_tags` + a policy that blocks untagged creation |
+| `env` | Is this production, or a lab someone forgot? | Same |
+| `service` | Which service's unit cost does this belong to? | Same |
+| `cost-center` | Which budget does this land in? | Same |
+
+```hcl
+# Set it once per provider and every resource inherits it
+provider "aws" {
+  region = var.region
+  default_tags {
+    tags = {
+      env        = var.environment
+      team       = var.team
+      service    = var.service
+      managed-by = "terraform"          # ⭐ instantly separates IaC from console clicks
+    }
+  }
+}
+```
+
+Then measure **allocation coverage** — the share of spend that lands in a tagged bucket. Below about 90% your reports are fiction, and untagged spend is where the waste hides.
+
+### Unit Economics
+
+Total spend is almost useless as a signal: it goes up when the business grows, which is fine, and it goes up when you get less efficient, which is not. The number that separates the two is **cost per unit of work**:
+
+```
+cost per 1,000 requests        cost per active customer per month
+cost per build minute          cost per GB ingested into logs
+cost per tenant                cost per completed order
+```
+
+A doubling of spend alongside a falling cost-per-order is a success. Flat spend with a rising cost-per-order is a regression you would otherwise never notice. Pick one unit that matches how your service is used, put it on a dashboard next to latency, and it becomes an engineering metric rather than a finance complaint.
+
+### Commitments, Without Getting Trapped
+
+Discounts come from promising to spend. The trap is promising for capacity you later re-architect away:
+
+| Instrument | Discount | Risk |
+|-----------|---------:|------|
+| On-demand | 0% | None — the baseline you measure against |
+| Savings Plans / flexible commitments | ~30–50% | You are committed for 1–3 years, even if you move to containers or serverless |
+| Reserved Instances (specific) | ~40–60% | Highest discount, least flexible — tied to family and region |
+| Spot | ~70–90% | ⭐ Interruptible with ~2 minutes' notice. Excellent for CI runners, batch, dev; wrong for a database primary |
+
+The sane pattern: cover your **verified steady-state floor** with flexible commitments (usually 60–80% of baseline, not 100%), run bursty and fault-tolerant work on spot, and leave headroom on demand. Commit to the floor you have measured over months, never to a forecast.
+
+### Operating It
+
+```bash
+# Where did the money go? Group by tag, not by service, once tagging is in place
+aws ce get-cost-and-usage --time-period Start=2026-07-01,End=2026-08-01 \
+  --granularity MONTHLY --metrics UnblendedCost \
+  --group-by Type=TAG,Key=service
+
+# Untagged spend — the number to drive toward zero
+aws ce get-cost-and-usage --time-period Start=2026-07-01,End=2026-08-01 \
+  --granularity MONTHLY --metrics UnblendedCost \
+  --filter '{"Tags":{"Key":"service","MatchOptions":["ABSENT"]}}'
+
+# Commitment efficiency: unused commitment is money already spent
+aws ce get-savings-plans-utilization --time-period Start=2026-07-01,End=2026-08-01
+
+# The three that are almost always pure waste
+aws ec2 describe-volumes --filters Name=status,Values=available   # unattached disks
+aws ec2 describe-addresses --query 'Addresses[?AssociationId==null]'
+aws logs describe-log-groups --query 'logGroups[?!retentionInDays].logGroupName'  # kept forever
+```
+
+Automate the parts humans forget: a **budget with an alert** per environment (not one for the whole account), **cost anomaly detection** so a 3× jump pages someone the same day rather than appearing on next month's invoice, **log and snapshot retention** set at creation, and a **scheduled shutdown** for non-production out of hours — an 8×5 dev environment costs roughly a quarter of a 24×7 one for identical work.
+
+> ⭐ **The interview answer**: "Cost is a non-functional requirement like latency. I'd start with allocation — enforced tags through Terraform `default_tags`, so every team sees its own bill — then pick one unit-cost metric like cost per thousand requests and track it next to the golden signals. Optimisation is the easy part; the hard part is that nobody acts on a number they can't see, and nobody notices efficiency regressions if you only watch total spend."
 
 ---
 
@@ -576,6 +670,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 |---|-----|----------------|
 | 1 | **[AWS Fundamentals](./labs/lab-01-aws-fundamentals.md)** | Get hands-on with the four foundational AWS services. |
 | 2 | **[IAM and Least Privilege](./labs/lab-02-iam-least-privilege.md)** | Write IAM policies that grant exactly what's needed and nothing more — and, more importantly, learn to **test** them before they reach production. |
+| 3 | **[FinOps](./labs/lab-03-finops-cost-review.md)** | Do a cost review the way it should happen: on the plan, before apply, with a number attributable to a team. |
 
 **Portfolio project:**
 
@@ -628,6 +723,13 @@ S3 is object storage over HTTP: unlimited scale, versioning, lifecycle rules, an
 <summary><strong>6. Where do surprise cloud bills come from on a learning account?</strong></summary>
 
 Resources you forgot: an idle NAT gateway, unattached elastic IPs and volumes, orphaned snapshots, a load balancer with no targets. Then data transfer — cross-AZ and egress — which no one estimates. Tag everything, set a budget alert on day one, and run the destroy step of every lab.
+
+</details>
+
+<details>
+<summary><strong>7. Spend doubled this quarter. What do you look at before touching a single instance size?</strong></summary>
+
+Allocation and unit cost. Total spend rising is meaningless on its own — it goes up when the business grows and when you get less efficient, and only cost per unit of work (per 1,000 requests, per order, per tenant) separates the two. Which requires enforced tags: `owner`, `env`, `service`, applied at creation via Terraform `default_tags`, because tags added later never get added. Nobody fixes a number they cannot see, which is why "inform" is the first phase of the FinOps loop and rightsizing is the last.
 
 </details>
 

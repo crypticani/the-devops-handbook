@@ -99,17 +99,17 @@ Everything under `code/` is automatically tested whenever it changes, so the fil
 | 04 | [Scripting](./04-scripting/) | Bash scripting, Python basics for automation | 2 weeks | [📋](./04-scripting/cheatsheet.md) | [📁](./04-scripting/code/) |
 | **Phase 2: Core Tools** ||||||
 | 05 | [Containers & Docker](./05-containers-docker/) | Images, containers, Compose, registries | 2 weeks | [📋](./05-containers-docker/cheatsheet.md) | [📁](./05-containers-docker/code/) |
-| 06 | [CI/CD](./06-ci-cd/) | GitHub Actions, Jenkins, pipelines, testing | 2 weeks | [📋](./06-ci-cd/cheatsheet.md) | [📁](./06-ci-cd/code/) |
+| 06 | [CI/CD](./06-ci-cd/) | GitHub Actions, Jenkins, GitLab CI, pipelines, testing | 2 weeks | [📋](./06-ci-cd/cheatsheet.md) | [📁](./06-ci-cd/code/) |
 | 07 | [Observability](./07-observability/) | Prometheus, Grafana, metrics, alerting, tracing | 2 weeks | [📋](./07-observability/cheatsheet.md) | [📁](./07-observability/code/) |
 | 08 | [Logging](./08-logging/) | ELK stack, Loki, centralized logging, debugging | 1.5 weeks | [📋](./08-logging/cheatsheet.md) | [📁](./08-logging/code/) |
 | **Phase 3: Production Skills** ||||||
-| 09 | [Cloud Fundamentals](./09-cloud-fundamentals/) | Cloud-agnostic concepts, then AWS specifics | 2 weeks | [📋](./09-cloud-fundamentals/cheatsheet.md) | [📁](./09-cloud-fundamentals/code/) |
-| 10 | [Terraform](./10-terraform/) | Infrastructure as Code, state, modules | 2 weeks | [📋](./10-terraform/cheatsheet.md) | [📁](./10-terraform/code/) |
+| 09 | [Cloud Fundamentals](./09-cloud-fundamentals/) | Cloud-agnostic concepts, then AWS specifics, FinOps | 2 weeks | [📋](./09-cloud-fundamentals/cheatsheet.md) | [📁](./09-cloud-fundamentals/code/) |
+| 10 | [Terraform](./10-terraform/) | Infrastructure as Code, state, modules, Packer | 2 weeks | [📋](./10-terraform/cheatsheet.md) | [📁](./10-terraform/code/) |
 | 11 | [Ansible](./11-ansible/) | Configuration management, playbooks, roles | 1 week | [📋](./11-ansible/cheatsheet.md) | [📁](./11-ansible/code/) |
-| 12 | [Kubernetes](./12-kubernetes/) | Pods, Services, Deployments, Helm, GitOps, debugging | 3 weeks | [📋](./12-kubernetes/cheatsheet.md) | [📁](./12-kubernetes/code/) |
+| 12 | [Kubernetes](./12-kubernetes/) | Pods, Services, Deployments, Helm, GitOps, service mesh | 3 weeks | [📋](./12-kubernetes/cheatsheet.md) | [📁](./12-kubernetes/code/) |
 | **Phase 4: Mastery** ||||||
 | 13 | [Security Basics](./13-security-basics/) | Secrets, RBAC, container security, secure CI/CD | 1.5 weeks | [📋](./13-security-basics/cheatsheet.md) | [📁](./13-security-basics/code/) |
-| 14 | [System Design](./14-system-design-devops/) | Architecture, scaling, HA, load balancing | 1 week | — | [📁](./14-system-design-devops/code/) |
+| 14 | [System Design](./14-system-design-devops/) | Architecture, scaling, HA, queues, platform engineering | 1 week | — | [📁](./14-system-design-devops/code/) |
 | 15 | [Projects](./15-projects/) | Beginner → Advanced real-world projects | 3-4 weeks | — | — |
 | 16 | [Interview Prep](./16-interview-prep/) | FAQs, scenarios, incident response, certs, job search | 1-2 weeks | — | [📁](./16-interview-prep/code/) |
 

@@ -35,9 +35,10 @@ Clicking through the AWS console doesn't scale. When you manage 50 servers, 3 en
 6. [Variables and Outputs](#6-variables-and-outputs)
 7. [Modules](#7-modules)
 8. [Managing Multiple Environments](#8-managing-multiple-environments)
-9. [Common Mistakes and Anti-Patterns](#9-common-mistakes-and-anti-patterns)
-10. [Debugging Mindset](#10-debugging-mindset)
-11. [Interview Insights](#11-interview-insights)
+9. [Packer — Building Golden Images](#9-packer--building-golden-images)
+10. [Common Mistakes and Anti-Patterns](#10-common-mistakes-and-anti-patterns)
+11. [Debugging Mindset](#11-debugging-mindset)
+12. [Interview Insights](#12-interview-insights)
 
 ---
 
@@ -710,7 +711,169 @@ resource "aws_instance" "web" {
 
 ---
 
-## 9. Common Mistakes and Anti-Patterns
+## 9. Packer — Building Golden Images
+
+### Bake or Configure?
+
+Terraform creates a machine. Ansible configures it. There is a third option that removes most of the second step: build the image *before* anything boots, so instances start already correct.
+
+```
+CONFIGURE AT BOOT                      BAKE THE IMAGE (Packer)
+  terraform apply → empty instance       packer build → AMI with everything in it
+  → user_data / Ansible installs         → terraform apply → instance boots ready
+    Python, nginx, agents, app
+  → 3-8 minutes before it serves         → 30-60 seconds before it serves
+  → apt repo down = failed launch        → no external dependency at boot
+  → each instance configures itself      → every instance is byte-identical
+    (and can differ)
+```
+
+Under autoscaling that difference stops being aesthetic: a node group that takes six minutes to become useful cannot respond to a traffic spike, and a launch that depends on a package repository will eventually fail at 3 a.m. because the repository is having a bad day.
+
+| Bake it | Configure at boot |
+|---------|-------------------|
+| Anything slow to install (compilers, ML libraries, agents) | Anything environment-specific (config, secrets, DNS names) |
+| The base OS hardening your whole fleet shares | Anything that changes more often than you want to rebuild |
+| Runtime, application dependencies, monitoring agents | The application version, if you deploy more than daily |
+
+The common answer is **both**: a golden base image rebuilt weekly with the OS, agents, and hardening, then a thin layer of config at boot. What you should not do is bake secrets or environment names into the image — that is how a staging AMI ends up in production.
+
+### Packer in One File
+
+```hcl
+# ubuntu-base.pkr.hcl
+packer {
+  required_plugins {
+    amazon = {
+      version = ">= 1.3.0"
+      source  = "github.com/hashicorp/amazon"
+    }
+  }
+}
+
+variable "region" {
+  type    = string
+  default = "eu-west-1"
+}
+
+# ⭐ Never hardcode a source AMI id. Resolve the newest one at build time, from a
+# filter that pins the OS version but not the patch level.
+source "amazon-ebs" "ubuntu" {
+  region        = var.region
+  instance_type = "t3.small"
+  ssh_username  = "ubuntu"
+
+  source_ami_filter {
+    filters = {
+      name                = "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"
+      virtualization-type = "hvm"
+      root-device-type    = "ebs"
+    }
+    owners      = ["099720109477"] # Canonical
+    most_recent = true
+  }
+
+  # The image name must be unique per build, and the timestamp is how you tell
+  # two images apart six months later.
+  ami_name = "app-base-{{timestamp}}"
+
+  tags = {
+    Name          = "app-base"
+    BuildDate     = "{{isotime \"2006-01-02\"}}"
+    SourceAMI     = "{{ .SourceAMI }}"
+    GitCommit     = "{{ env `GIT_COMMIT` }}" # ⭐ trace any running instance back to a commit
+    ManagedBy     = "packer"
+  }
+}
+
+build {
+  sources = ["source.amazon-ebs.ubuntu"]
+
+  # Wait for cloud-init, or your first apt command races it and fails intermittently.
+  provisioner "shell" {
+    inline = ["cloud-init status --wait"]
+  }
+
+  # Reuse the Ansible roles you already wrote (Module 11) — no need for a second
+  # configuration language just because this is image build time.
+  provisioner "ansible" {
+    playbook_file = "../ansible/playbooks/base.yml"
+    extra_arguments = ["--extra-vars", "packer_build=true"]
+  }
+
+  # Prove the image is correct before it is allowed to exist.
+  provisioner "shell" {
+    inline = [
+      "set -euo pipefail",
+      "systemctl is-enabled node_exporter",
+      "test -f /etc/ssh/sshd_config.d/hardening.conf",
+      "! systemctl is-active ssh-password-auth || (echo 'password auth enabled' && exit 1)",
+    ]
+  }
+
+  # Machine-readable output for the pipeline that consumes the image id.
+  post-processor "manifest" {
+    output = "manifest.json"
+  }
+}
+```
+
+```bash
+packer init .
+packer fmt -check .                    # like terraform fmt — CI should enforce it
+packer validate -var region=eu-west-1 .
+PACKER_LOG=1 packer build .            # ⭐ PACKER_LOG=1 is how you debug a hanging build
+jq -r '.builds[-1].artifact_id' manifest.json
+```
+
+### Handing the Image to Terraform
+
+The two tools meet at the image ID, and how they meet decides whether your fleet is reproducible:
+
+```hcl
+# Look up the newest image this pipeline published — never a hardcoded ami-0abc123
+data "aws_ami" "app_base" {
+  most_recent = true
+  owners      = ["self"]
+
+  filter {
+    name   = "name"
+    values = ["app-base-*"]
+  }
+  filter {
+    name   = "tag:ManagedBy"
+    values = ["packer"]
+  }
+}
+
+resource "aws_launch_template" "app" {
+  image_id      = data.aws_ami.app_base.id
+  instance_type = "t3.small"
+  # ...
+}
+```
+
+> ⚠️ `most_recent = true` means a new Packer build silently changes your next `terraform plan`. That is convenient in dev and unacceptable in production. Pin production to an explicit AMI ID in a `.tfvars` file and promote it deliberately — the same "build once, promote the artefact" discipline from Module 06, applied to machine images.
+
+### Cleaning Up After Yourself
+
+Old AMIs are free; their snapshots are not. This is one of the quietest cloud bills there is:
+
+```bash
+# Images you own, oldest first — anything unused beyond your rollback window is waste
+aws ec2 describe-images --owners self \
+  --query 'sort_by(Images,&CreationDate)[].[CreationDate,ImageId,Name]' --output table
+
+# Deregistering an AMI does NOT delete its snapshot. Delete both.
+aws ec2 deregister-image --image-id ami-0123456789abcdef0
+aws ec2 delete-snapshot --snapshot-id snap-0123456789abcdef0
+```
+
+> **💡 DevOps Impact**: golden images are the practical mechanism behind immutable infrastructure. Once instances boot ready and identical, "log in and fix it" stops being possible — which is the point. The fix becomes a new image and a replaced instance, and configuration drift has nowhere to live.
+
+---
+
+## 10. Common Mistakes and Anti-Patterns
 
 ### ❌ Committing State Files
 
@@ -760,7 +923,7 @@ GOOD: Split into modules, use separate state per component
 
 ---
 
-## 10. Debugging Mindset
+## 11. Debugging Mindset
 
 ### Terraform Troubleshooting
 
@@ -788,7 +951,7 @@ terraform plan fails?
 
 ---
 
-## 11. Interview Insights
+## 12. Interview Insights
 
 **Q: What is Terraform and why use it over CloudFormation?**
 > Terraform is a declarative IaC tool that provisions infrastructure across any cloud provider. Unlike CloudFormation (AWS-only), Terraform is multi-cloud — the same workflow works for AWS, GCP, Azure, and hundreds of other providers. It has a larger community, reusable modules on the Terraform Registry, and the plan/apply workflow provides safe change management.
@@ -816,6 +979,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 | 1 | **[Terraform Basics](./labs/lab-01-terraform-basics.md)** | Write your first Terraform configurations, provision real AWS resources, understand state, and practice the plan/apply/destroy workflow. |
 | 2 | **[Remote State and Locking](./labs/lab-02-remote-state-and-locking.md)** | Move Terraform state off your laptop and into shared, versioned, encrypted, **locked** storage — the change that makes Terraform usable by more than… |
 | 3 | **[Modules, Environments, and Drift](./labs/lab-03-modules-and-environments.md)** | Stop copy-pasting `.tf` files between environments. |
+| 4 | **[Packer and Golden Images](./labs/lab-04-packer-golden-images.md)** | Bake an image, verify it before it is allowed to exist, and hand it to Terraform by digest — the immutable-infrastructure loop, end to end, on your… |
 
 **Portfolio project:**
 
@@ -868,6 +1032,13 @@ A plan is a diff against state and the real world at the moment it ran. If someo
 <summary><strong>6. How do you force one resource to be rebuilt, and how do you adopt one that already exists?</strong></summary>
 
 `terraform apply -replace=ADDRESS` recreates a single resource (this replaced the deprecated `taint`). `terraform import` brings an existing resource under management — you still have to write matching configuration. Hand-editing the state file is not on the list.
+
+</details>
+
+<details>
+<summary><strong>7. Your autoscaling group takes six minutes to serve traffic after a launch. What changes, and what must not move into the image?</strong></summary>
+
+Bake a golden image with Packer: the slow installs, agents, and OS hardening go in at build time, so instances boot ready in under a minute and no longer depend on a package repository being up at 3 a.m. What must stay out is anything environment-specific — config, secrets, environment names — otherwise a staging image ends up in production. And pin production to an explicit AMI id rather than `most_recent = true`, or a Packer build silently changes your next `terraform plan`.
 
 </details>
 

@@ -1,0 +1,72 @@
+# Generated with the defaults the platform promises: both probes, requests AND limits,
+# and a non-root security context. The policy gate checks every one of them.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${SERVICE_NAME}
+  labels:
+    app: ${SERVICE_NAME}
+    owner: ${OWNER}
+    tier: "${TIER}"
+    platform-version: "${PLATFORM_VERSION}"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ${SERVICE_NAME}
+  template:
+    metadata:
+      labels:
+        app: ${SERVICE_NAME}
+        owner: ${OWNER}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: app
+          # Replaced by the pipeline with the SHA-tagged image it built. Never :latest.
+          image: ghcr.io/example-org/${SERVICE_NAME}:REPLACED_BY_CI
+          ports:
+            - containerPort: 8080
+          env:
+            - name: APP_ENV
+              value: production
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${SERVICE_NAME}
+  labels:
+    app: ${SERVICE_NAME}
+spec:
+  selector:
+    app: ${SERVICE_NAME}
+  ports:
+    - port: 80
+      targetPort: 8080

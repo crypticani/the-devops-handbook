@@ -484,6 +484,37 @@ aws elbv2 describe-load-balancers --query 'LoadBalancers[].LoadBalancerArn'     
 
 ---
 
+## FinOps
+
+```bash
+# Spend by tag — only meaningful once tags are ENFORCED at creation
+aws ce get-cost-and-usage --time-period Start=2026-07-01,End=2026-08-01 \
+  --granularity MONTHLY --metrics UnblendedCost --group-by Type=TAG,Key=service
+
+# ⭐ Untagged spend: drive this number to zero, it's where waste hides
+aws ce get-cost-and-usage --time-period Start=2026-07-01,End=2026-08-01 \
+  --granularity MONTHLY --metrics UnblendedCost \
+  --filter '{"Tags":{"Key":"service","MatchOptions":["ABSENT"]}}'
+
+aws ce get-savings-plans-utilization --time-period Start=2026-07-01,End=2026-08-01
+aws ce get-anomaly-monitors                      # set one up on day one
+aws budgets describe-budgets --account-id "$ACCT"  # per environment, not per account
+```
+
+| Lever | Saves | Watch out |
+|-------|------:|-----------|
+| Rightsizing | 20–40% | Measure p95, not average, before shrinking |
+| Flexible commitments | 30–50% | Commit to the measured floor (~60–80% of baseline), never a forecast |
+| Reserved (specific) | 40–60% | Locked to family and region |
+| Spot | 70–90% | ⭐ 2-minute eviction notice — CI, batch, dev; never a DB primary |
+| Off-hours shutdown (non-prod) | ~75% | 8×5 vs 24×7 for identical work |
+| Storage tiering / retention | varies | Log groups with no retention are kept **forever** |
+
+**Unit cost beats total cost.** Track cost per 1,000 requests, per order, or per tenant next to
+your golden signals — total spend rising while unit cost falls is growth, not a regression.
+
+---
+
 ## Query Patterns
 
 The `--query` flag uses **JMESPath** and runs client-side; `--filters` runs server-side and is faster on large result sets.

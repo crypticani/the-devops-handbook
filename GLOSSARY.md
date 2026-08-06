@@ -15,10 +15,12 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 - **Ad-hoc command** — A single Ansible module run from the command line (`ansible web -m ping`) with no playbook. Useful for checks, not for anything you need to repeat. [11]
 - **Agentless** — Managing a machine without installing software on it. Ansible only needs SSH and Python on the target. [11]
 - **Alertmanager** — Prometheus companion that receives fired alerts and handles routing, grouping, silencing, and inhibition. Prometheus decides *whether*; Alertmanager decides *who and how*. [07]
+- **Ambient mesh** — Service mesh without a sidecar per pod: a per-node proxy handles L4 and mTLS, with an L7 proxy only where needed. Much lower overhead than sidecars, and newer. [12]
 - **Ansible** — Agentless configuration management tool that pushes idempotent modules over SSH. [11]
 - **API server** — The Kubernetes control plane component that every request passes through and the only one that talks to etcd. [12]
 - **Argo CD** — Kubernetes GitOps controller: it watches a Git repository, reports whether live state matches it (`Synced` / `OutOfSync`), and applies the difference when configured to. `selfHeal` and `prune` both default to off. [12]
 - **Artifact** — The built output a pipeline produces and promotes: a container image, a binary, a package. Build it once, deploy that exact thing everywhere. [06]
+- **At-least-once delivery** — What nearly every message broker actually guarantees: a consumer that crashes after doing the work but before acknowledging will see the message again. Design for duplicates with an idempotency key. [14]
 - **Attribute (span)** — Key-value metadata on a span. Searchable, and the right home for unique values like an order id — unlike the span *name*, which must stay low-cardinality. [07]
 - **Autoscaling** — Adding and removing capacity automatically in response to a signal (CPU, queue depth, request rate). Requires stateless workloads to be useful. [09] [14]
 - **Availability Zone (AZ)** — An isolated datacenter within a cloud region. Spanning two AZs is the cheapest meaningful step up in availability. [09]
@@ -26,6 +28,7 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 ## B
 
 - **Backend (Terraform)** — Where state is stored. A remote backend (S3 + DynamoDB lock, Terraform Cloud) is what makes team use safe. [10]
+- **Backpressure** — What happens when consumers can't keep up: either the queue grows (memory, disk, cost) or producers must be slowed. Choose deliberately and set retention, or the broker chooses for you. [14]
 - **Base image** — The image a Dockerfile starts `FROM`. Everything in it ships in your image, including its vulnerabilities. [05] [13]
 - **Bastion host** — A hardened, audited jump host that is the only SSH entry point into a private network. [09] [13]
 - **Bind mount** — Mounting a host directory into a container. Convenient in development, a permissions and portability problem in production; prefer named volumes. [05]
@@ -50,6 +53,7 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 - **ClusterIP** — Default Kubernetes Service type: a stable virtual IP reachable only inside the cluster. [12]
 - **Collector (OpenTelemetry)** — Standalone process that receives telemetry, processes it (batching, sampling, redaction), and exports it onward. Where you change sampling or add a backend without redeploying a single application. [07]
 - **ConfigMap** — Kubernetes object holding non-secret configuration, consumed as environment variables or mounted files. [12]
+- **Consumer lag** — The gap between what has been produced and what has been consumed, and whether it is growing. The real health metric for a queue — not CPU, not depth alone. [14]
 - **Container** — A process isolated with namespaces and constrained with cgroups, sharing the host kernel. Not a small VM. [05]
 - **Container runtime** — The component that actually starts containers (containerd, CRI-O, runc underneath). Docker is a toolchain on top of one. [05] [12]
 - **Context propagation** — Carrying trace context across a process boundary, in HTTP via the W3C `traceparent` header. Every "our traces are broken" is a boundary where this didn't happen. [07]
@@ -64,6 +68,7 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 
 - **DaemonSet** — Kubernetes workload that runs exactly one pod per node. What log shippers, node exporters, and CNI plugins use. [12]
 - **DAST** — Dynamic application security testing: probing the running application from the outside. Finds what static analysis cannot see. [13]
+- **Dead letter queue (DLQ)** — Where messages go after N failed attempts, so a poison message stops blocking the queue. An unmonitored DLQ is a folder of work nobody is doing. [14]
 - **Declarative** — You describe the desired end state and the tool works out the steps. The opposite of imperative scripts that describe the steps and hope about the state. [10] [12]
 - **Defense in depth** — Layering controls so no single failure is fatal: non-root user, read-only filesystem, network policy, scoped IAM. [13]
 - **Deployment (Kubernetes)** — Controller that manages a ReplicaSet to run N interchangeable pods and perform rolling updates and rollbacks. [12]
@@ -96,6 +101,7 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 - **Fast-forward merge** — Merge with no divergence, so the branch pointer just moves forward and no merge commit is created. [03]
 - **Feature flag** — Shipping code disabled and enabling it separately, which decouples deploy from release and makes rollback a config change. [06]
 - **Filesystem Hierarchy Standard** — The convention behind `/etc`, `/var`, `/usr`, `/opt`: knowing where things live is how you navigate an unfamiliar server. [01]
+- **FinOps** — Treating cloud cost as an engineering metric: allocate it with enforced tags, measure unit cost, then optimise. The loop is inform → optimise → operate, and "inform" is the step that changes behaviour. [09]
 - **Firewall** — Rules that permit or drop traffic. A dropped packet produces a timeout; a rejected one produces "connection refused". [02]
 - **Fork** — Your own server-side copy of a repository, the basis of the contribution model for repositories you cannot push to. [03]
 
@@ -103,8 +109,10 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 
 - **Gauge** — Prometheus metric type that can go up and down. Read it directly: queue depth, memory in use, replica count. [07]
 - **GitHub Actions** — GitHub's CI/CD system: workflows of jobs and steps triggered by repository events. [06]
+- **GitLab CI** — GitLab's built-in CI/CD: one `.gitlab-ci.yml`, stages and jobs, and every job running inside a container image you name. No action marketplace, so more of the pipeline is shell you wrote. [06]
 - **GitOps** — Git as the single source of truth for infrastructure and deployment state, with a controller continuously reconciling the cluster to the repository. [06] [12]
 - **Golden image** — A pre-baked machine or container image with everything installed, so instances boot ready rather than configuring themselves. [09] [11]
+- **Golden path** — The supported, paved route for a common task (create a service, ship to prod) that a platform team maintains. It must be easier than doing it yourself, and must have an escape hatch. [14]
 - **Graceful shutdown** — Handling SIGTERM by finishing in-flight requests and closing connections before exiting. Its absence is why rolling updates drop traffic. [05] [12]
 - **Grafana** — Dashboarding and visualization layer over Prometheus, Loki, and other data sources. [07]
 - **group_vars** — Ansible directory holding variables that apply to every host in an inventory group. Where environment differences belong. [11]
@@ -168,6 +176,7 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 - **Module (Terraform)** — A reusable, parameterized group of resources with inputs and outputs. The unit of reuse across environments. [10]
 - **MTTA** — Mean time to acknowledge: alert fired → a human owns it. Distinct from MTTR, and the one an on-call rotation is actually judged on. [16]
 - **MTTR** — Mean time to restore service. The DORA metric that improves most when rollback is automated. [00]
+- **mTLS** — Mutual TLS: both sides present certificates, so identity is verified in both directions. What a service mesh gives you across every service, in any language, without app changes. [12] [13]
 - **Multi-stage build** — Dockerfile with several `FROM` stages so build tooling stays out of the final image. Smaller image, much smaller attack surface. [05]
 - **Mutable tag** — An image tag like `:latest` or `:3.19` whose meaning can change under you. The reason to pin digests. [05] [13]
 
@@ -194,11 +203,14 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 ## P
 
 - **p95 / p99** — The latency 95% or 99% of requests come in under. Averages hide the users who are actually suffering. [07]
+- **Packer** — Builds machine images (AMIs, VM templates) so instances boot ready instead of configuring themselves. The mechanism behind golden images and immutable infrastructure. [10]
 - **Persistent volume (PV/PVC)** — Kubernetes storage that outlives the pod using it, claimed by a PVC and bound to a volume. [12]
 - **Pipeline** — The automated sequence a change passes through: lint, test, build, scan, deploy. Ordered cheapest-first so feedback is fast. [06]
+- **Platform engineering** — Treating internal tooling as a product whose users are engineers: golden paths, self-service, and service teams still owning production. Not a team that deploys on your behalf. [14]
 - **Playbook** — An Ansible YAML file mapping plays (host groups) to tasks. [11]
 - **Pod** — The smallest deployable Kubernetes unit: one or more containers sharing a network namespace and storage. [12]
 - **Portfolio project** — A project with a stated problem, constraints, a decision you can defend, and setup a stranger can reproduce. A replayed tutorial is not one. [15]
+- **Poison message** — A message that can never succeed (malformed, or referencing deleted data). Retried forever it blocks a partition or burns consumers indefinitely — cap attempts and route it to a DLQ. [14]
 - **Postmortem** — Written incident review: timeline, contributing causes, and actions with owners. Worthless if it names people instead of mechanisms. [00] [13]
 - **Privileged container** — A container with host-level capabilities. Not a hardening tradeoff — effectively node ownership. [13]
 - **Probe** — Kubernetes health check: liveness (restart), readiness (remove from Service), startup (delay liveness). [12]
@@ -283,6 +295,7 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 ## U
 
 - **Uptime "nines"** — 99.9% is 43 minutes down per month; 99.99% is 4.3. Each nine multiplies cost, so someone should say why it is needed. [14]
+- **Unit cost** — Cost per unit of work: per 1,000 requests, per order, per tenant. The metric that distinguishes growth from an efficiency regression, which total spend cannot. [09]
 - **Upstream** — The remote you track (`git`), or the backend a proxy forwards to (`nginx`). Context decides which. [02] [03]
 
 ## V

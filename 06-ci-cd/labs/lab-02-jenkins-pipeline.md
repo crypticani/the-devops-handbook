@@ -403,4 +403,4 @@ Add these to your portfolio repo as evidence of completed work:
 
 ---
 
-[← Back to Module README](../README.md)
+[← Previous Lab: GitHub Actions](./lab-01-github-actions.md) | [Back to Module README](../README.md) | [Next Lab: GitLab CI →](./lab-03-gitlab-ci.md)

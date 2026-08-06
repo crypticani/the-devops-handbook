@@ -1,0 +1,51 @@
+# A workload OUTSIDE the mesh, in a namespace with no injection annotation.
+#
+# It exists to answer the question people forget to ask: "what does the mesh do about traffic
+# that never entered the mesh?" Run it before you add the policy, and again after.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: outside
+  # Deliberately NOT annotated with linkerd.io/inject
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: outsider
+  namespace: outside
+  labels:
+    app: outsider
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: outsider
+  template:
+    metadata:
+      labels:
+        app: outsider
+    spec:
+      containers:
+        - name: outsider
+          image: curlimages/curl:8.8.0
+          command:
+            - sh
+            - -c
+            - |
+              while true; do
+                printf 'outsider -> api: '
+                curl -s -o /dev/null -w '%{http_code}\n' -m 5 \
+                  http://api.meshlab.svc.cluster.local/ || echo blocked
+                sleep 5
+              done
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 32Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
