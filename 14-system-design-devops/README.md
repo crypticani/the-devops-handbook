@@ -463,6 +463,8 @@ STAY SYNCHRONOUS WHEN:
   ❌ Debuggability matters more than decoupling; async traces are harder to follow
 ```
 
+Run both shapes: [Lab 02 — Message Queues and Async Failure](./labs/lab-02-message-queues.md) for the queue (depth, unacked, a dead letter queue, duplicate charges), then [Lab 04 — Kafka: Partitions, Consumer Groups, and Offsets](./labs/lab-04-kafka-partitions.md) for the log (per-partition lag, the parallelism ceiling, a rebalance storm, and a replay). The Break It sections are the interview follow-ups, and Lab 04 ends with the queue-versus-log comparison from first-hand evidence rather than a vendor page.
+
 > ⭐ **The interview trap** is "we'll use a queue for scalability". Say instead what the queue *decouples* and what it *costs*: a broker to operate, at-least-once duplicates to handle, a DLQ to monitor, and end-to-end tracing that now has to propagate context through message attributes rather than HTTP headers (Module 07 §9 — this is the boundary where trace propagation is most often lost).
 
 ---
@@ -803,6 +805,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 | 1 | **[High Availability and Load Balancing](./labs/lab-01-ha-load-balancing.md)** | Build a load-balanced, highly available web application using Nginx as a reverse proxy with health checks, and simulate real-world failure scenarios… |
 | 2 | **[Message Queues and Async Failure](./labs/lab-02-message-queues.md)** | Operate a queue the way you will have to on call: watch a backlog form, drain it by scaling consumers, and deal with the message that can never… |
 | 3 | **[Platform Engineering](./labs/lab-03-golden-path.md)** | Build the paved road: one command that takes a team from "we need a service" to a repository with probes, limits, a pipeline, alerts, and a named… |
+| 4 | **[Kafka](./labs/lab-04-kafka-partitions.md)** | Operate a partitioned log the way Kafka actually behaves: read lag per partition, prove that partition count rather than replica count is your… |
 
 **Portfolio project:**
 

@@ -359,4 +359,4 @@ Keep `templates/`, both scripts, and your metrics — a working golden path with
 
 ---
 
-[← Previous Lab: Message Queues and Async Failure](./lab-02-message-queues.md) | [Back to Module README](../README.md) | [Module 15: Projects →](../../15-projects/)
+[← Previous Lab: Message Queues and Async Failure](./lab-02-message-queues.md) | [Back to Module README](../README.md) | [Next Lab: Kafka — Partitions, Consumer Groups, and Offsets →](./lab-04-kafka-partitions.md)
