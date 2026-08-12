@@ -91,6 +91,42 @@ WITH ANSIBLE:
 No agents on managed nodes — just Python + SSH
 ```
 
+### What "Agentless" Actually Does
+
+"No agent" does not mean magic over SSH. Ansible ships the code to the target for every single task, runs it, and cleans up — and knowing that explains most of the errors you will hit:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Control node
+    participant S as SSH connection
+    participant R as Managed node
+
+    Note over C: Read inventory, load the play,<br/>render variables and templates locally
+    C->>S: Open a connection (reused via ControlPersist)
+    S->>R: Connect as remote_user
+
+    Note over C,R: Per task — this repeats for every task, on every host
+    C->>R: Copy the module (Python) to a temp dir under ~/.ansible/tmp
+    R->>R: Run it with the target's Python interpreter
+    R-->>C: Return JSON: {"changed": true/false, ...}
+    R->>R: Delete the temp file
+
+    Note over C,R: At the end of the play
+    C->>R: Run notified handlers, once each
+    C->>C: Print the recap: ok / changed / unreachable / failed
+```
+
+**Three things follow directly from that picture**, and each is a common failure:
+
+| Requirement | What breaks without it | The fix |
+|-------------|------------------------|---------|
+| **Python on the target** | `/usr/bin/python: not found` on minimal images | Set `ansible_python_interpreter`, or use the `raw` module to bootstrap it |
+| **A writable temp directory** | Tasks fail on hosts with `noexec` on `/tmp` or a read-only home | `remote_tmp` in `ansible.cfg`, or fix the mount |
+| **The module returns JSON** | Anything printed to stdout by a login shell (a banner, a `.bashrc` echo) corrupts the reply and every task fails weirdly | Keep `.bashrc` silent for non-interactive shells |
+
+⭐ **`changed: true/false` is the module's own judgement, not Ansible's.** The `apt` module knows whether it installed anything; the `command` module has no idea and therefore reports `changed` every single time. That difference is the whole of idempotency in practice, and it's why `command` and `shell` need `creates=`, `removes=`, or `changed_when:` before they belong in a playbook you run twice.
+
 ### Key Concepts
 
 ```
@@ -206,6 +242,36 @@ ansible web1 -i inventory.ini -m setup
 ---
 
 ## 5. Playbooks
+
+### How a Play Runs Across Hosts
+
+The order surprises people: Ansible does not finish one host and move to the next. It runs **task 1 on every host, waits for all of them, then task 2** — the default `linear` strategy, and the reason a single slow host holds up the entire fleet:
+
+```mermaid
+flowchart TB
+    Start(["ansible-playbook site.yml"]) --> Facts["gather_facts on all hosts<br/><i>the first, and often slowest, step</i>"]
+    Facts --> T1["Task 1 — on web01, web02, web03<br/>in parallel, up to <b>forks</b> at a time"]
+    T1 --> B1{{"barrier: all hosts finish task 1"}}
+    B1 --> T2["Task 2 — on every host that<br/>is still alive"]
+    T2 --> B2{{"barrier"}}
+    B2 --> T3["Task 3 …"]
+    T3 --> H["Handlers — at the <b>end of the play</b>,<br/>once each, in the order they were defined<br/><i>not the order they were notified</i>"]
+    H --> Recap["PLAY RECAP<br/>ok / changed / unreachable / failed / skipped"]
+
+    T2 -.->|"a host fails a task"| Drop["That host drops out of the play.<br/>The others carry on"]
+
+    style B1 fill:#fff4e0,stroke:#cc8800
+    style B2 fill:#fff4e0,stroke:#cc8800
+    style H fill:#e8f4ff,stroke:#0066cc
+    style Drop fill:#ffe8e8,stroke:#cc3333
+```
+
+**Four consequences worth knowing before you write a rolling deploy:**
+
+- **`forks` (default 5) is your parallelism**, not your host count. Fifty hosts with the default means ten sequential waves per task — raise it in `ansible.cfg` before blaming Ansible for being slow.
+- **Handlers run at the end, not where they were notified.** A play that changes the config and then depends on the restart having happened needs `meta: flush_handlers`, or it tests the old process.
+- **A failed host silently leaves the play**, and the recap is the only place that says so. In CI, treat any non-zero `failed` or `unreachable` as a pipeline failure — and check `any_errors_fatal` if a partial rollout is worse than none.
+- **`serial: 1` turns this into a rolling deploy**: the whole play runs on one host (or batch) at a time, which is what you want with a load balancer in front. Without it, "restart nginx" happens everywhere simultaneously.
 
 ### Your First Playbook
 
@@ -333,6 +399,36 @@ defaults → inventory → playbook vars → -e command line
   host_vars/        → host-specific overrides
   -e "var=value"    → one-off overrides from CLI
 ```
+
+Ansible has 22 precedence levels. These are the eight you will actually collide with, weakest at the bottom — the value that wins is the highest one that defines the variable:
+
+```mermaid
+flowchart TB
+    E["<b>-e / --extra-vars</b><br/>always wins, no exceptions"] --> T["include_vars, set_fact<br/>set during the run"]
+    T --> TV["task vars"]
+    TV --> BV["block vars"]
+    BV --> RV["role vars/main.yml<br/><i>note: NOT defaults</i>"]
+    RV --> PV["play vars, vars_files"]
+    PV --> HV["host_vars/"]
+    HV --> GV["group_vars/<br/>child group beats parent;<br/>group_vars/all is weakest"]
+    GV --> D["role defaults/main.yml<br/>weakest — designed to be overridden"]
+
+    style E fill:#ffe8e8,stroke:#cc3333
+    style D fill:#e8ffe8,stroke:#00aa44
+    style RV fill:#fff4e0,stroke:#cc8800
+```
+
+⭐ **The trap is `defaults/` versus `vars/` inside a role**, and it catches everyone once. `defaults/main.yml` sits at the very bottom, so anything can override it — that is where a role's tunables belong. `vars/main.yml` sits *above* `group_vars` and `host_vars`, so a value you put there silently ignores the inventory the user carefully wrote. Rule of thumb: **role authors put almost everything in `defaults/`**, and reserve `vars/` for internal constants nobody should change.
+
+**When a variable is not what you expect**, stop guessing and ask the host:
+
+```bash
+ansible web01 -m debug -a "var=app_port"          # the effective value for that host
+ansible-inventory --host web01                     # every inventory var, merged
+ansible-playbook site.yml --check -vvv | grep app_port
+```
+
+⚠️ **`-e` beating everything is a feature that becomes a footgun in CI.** A pipeline that passes `-e env=prod` overrides the `group_vars/staging` a developer relies on locally, so the same playbook behaves differently in the two places. Pass as few extra-vars as you can, and treat each one as part of the interface.
 
 ### Ansible Facts
 
@@ -611,6 +707,33 @@ Playbook failed?
       ├─ Template error → validate Jinja2 syntax
       └─ Host unreachable → check inventory, SSH config
 ```
+
+### 🔧 Troubleshooting: "It Reports changed Every Single Run"
+
+A playbook that is never green on a second run has lost the property you adopted Ansible for. You can no longer tell "something drifted" from "this playbook always says that":
+
+```mermaid
+flowchart TD
+    S(["Task reports changed<br/>on an unchanged host"]) --> Mod{"Which module<br/>is the task using?"}
+
+    Mod -->|"command, shell, raw"| Cmd["These cannot know if they changed anything,<br/>so they always say they did.<br/><b>Add creates= / removes=</b>, or<br/>changed_when: on a real signal"]
+    Mod -->|"template, copy"| Tpl{"Does the rendered file<br/>actually differ?<br/><i>run with --check --diff</i>"}
+    Mod -->|"file"| File["Re-setting mode, owner or group counts<br/>as a change. Often the file is fine and<br/>a permission you specified is not what you meant"]
+    Mod -->|"lineinfile, replace"| Line["The regexp doesn't match what it inserted,<br/>so it inserts again — check with a second<br/>--check run and read the diff"]
+    Mod -->|"a proper module<br/>(apt, service, user)"| Real["Believe it. Something genuinely<br/>changes between runs — another config tool,<br/>a cron job, or a human on the box"]
+
+    Tpl -->|"Yes, whitespace only"| WS["Jinja2 block tags leaving stray newlines.<br/>Use {%- -%} trim markers, or set<br/>trim_blocks/lstrip_blocks"]
+    Tpl -->|"Yes, a real value"| Var["A variable that differs each run:<br/>a timestamp in the template,<br/>ansible_date_time, or a random value"]
+    Tpl -->|"No difference shown"| Meta["Then it is metadata, not content —<br/>mode, owner, or SELinux context"]
+
+    style Cmd fill:#ffe8e8,stroke:#cc3333
+    style Real fill:#e8ffe8,stroke:#00aa44
+    style WS fill:#fff4e0,stroke:#cc8800
+```
+
+⭐ **`--check --diff` is the tool for this, and it answers the question in one run.** It shows you the exact bytes Ansible intends to change, which instantly separates "a real drift" from "a trailing newline in a template" — the two causes that look identical in the recap.
+
+⚠️ **Never fix this with `changed_when: false` unless the task genuinely cannot change anything** (a read-only check, a `curl` for a health probe). Slapping it on a task that *does* change things buys you a green run and throws away the signal — you'll then need `--diff` to answer questions the recap used to answer for free.
 
 ---
 
