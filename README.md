@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Modules](https://img.shields.io/badge/Modules-17-orange.svg)](#-module-hierarchy)
-[![Labs](https://img.shields.io/badge/Hands--On%20Labs-38-red.svg)](#-module-hierarchy)
+[![Labs](https://img.shields.io/badge/Hands--On%20Labs-48-red.svg)](#-module-hierarchy)
 
 ---
 
