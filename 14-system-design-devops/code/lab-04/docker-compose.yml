@@ -1,0 +1,60 @@
+# A single-broker Kafka in KRaft mode (no ZooKeeper), a producer, and consumers you can
+# scale. Everything the lab breaks is an environment variable, so no scenario needs a
+# code edit — and every scenario is visible in ./watch-lag.sh.
+services:
+  kafka:
+    image: apache/kafka:3.9.0
+    container_name: kafka
+    ports:
+      - "9092:9092" # in-network listener, also published for host tools
+    environment:
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # The controller listener must not advertise 0.0.0.0, so leave its host empty and
+      # let the broker bind every interface — a literal 0.0.0.0 here refuses to start.
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      # Single broker, so nothing can be replicated. Every one of these is 3 in production
+      # and a topic with replication_factor 1 is a topic you are willing to lose.
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0" # don't wait 3s for a group to form
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+    restart: unless-stopped
+
+  producer:
+    build: ./app
+    container_name: producer
+    environment:
+      MODE: producer
+      RATE: "${RATE:-10}" # records per second
+      KEYS: "${KEYS:-50}" # distinct customer keys — 1 gives you one hot partition
+      PARTITIONS: "${PARTITIONS:-3}" # ⭐ the parallelism ceiling for the whole group
+    depends_on:
+      kafka:
+        condition: service_healthy # ⭐ started != ready
+    restart: unless-stopped
+
+  # No container_name: that's what lets you run `docker compose up -d --scale consumer=5`
+  consumer:
+    build: ./app
+    environment:
+      MODE: consumer
+      GROUP: "${GROUP:-orders}"
+      WORK_MS: "${WORK_MS:-40}" # per record; raise it above MAX_POLL_MS/BATCH for scenario 3
+      BATCH: "${BATCH:-10}" # records per poll, and the size of the duplicate window
+      MAX_POLL_MS: "${MAX_POLL_MS:-300000}" # exceed it and the group evicts this consumer
+      COMMIT_BEFORE_WORK: "${COMMIT_BEFORE_WORK:-0}" # 1 = at-most-once — scenario 4
+      CRASH_AFTER: "${CRASH_AFTER:-0}" # exit after N records processed
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
