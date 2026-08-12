@@ -171,6 +171,46 @@ EDGE LOCATIONS (400+):
   └── AZ: us-east-1f
 ```
 
+The hierarchy only matters because of what it means when a piece of it fails. This is a blast radius diagram, not an org chart:
+
+```mermaid
+flowchart TB
+    subgraph R1["Region · us-east-1 — its own control plane, its own outages"]
+        direction LR
+        subgraph AZ1["AZ · us-east-1a"]
+            W1["Web tier"]
+            DB1[("DB primary")]
+        end
+        subgraph AZ2["AZ · us-east-1b"]
+            W2["Web tier"]
+            DB2[("DB standby")]
+        end
+        subgraph AZ3["AZ · us-east-1c"]
+            W3["Web tier"]
+        end
+    end
+
+    subgraph R2["Region · eu-west-1 — independent by design"]
+        DR["DR copy<br/><i>replication is yours to build</i>"]
+    end
+
+    DB1 -.->|"synchronous replication<br/>~1-2 ms between AZs"| DB2
+    DB1 -.->|"asynchronous, cross-region<br/>~70 ms, and you pay per GB"| DR
+
+    style AZ1 fill:#ffe8e8,stroke:#cc3333
+    style R2 fill:#e8f4ff,stroke:#0066cc
+```
+
+**Read the red box as "this AZ is gone".** With the layout above you lose a third of the web tier and fail the database over to `us-east-1b` — a blip. With everything in `us-east-1a`, which is the default a beginner builds, you lose the application entirely.
+
+| Failure | What survives | What it costs you to be ready |
+|---------|---------------|-------------------------------|
+| One instance | Everything, if the tier is behind a load balancer with health checks | Nothing — this is table stakes |
+| One AZ | Everything, if each tier spans ≥2 AZs | Roughly 2× the instances and a cross-AZ data transfer bill |
+| A whole region | Only what you replicated somewhere else | A second environment, cross-region replication, and a tested failover plan |
+
+⭐ **Multi-AZ is a normal architecture; multi-region is a project.** Regions share nothing on purpose — no automatic replication, no shared VPC, separate service quotas, and even IAM's global endpoints have regional failure characteristics. Treat "go multi-region" as a quarter of work with an ongoing bill, not a checkbox, and be able to say which of RTO or RPO is forcing it (Module 14 §9).
+
 ---
 
 ## 4. Compute — EC2
@@ -258,6 +298,45 @@ Elastic IP:
 └──────────────────────────────────────────────────────────┘
 ```
 
+That is the layout. What you actually debug is the **path a packet takes** and the four things that can stop it:
+
+```mermaid
+flowchart LR
+    User(["User on the internet"]) --> IGW["Internet Gateway"]
+
+    subgraph Pub["Public subnet · route 0.0.0.0/0 → IGW"]
+        NACL1{{"NACL<br/>stateless, both directions"}}
+        ALB["Load balancer<br/>SG: allow :443 from 0.0.0.0/0"]
+        NAT["NAT Gateway"]
+    end
+
+    subgraph Priv["Private subnet · route 0.0.0.0/0 → NAT"]
+        NACL2{{"NACL"}}
+        App["App server<br/>SG: allow :8080 <b>from the ALB's SG</b>"]
+        DB[("RDS<br/>SG: allow :5432 from the app's SG")]
+    end
+
+    IGW --> NACL1 --> ALB --> NACL2 --> App --> DB
+    App -->|"outbound only:<br/>patches, APIs, S3"| NAT --> IGW
+
+    style Pub fill:#fff4e0,stroke:#cc8800
+    style Priv fill:#e8f4ff,stroke:#0066cc
+    style DB fill:#e8ffe8,stroke:#00aa44
+```
+
+**What each layer is actually for**, in the order a packet meets them:
+
+| Layer | Scope | Stateful? | The mistake people make |
+|-------|-------|-----------|-------------------------|
+| **Route table** | Subnet | n/a | A subnet is "public" *only* because its route table points `0.0.0.0/0` at an IGW — nothing else makes it public |
+| **NACL** | Subnet | ❌ **Stateless** | Allowing inbound `:443` and forgetting the outbound ephemeral range `1024-65535`, so replies are dropped |
+| **Security group** | ENI (instance) | ✅ Stateful | Opening `0.0.0.0/0` instead of referencing the *source SG* — SGs can reference each other, and that's the whole point |
+| **Public IP** | Instance | n/a | A private instance has no public IP and never will; reaching it means a bastion, SSM, or the load balancer |
+
+⭐ **The NAT Gateway is one-way and that is deliberate.** It lets private instances fetch patches and call APIs; it gives nobody a path in. It is also billed per hour *and* per GB processed, which is why "why is our NAT bill £400?" is usually an S3 download loop that should have gone through a VPC endpoint instead.
+
+⚠️ **Security groups are stateful, NACLs are not.** If you allow something inbound on an SG, the reply is automatically allowed out. Do the same on a NACL and the reply is dropped unless you wrote a second rule for it. Reach for SGs by default and leave NACLs at their permissive default until you have a specific reason — most "the VPC is broken" incidents are a hand-edited NACL.
+
 ### Key Components
 
 ```
@@ -285,6 +364,39 @@ SECURITY GROUP:
 NACL (Network ACL):
   Stateless firewall at the subnet level. Second layer of defense.
 ```
+
+### 🔧 Troubleshooting: "I Can't Reach My Instance"
+
+The most common cloud ticket there is, and the layers are checked in a fixed order because each one is cheaper to rule out than the next:
+
+```mermaid
+flowchart TD
+    S(["ssh / curl times out<br/>or is refused"]) --> Sym{"Timeout, or<br/>connection refused?"}
+
+    Sym -->|"Connection <b>refused</b>"| Refused["The packet arrived — the network is fine.<br/>Nothing is listening on that port.<br/>Check the service, and ss -tulpn on the box"]
+    Sym -->|"<b>Timeout</b>"| IP{"Does the instance have a<br/>route to you at all?"}
+
+    IP -->|"No public IP,<br/>private subnet"| Path["Expected. Use SSM Session Manager,<br/>a bastion, or the load balancer.<br/>A private instance is not addressable"]
+    IP -->|"Has a public IP"| RT{"Route table:<br/>0.0.0.0/0 → IGW?"}
+
+    RT -->|"No"| RTFix["The subnet isn't public.<br/>That route is what 'public' means"]
+    RT -->|"Yes"| SG{"Security group inbound:<br/>your port, from <b>your</b> IP?"}
+
+    SG -->|"No"| SGFix["The usual culprit. Note your office IP<br/>changed, or you allowed the wrong CIDR"]
+    SG -->|"Yes"| NACL{"NACL: inbound rule<br/><b>and</b> outbound<br/>ephemeral 1024-65535?"}
+
+    NACL -->|"No"| NFix["Stateless — the reply needs its own rule.<br/>This is the one people forget"]
+    NACL -->|"Yes"| Host["It's the host, not AWS.<br/>OS firewall (ufw, firewalld),<br/>sshd not running, instance still booting,<br/>or a failed status check"]
+
+    style Refused fill:#e8f4ff,stroke:#0066cc
+    style SGFix fill:#fff4e0,stroke:#cc8800
+    style NFix fill:#fff4e0,stroke:#cc8800
+    style Host fill:#e8ffe8,stroke:#00aa44
+```
+
+⭐ **Split on the error message first.** "Connection refused" means your packet reached the machine and something answered — the entire network half of this tree is already ruled out, so anyone who starts editing security groups is debugging the wrong layer. "Timeout" means nothing came back, which is when route tables, SGs and NACLs are in scope.
+
+**Two AWS tools make this near-instant** once you know they exist: the **VPC Reachability Analyzer** tests a source-to-destination path and names the exact component that blocks it, and **VPC Flow Logs** show whether the packet arrived and was `REJECT`ed (a rule) or never appeared at all (routing). Reach for those before hand-inspecting rules.
 
 ---
 
@@ -338,6 +450,42 @@ IAM ENTITIES:
 GOLDEN RULE: LEAST PRIVILEGE
   Grant only the minimum permissions needed. Never use root for daily work.
 ```
+
+### How a Request Is Evaluated
+
+Every API call runs this gauntlet. Memorise the shape — it is the most-asked IAM interview question, and it is also how you debug an `AccessDenied` without guessing:
+
+```mermaid
+flowchart TD
+    Req(["API request<br/>principal + action + resource"]) --> Deny{"Any <b>explicit Deny</b><br/>anywhere at all?"}
+    Deny -->|"Yes"| No(["❌ Denied — final.<br/>Nothing can override this"])
+    Deny -->|"No"| SCP{"Allowed by the<br/>Organizations SCP?"}
+    SCP -->|"No"| No2(["❌ Denied<br/>(the account never had it)"])
+    SCP -->|"Yes"| Ident{"Does an <b>identity</b> policy<br/>allow it? (user, group, role)"}
+
+    Ident -->|"Yes"| Bound{"Within the<br/>permissions boundary,<br/>if one is attached?"}
+    Ident -->|"No"| Res{"Does a <b>resource</b> policy<br/>allow it? (bucket policy,<br/>KMS key policy, trust policy)"}
+
+    Res -->|"Yes"| Bound
+    Res -->|"No"| No3(["❌ Denied by default —<br/>everything starts denied"])
+    Bound -->|"Yes"| Yes(["✅ Allowed"])
+    Bound -->|"No"| No4(["❌ Denied"])
+
+    style No fill:#ffe8e8,stroke:#cc3333
+    style No2 fill:#ffe8e8,stroke:#cc3333
+    style No3 fill:#ffe8e8,stroke:#cc3333
+    style No4 fill:#ffe8e8,stroke:#cc3333
+    style Yes fill:#e8ffe8,stroke:#00aa44
+    style Deny fill:#fff4e0,stroke:#cc8800
+```
+
+**Three rules do all the work here:**
+
+1. **Default deny.** No policy anywhere means denied. There is no "unset" that leaks access.
+2. **Explicit deny always wins.** An `Effect: Deny` in *any* applicable policy ends the evaluation — you cannot out-allow it from another policy, and this is what makes a guardrail SCP trustworthy.
+3. **Identity *or* resource policy is enough** (within the same account). This is why an S3 bucket policy can grant access to a role that has no S3 permissions of its own — and why auditing only IAM roles misses half of your real access graph.
+
+> ⭐ **Debugging `AccessDenied` in order**: read the error — it names the action and often the policy type. Then `aws sts get-caller-identity` to confirm *who* you actually are (usually the surprise), then the IAM Policy Simulator, then check for an SCP if the account is in an Organization. Ninety percent of the time it is a role you did not think you were using.
 
 ### IAM Policy Anatomy
 

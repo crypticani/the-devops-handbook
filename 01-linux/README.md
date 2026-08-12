@@ -305,6 +305,39 @@ Common permission sets:
 700 = rwx------  (private directories/scripts)
 ```
 
+### How the Kernel Actually Decides
+
+Three permission classes exist, but only **one** of them is ever consulted. This is the part that surprises people:
+
+```mermaid
+flowchart TD
+    S(["Process wants to open a file"]) --> Root{"Is the process<br/>running as root?"}
+    Root -->|"Yes"| Allow(["✅ Allowed<br/>(permission bits ignored)"])
+    Root -->|"No"| Owner{"Is the process UID<br/>the file's owner?"}
+
+    Owner -->|"Yes"| OB{"Do the <b>owner</b> bits<br/>allow it?"}
+    OB -->|"Yes"| Allow
+    OB -->|"No"| Deny(["❌ Permission denied"])
+
+    Owner -->|"No"| Group{"Is the file's group in<br/>the process's groups?"}
+    Group -->|"Yes"| GB{"Do the <b>group</b> bits<br/>allow it?"}
+    GB -->|"Yes"| Allow
+    GB -->|"No"| Deny
+
+    Group -->|"No"| OtB{"Do the <b>other</b> bits<br/>allow it?"}
+    OtB -->|"Yes"| Allow
+    OtB -->|"No"| Deny
+
+    style Deny fill:#ffe8e8,stroke:#cc3333
+    style Allow fill:#e8ffe8,stroke:#00aa44
+    style OB fill:#fff4e0,stroke:#cc8800
+    style GB fill:#fff4e0,stroke:#cc8800
+```
+
+⭐ **First match wins, and there is no fallthrough.** A file with mode `604` (`rw----r--`) owned by `deploy:devops` is *unreadable* by a member of the `devops` group — the group bits are `---`, and the check stops there. It never falls through to the friendlier `other` bits, even though everyone else on the system can read it. Every "but the permissions are more open for everyone else!" bug is this rule.
+
+The second thing this diagram hides deliberately: to reach a file at all you need `x` on **every directory in its path**. `x` on a directory does not mean "execute" — it means "traverse". A perfectly readable file inside `chmod 600 /opt/secrets/` is unreachable, and the error you get is the same `Permission denied`.
+
 ### Changing Permissions and Ownership
 
 ```bash
@@ -479,6 +512,49 @@ killall nginx
 # SIGCONT (18) - "Resume"
 ```
 
+Those signals move a process between states, and the `STAT` column in `ps` is telling you exactly which one it is in:
+
+```mermaid
+stateDiagram-v2
+    [*] --> R: fork() + exec()
+    R: R · Running<br/>on a CPU, or ready for one
+    S: S · Sleeping (interruptible)<br/>waiting on a socket, a timer, input
+    D: D · Uninterruptible sleep<br/>waiting on disk or NFS
+    T: T · Stopped<br/>suspended by a signal
+    Z: Z · Zombie<br/>finished, exit code not collected
+
+    R --> S: waits for I/O
+    S --> R: data arrived
+    R --> D: disk / NFS read
+    D --> R: the device answered
+    R --> T: SIGSTOP, SIGTSTP (Ctrl+Z)
+    T --> R: SIGCONT
+    R --> Z: exit() or SIGKILL
+    Z --> [*]: parent calls wait()
+
+    note right of D
+        SIGKILL cannot touch a D state.
+        The process is inside a kernel call
+        and will not come out until the
+        device replies — this is why a
+        hung NFS mount leaves processes
+        that "will not die".
+    end note
+
+    note right of Z
+        A zombie is already dead. Killing it
+        does nothing; it is a row in the
+        process table waiting for its parent
+        to read the exit code. Thousands of
+        them means the parent is buggy —
+        restart the PARENT.
+    end note
+```
+
+⭐ **Two of these five states explain most "I can't kill this process" tickets**, and the fix in both cases is not a bigger hammer: `kill -9` is useless against `D` (the process is not scheduled to receive it) and meaningless against `Z` (there is nothing left to kill).
+
+**The other rule worth internalising**: always send SIGTERM first. SIGTERM is a request the process can handle — flush buffers, finish the in-flight request, deregister from the load balancer. SIGKILL cannot be caught, so it takes those chances away. That is also exactly what a container runtime does when you `docker stop`: SIGTERM, wait for the grace period, then SIGKILL — which is why an application that ignores SIGTERM loses data on every single deploy.
+
 ### Resource Monitoring
 
 ```bash
@@ -598,6 +674,40 @@ dnf repoquery -i nginx
 
 Systemd is the **init system** — it manages everything that runs on a modern Linux system. As a DevOps engineer, you'll manage services with systemd daily.
 
+`systemctl status` reports one of a handful of states, and knowing which transitions exist tells you what to look at:
+
+```mermaid
+stateDiagram-v2
+    [*] --> inactive
+    inactive --> activating: systemctl start
+    activating --> active: ExecStart succeeded<br/>(or the readiness signal arrived)
+    activating --> failed: exited non-zero,<br/>or TimeoutStartSec elapsed
+    active --> deactivating: systemctl stop
+    deactivating --> inactive
+    active --> failed: process exited non-zero,<br/>or was OOM-killed
+    failed --> activating: Restart= policy fires<br/>(after RestartSec)
+    active --> active: systemctl reload<br/>(no restart, no downtime)
+
+    note right of failed
+        "failed" is sticky. Until you
+        `systemctl reset-failed`, the unit
+        stays failed even after the cause
+        is fixed — which is why a service
+        can look broken after you repaired it.
+    end note
+
+    note right of activating
+        A unit stuck in "activating" is usually
+        Type= mismatch: Type=notify on a service
+        that never calls sd_notify, or Type=forking
+        on one that stays in the foreground.
+    end note
+```
+
+⭐ **`restart` versus `reload` is a production decision, not a preference.** `restart` stops the process and starts a new one — every in-flight connection dies. `reload` sends the unit's `ExecReload` signal (usually SIGHUP) and the process re-reads its config without dropping traffic. Reach for `reload` whenever the unit supports it, and note that only a config change qualifies: a new binary always needs a restart.
+
+> ⚠️ **`Restart=always` turns a crash into a crash loop, and a crash loop looks calm from the outside.** The unit reports `activating` most of the time and something is being retried forever. Set `StartLimitBurst` and `StartLimitIntervalSec` so the unit gives up and stays `failed` — a service that is honestly broken is easier to find than one that is quietly restarting every ten seconds.
+
 ### Core Commands
 
 ```bash
@@ -708,6 +818,47 @@ sudo journalctl --vacuum-time=7d         # Keep only last 7 days
 sudo journalctl --vacuum-size=500M       # Keep only 500MB
 ```
 
+### 🔧 Troubleshooting: "The Service Won't Start"
+
+The most common ticket you will ever get on a Linux box. Work it in this order — each step is cheap and rules out a whole class of cause:
+
+```mermaid
+flowchart TD
+    S(["systemctl start myapp<br/>… and it isn't running"]) --> Status["systemctl status myapp --no-pager -l<br/><i>read the Active: line and the exit code</i>"]
+
+    Status --> Q1{"What does<br/>Active: say?"}
+
+    Q1 -->|"failed (code=exited,<br/>status=203/EXEC)"| Exec["The binary or its path is wrong.<br/>Check ExecStart= is absolute,<br/>the file exists, and is +x"]
+    Q1 -->|"failed (code=exited,<br/>status=200/CHDIR ... 226/NAMESPACE)"| Unit["A unit directive can't be satisfied:<br/>WorkingDirectory, User, ReadOnlyPaths.<br/>systemd-analyze verify /path/to.service"]
+    Q1 -->|"failed (code=exited,<br/>status=1 or app-specific)"| App["The app started and rejected something.<br/>journalctl -u myapp -n 50 --no-pager"]
+    Q1 -->|"inactive (dead)<br/>right after start"| Type["Type= mismatch — systemd thinks it<br/>finished. Type=simple for foreground,<br/>Type=forking only if it daemonises"]
+    Q1 -->|"activating, forever"| Ready["Readiness never signalled:<br/>Type=notify without sd_notify,<br/>or a health check that never passes"]
+
+    App --> Q2{"What does the<br/>log actually say?"}
+    Q2 -->|"Permission denied"| Perm["Whose permission? Run as User=.<br/>Check the file, every parent directory,<br/>and SELinux/AppArmor: ausearch -m avc"]
+    Q2 -->|"Address already in use"| Port["ss -tulpn | grep :PORT<br/>— something already owns it,<br/>often the previous instance"]
+    Q2 -->|"No such file or directory"| Cfg["A path in the config, not the unit.<br/>Config parsing happens after start"]
+    Q2 -->|"Nothing at all"| Env["The app never got far enough to log.<br/>Run ExecStart by hand as User=<br/>and watch it fail in front of you"]
+
+    Exec --> Fix
+    Unit --> Fix
+    Type --> Fix
+    Ready --> Fix
+    Perm --> Fix
+    Port --> Fix
+    Cfg --> Fix
+    Env --> Fix
+    Fix["Fix it → systemctl daemon-reload<br/>→ systemctl reset-failed myapp<br/>→ systemctl start myapp"] --> Done(["Running"])
+
+    style Status fill:#e8f4ff,stroke:#0066cc
+    style Fix fill:#e8ffe8,stroke:#00aa44
+    style Q2 fill:#fff4e0,stroke:#cc8800
+```
+
+⭐ **The two commands at the top of that tree answer 90% of these**, and beginners skip both to go straight to editing the unit file. `systemctl status` gives you the exit code, which names the *category* of failure; `journalctl -u` gives you the application's own words. Guessing before reading those is how a five-minute fix becomes an afternoon.
+
+⚠️ **`daemon-reload` after every unit file edit.** Without it systemd keeps running the version it parsed at boot, so your fix appears to do nothing — and you go looking for a second bug that does not exist.
+
 ---
 
 ## 9. Text Processing
@@ -715,6 +866,34 @@ sudo journalctl --vacuum-size=500M       # Keep only 500MB
 ### The Text Processing Pipeline
 
 This is one of the **most valuable skills** in DevOps — processing logs, configs, and data on the command line.
+
+Every process starts with three open file descriptors, and a pipe connects exactly one of them to the next command:
+
+```mermaid
+flowchart LR
+    In["stdin<br/><b>fd 0</b>"] --> C1["grep error"]
+    C1 -->|"fd 1 · stdout"| C2["awk '{print $5}'"]
+    C1 -.->|"fd 2 · stderr<br/><b>not piped</b>"| Term["your terminal"]
+    C2 -->|"fd 1 · stdout"| C3["sort | uniq -c"]
+    C2 -.->|"fd 2 · stderr"| Term
+    C3 --> Out["file, or terminal"]
+
+    style Term fill:#ffe8e8,stroke:#cc3333
+    style C1 fill:#e8f4ff,stroke:#0066cc
+    style C2 fill:#e8f4ff,stroke:#0066cc
+    style C3 fill:#e8f4ff,stroke:#0066cc
+```
+
+⭐ **`|` carries stdout only.** Error messages take the dotted red path straight to your screen and never enter the pipeline — which is why `find / -name '*.conf' | wc -l` prints a clean count while permission errors scroll past, and why `2>/dev/null` is so common in scripts.
+
+**The redirection trap**, and it catches everyone once:
+
+```bash
+command > out.txt 2>&1     # ✅ stdout to the file, then stderr to "wherever stdout goes" = the file
+command 2>&1 > out.txt     # ❌ stderr to the terminal (stdout's value at that moment), stdout to the file
+```
+
+Redirections are applied **left to right**, and `2>&1` copies where fd 1 points *right now* — not a live link. Reversing the order silently sends errors somewhere you are not looking, which is how a cron job "runs fine" for months while writing its errors to nobody.
 
 ### Pipes and Redirection
 

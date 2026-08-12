@@ -80,30 +80,34 @@ Understanding the SDLC is critical because DevOps wraps around every phase of it
 
 ### Traditional SDLC (Waterfall)
 
-```
-Plan → Design → Develop → Test → Deploy → Maintain
-  │                                              │
-  └──────── 6-12 months per cycle ───────────────┘
+```mermaid
+flowchart LR
+    P["Plan"] --> D["Design"] --> Dev["Develop"] --> T["Test"] --> Dep["Deploy"] --> M["Maintain"]
+    M -.->|"the only feedback,<br/>6-12 months late"| P
+
+    style Dep fill:#ffe8e8,stroke:#cc3333
+    style M fill:#ffe8e8,stroke:#cc3333
 ```
 
-**Problems**: Slow feedback, high risk releases, "big bang" deployments.
+**Problems**: Slow feedback, high risk releases, "big bang" deployments. Look at where the single feedback arrow starts — you learn whether the plan was right only after the whole thing has shipped.
 
 ### DevOps-Enhanced SDLC
 
-```
-    ┌──────────────────────────────────────────┐
-    │              Continuous Loop              │
-    │                                          │
-    │  Plan → Code → Build → Test → Release   │
-    │    ▲                               │     │
-    │    │    Deploy → Operate → Monitor  │     │
-    │    │                          │      │     │
-    │    └──────── Feedback ────────┘      │     │
-    │                                      │     │
-    └──────────────────────────────────────┘     │
+```mermaid
+flowchart LR
+    Plan["Plan"] --> Code["Code"] --> Build["Build"] --> Test["Test"] --> Release["Release"]
+    Release --> Deploy["Deploy"] --> Operate["Operate"] --> Monitor["Monitor"]
+    Monitor -->|"feedback in minutes"| Plan
+
+    Test -.->|"test fails"| Code
+    Monitor -.->|"error rate up"| Code
+    Operate -.->|"toil found"| Plan
+
+    style Monitor fill:#e8f4ff,stroke:#0066cc
+    style Plan fill:#e8ffe8,stroke:#00aa44
 ```
 
-**Key difference**: The cycle is continuous and fast. Each iteration is small, so risk is low.
+**Key difference**: the cycle is continuous, and — more importantly — there are *several* feedback arrows, not one. Each iteration is small, so risk is low and every arrow is short enough that the person who caused a problem is still holding the context needed to fix it.
 
 ### SDLC Phases in DevOps Context
 
@@ -170,6 +174,29 @@ A well-known model for evaluating DevOps maturity:
 - Allocate time for process improvement
 - Share knowledge widely
 
+The three are one system, and the diagram is the point: each Way only works because the one before it does.
+
+```mermaid
+flowchart LR
+    subgraph W1["First Way · Flow (left to right)"]
+        direction LR
+        Dev["Dev"] --> Build["Build"] --> QA["Test"] --> Ops["Ops"] --> Cust["Customer"]
+    end
+
+    Cust -.->|"② production behaviour"| Ops
+    Ops -.->|"② incidents, toil"| QA
+    QA -.->|"② failing tests"| Build
+    Build -.->|"② broken builds"| Dev
+
+    Dev --> L(["③ Experiment, postmortem,<br/>share what you learned"])
+    L -->|"improves the system itself"| Dev
+
+    style L fill:#fff4e0,stroke:#cc8800
+    style Cust fill:#e8ffe8,stroke:#00aa44
+```
+
+**Read it in order.** ① Work only ever moves right, and defects never do. ② Every stage reports back to the one before it, as fast as possible — that is what makes the flow safe. ③ The learning loop is the one that changes the *system* rather than the work item, and it is the one organisations skip, which is why they get faster at repeating the same failure.
+
 ### Principle 2: Automation Everything
 
 ```
@@ -198,10 +225,22 @@ Treat your infrastructure like application code:
 
 Move quality activities earlier in the pipeline:
 
+The argument is not "test more". It is that the *same defect* costs a different amount depending on which gate catches it:
+
+```mermaid
+flowchart LR
+    A["Developer's editor<br/><b>1×</b>"] --> B["Commit hook<br/>lint, unit tests<br/><b>~5×</b>"]
+    B --> C["CI pipeline<br/>integration, security scan<br/><b>~10×</b>"]
+    C --> D["Staging<br/>manual QA<br/><b>~50×</b>"]
+    D --> E["Production<br/>a customer finds it<br/><b>100×+</b>"]
+
+    style A fill:#e8ffe8,stroke:#00aa44
+    style B fill:#e8ffe8,stroke:#00aa44
+    style D fill:#fff4e0,stroke:#cc8800
+    style E fill:#ffe8e8,stroke:#cc3333
 ```
-Traditional:    Code → Code → Code → ... → Test (find bugs) → Fix → Deploy
-Shift Left:     Code → Test → Code → Test → Code → Test → Deploy (mostly clean)
-```
+
+The multipliers are rough, and the shape is not: cost rises because the number of people involved rises. A failing unit test costs one developer two minutes with the code already in their head. The same bug in production costs an incident channel, a rollback, a postmortem, and a customer who now doubts you — and the developer has to rebuild the context they lost three weeks ago. **Shift Left means moving each check to the earliest gate that can honestly run it.**
 
 ### Principle 5: Observability First
 
@@ -365,6 +404,31 @@ These four metrics define elite DevOps performance:
 | **Change Failure Rate** | 0-15% | 16-30% | 16-30% | 16-30% |
 | **Time to Restore Service** | Less than one hour | Less than one day | One day to one week | More than six months |
 
+The four split into two pairs, and the finding that made DORA famous is what the diagram shows: teams do **not** trade one pair against the other.
+
+```mermaid
+flowchart TB
+    subgraph TP["Throughput — how fast can you deliver?"]
+        DF["Deployment Frequency"]
+        LT["Lead Time for Changes"]
+    end
+
+    subgraph ST["Stability — what happens when you do?"]
+        CFR["Change Failure Rate"]
+        MTTR["Time to Restore Service"]
+    end
+
+    TP -->|"small batches mean<br/>less to debug per change"| ST
+    ST -->|"fast recovery makes<br/>frequent deploys safe"| TP
+
+    style TP fill:#e8f4ff,stroke:#0066cc
+    style ST fill:#e8ffe8,stroke:#00aa44
+```
+
+⭐ **This is the counterintuitive part.** Intuition says shipping more often must break things more often, so you slow down to be safe. The data says the opposite: elite performers score well on *both* pairs, because the mechanisms reinforce each other. Deploying ten small changes a day means each failure has one obvious suspect, and knowing you can restore in an hour is what makes deploying at all reasonable. Slowing down does not buy stability — it buys larger, riskier batches and rustier recovery skills.
+
+> ⚠️ Report all four together or none. Deployment Frequency on its own is the easiest metric in the industry to game, and a team optimising it alone will happily ship faster while the change failure rate climbs.
+
 ### Other Important Metrics
 
 - **Mean Time to Detect (MTTD)** — How fast you notice a problem
@@ -430,6 +494,35 @@ Writing Terraform like a shell script (procedural, no state management).
 7. VERIFY      →  Confirm the fix works AND nothing else broke
 8. DOCUMENT    →  Write it down so no one fights this again
 ```
+
+As a loop, with the two places people actually go wrong marked in red:
+
+```mermaid
+flowchart TD
+    S(["Something is wrong"]) --> O["1 · OBSERVE<br/>symptoms, not assumptions"]
+    O --> R{"2 · Can you<br/>reproduce it?"}
+    R -->|"No"| Eph["Gather evidence while it lasts:<br/>logs, metrics, a core dump,<br/>the exact request that failed"]
+    Eph --> I
+    R -->|"Yes"| I["3 · ISOLATE<br/>what changed? what's different<br/>between working and broken?"]
+    I --> H["4 · HYPOTHESIZE<br/>one falsifiable statement"]
+    H --> T{"5 · TEST it —<br/>smallest possible action.<br/>Did it confirm?"}
+    T -->|"No"| H
+    T -->|"Yes"| F["6 · FIX the cause"]
+    F --> V{"7 · VERIFY —<br/>fixed, and nothing<br/>else broke?"}
+    V -->|"No"| O
+    V -->|"Yes"| Doc["8 · DOCUMENT<br/>runbook, postmortem, test"]
+    Doc --> Done(["Done"])
+
+    Guess["Restart it and<br/>hope"] -.->|"the tempting shortcut"| F
+    Skip["Ship the fix,<br/>move on"] -.->|"the common one"| Done
+
+    style Guess fill:#ffe8e8,stroke:#cc3333
+    style Skip fill:#ffe8e8,stroke:#cc3333
+    style H fill:#fff4e0,stroke:#cc8800
+    style Doc fill:#e8ffe8,stroke:#00aa44
+```
+
+Both red boxes are shortcuts that feel like progress. Restarting jumps from symptom straight to "fix" with no hypothesis, so you learn nothing and it returns at 3am. Skipping step 8 means the next person — often you, in six months — starts this flowchart again from the top.
 
 ### Real-World Debugging Examples
 
