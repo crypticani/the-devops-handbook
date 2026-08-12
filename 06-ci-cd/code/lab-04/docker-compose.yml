@@ -1,0 +1,17 @@
+# One self-hosted agent, which is what makes this lab runnable on a brand-new
+# organisation: Microsoft-hosted parallelism needs a grant request that takes days,
+# and self-hosted parallelism is free and immediate.
+services:
+  agent:
+    build: ./agent
+    environment:
+      # Export these before `docker compose up`. They are empty by default rather than
+      # required, so `docker compose config` still validates the file — start.sh does the
+      # real check and fails immediately with a readable message if either is missing.
+      AZP_URL: "${AZP_URL:-}" # https://dev.azure.com/<your-org>
+      AZP_TOKEN: "${AZP_TOKEN:-}" # PAT with Agent Pools (read, manage)
+      AZP_POOL: "${AZP_POOL:-Default}"
+      AZP_AGENT_NAME: "${AZP_AGENT_NAME:-docker-agent}"
+    # The agent takes one job and exits (--once). Restarting it gives the next job a
+    # clean container — the ephemeral pattern. Use "no" if you want it to stay down.
+    restart: unless-stopped

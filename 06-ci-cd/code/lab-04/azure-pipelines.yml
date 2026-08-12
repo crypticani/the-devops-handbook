@@ -1,0 +1,78 @@
+# Azure Pipelines — the same shape as the GitHub Actions workflow in lab-01, in
+# Azure DevOps vocabulary. Read the two side by side; almost every line maps.
+#
+#   GitHub Actions          Azure Pipelines
+#   ──────────────          ───────────────
+#   on:                     trigger: / pr:
+#   jobs:                   stages: → jobs: → steps:
+#   runs-on:                pool: { vmImage: } or a self-hosted pool name
+#   uses:                   task: Name@version
+#   run:                    script: (bash on Linux, cmd on Windows)
+#   env:                    variables:
+#   secrets.FOO             $(FOO) from a variable group or a secret variable
+#   environment:            environment: — the thing that carries approvals
+
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+# ⭐ The pool decides where this runs. "Default" is the self-hosted pool your
+# container registers into — a new organisation has no hosted parallelism until
+# Microsoft grants it, so hosted agents are not available on day one.
+pool:
+  name: Default
+
+variables:
+  - name: pythonVersion
+    value: "3.12"
+  # A variable group lives in Library and is shared across pipelines. Secrets in it
+  # are masked in logs and are NOT passed to a fork's PR build.
+  # - group: shared-nonprod
+
+stages:
+  - stage: Build
+    displayName: Build and test
+    jobs:
+      - job: build
+        displayName: Lint, test, package
+        steps:
+          - template: templates/steps-python.yml
+            parameters:
+              pythonVersion: $(pythonVersion)
+
+          - script: ./ci.sh all
+            displayName: Run the same script you run locally
+
+          # Publishing is how a later stage gets the artefact. Stages do not share a
+          # working directory — each one starts on a clean agent.
+          - publish: dist
+            artifact: app
+            displayName: Publish the package
+
+  - stage: Deploy
+    displayName: Deploy to staging
+    dependsOn: Build
+    # Only from main — a PR build gets as far as Build and stops.
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      # ⭐ A deployment job, not a plain job. This is what binds to an environment,
+      # which is where approvals and deployment history live.
+      - deployment: deployStaging
+        displayName: Deploy
+        environment: staging
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # Artefacts download automatically in a deployment job — one of the
+                # few places Azure Pipelines does something implicitly.
+                - script: |
+                    ls -la $(Pipeline.Workspace)/app
+                    echo "Deploying $(Build.BuildNumber) to staging"
+                  displayName: Deploy the artefact

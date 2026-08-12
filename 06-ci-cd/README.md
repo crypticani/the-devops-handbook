@@ -34,12 +34,13 @@ CI/CD is the **backbone of modern software delivery**. Without it, every deploym
 5. [Building a CD Pipeline](#5-building-a-cd-pipeline)
 6. [Jenkins — Secondary Tool](#6-jenkins--secondary-tool)
 7. [GitLab CI — Translating What You Know](#7-gitlab-ci--translating-what-you-know)
-8. [Testing in CI/CD](#8-testing-in-cicd)
-9. [Deployment Strategies](#9-deployment-strategies)
-10. [Common Mistakes and Anti-Patterns](#10-common-mistakes-and-anti-patterns)
-11. [Debugging Mindset](#11-debugging-mindset)
-12. [Security Considerations](#12-security-considerations)
-13. [Interview Insights](#13-interview-insights)
+8. [Azure Pipelines — The Enterprise Sibling](#8-azure-pipelines--the-enterprise-sibling)
+9. [Testing in CI/CD](#9-testing-in-cicd)
+10. [Deployment Strategies](#10-deployment-strategies)
+11. [Common Mistakes and Anti-Patterns](#11-common-mistakes-and-anti-patterns)
+12. [Debugging Mindset](#12-debugging-mindset)
+13. [Security Considerations](#13-security-considerations)
+14. [Interview Insights](#14-interview-insights)
 
 ---
 
@@ -803,7 +804,101 @@ Hands-on, on the same application you built the Actions pipeline for: **[Lab 03:
 
 ---
 
-## 8. Testing in CI/CD
+## 8. Azure Pipelines — The Enterprise Sibling
+
+If a company runs Microsoft 365, Active Directory, and .NET, its CI is very often Azure DevOps. The pipeline language is close enough to GitHub Actions that the translation takes an afternoon — unsurprising, since Microsoft owns both — and the differences that matter are about **where the controls live**, not about syntax.
+
+### The Concept Map
+
+| GitHub Actions | Azure Pipelines | Note |
+|----------------|-----------------|------|
+| `on: push` | `trigger:` | `pr:` is a separate block, not a filter |
+| `jobs:` | `stages:` → `jobs:` → `steps:` | ⭐ One extra level; stages are the deployment boundary |
+| `runs-on: ubuntu-latest` | `pool: { vmImage: ubuntu-latest }` | Or `pool: { name: <pool> }` for self-hosted |
+| `uses: actions/checkout@v4` | implicit, or `- checkout: self` | Checkout happens by default |
+| `uses: some/action@v1` | `task: SomeTask@1` | Tasks are versioned by major number |
+| `run:` | `script:` (or `bash:` / `pwsh:`) | `script:` is bash on Linux, cmd on Windows |
+| `secrets.FOO` | `$(FOO)` from a variable group | Variable groups live in **Library**, shared across pipelines |
+| `actions/upload-artifact` | `publish:` / `download:` | Automatic inside a `deployment:` job |
+| composite action / reusable workflow | `template:` and `extends:` | ⭐ Also a security boundary — see below |
+| `environment:` with reviewers | `environment:` with **approvals and checks** | Same idea, richer checks |
+| OIDC to a cloud role | **Service connection** (workload identity federation) | The connection is the credential, held outside the YAML |
+
+### The Four Things That Are Genuinely Different
+
+**1. A new organisation has zero parallel jobs.** Microsoft-hosted agents require a **free grant request** that takes a few business days to approve. Until then every run queues forever with no error — the single most common "Azure DevOps is broken" experience. **Self-hosted agents are free and immediate**, which is why [Lab 04](./labs/lab-04-azure-pipelines.md) runs one in Docker.
+
+**2. Approvals attach to environments, not to pipelines.** Add an approval to the `production` environment and *every* pipeline deploying there inherits it, including ones written later by people who never read yours. Only a `deployment:` job binds to an environment — a plain `job:` silently skips the whole mechanism.
+
+**3. Templates are a security control, not just reuse.** A pipeline that says `extends: a-template-from-a-protected-repo` can only do what the template permits. That is how an organisation stops a pull request from editing the pipeline to print its own secrets — a threat GitHub Actions addresses differently, with `pull_request` scoping and environment protection rules.
+
+**4. Service connections hold the credentials.** A service connection to Azure, AWS, or a registry is an object with its own permissions and its own approval checks, referenced by name from the YAML. The pipeline never contains the credential, and an administrator can restrict which pipelines may use it.
+
+```mermaid
+flowchart TB
+    subgraph Editable["In the repo — anyone with a PR can change this"]
+        Y["azure-pipelines.yml<br/>stages, jobs, steps, conditions"]
+    end
+
+    subgraph Protected["Project settings — administrators only"]
+        E["Environments<br/><i>approvals, checks</i>"]
+        SC["Service connections<br/><i>cloud credentials</i>"]
+        T["Protected template repo<br/><i>extends:</i>"]
+        P["Agent pools<br/><i>and their permissions</i>"]
+    end
+
+    Y -->|"references by name"| E
+    Y -->|"references by name"| SC
+    Y -->|"constrained by"| T
+    Y -->|"runs on"| P
+
+    style Editable fill:#fff4e0,stroke:#cc8800
+    style Protected fill:#e8ffe8,stroke:#00aa44
+```
+
+⭐ **That split is the lesson worth carrying to any CI system.** A safeguard written in the file being reviewed can be edited by the same pull request that needs safeguarding. A safeguard held outside it cannot. When you assess a pipeline's security — Actions, Pipelines, GitLab, Jenkins — sort every control into those two boxes first.
+
+### A Minimal Two-Stage Pipeline
+
+```yaml
+trigger:
+  branches: { include: [main] }
+
+pool:
+  name: Default              # a self-hosted pool; vmImage: for Microsoft-hosted
+
+stages:
+  - stage: Build
+    jobs:
+      - job: build
+        steps:
+          - script: ./ci.sh all          # ⭐ the same script you run locally
+            displayName: Build and test
+          - publish: dist                # stages don't share a filesystem
+            artifact: app
+
+  - stage: Deploy
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: deployStaging        # deployment, not job — this binds the environment
+        environment: staging             # approvals live here
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: ./deploy.sh $(Pipeline.Workspace)/app
+```
+
+> ⚠️ **Stages run on different agents.** Anything Build wrote to disk is gone in Deploy unless it was published as an artefact — and a deploy step that "succeeds" against an empty directory is the quiet version of that bug.
+
+Hands-on, translating the Lab 01 pipeline: **[Lab 04: Azure Pipelines — Agents, Stages, and Approvals](./labs/lab-04-azure-pipelines.md)**.
+
+> **💡 DevOps Impact**: knowing Azure Pipelines roughly doubles the number of enterprise roles you can take, and it costs you very little once you know Actions. The five moving parts from §7 are all here — triggers, execution environment, dependency graph, artifacts, secret store — plus a sixth that Actions is still growing into: controls that live outside the file.
+
+---
+
+## 9. Testing in CI/CD
 
 ### Test Pyramid in Pipelines
 
@@ -846,7 +941,7 @@ Hands-on, on the same application you built the Actions pipeline for: **[Lab 03:
 
 ---
 
-## 9. Deployment Strategies
+## 10. Deployment Strategies
 
 All three strategies achieve zero downtime. They differ in **how much infrastructure you pay for** and **how fast you can undo a bad release**.
 
@@ -951,7 +1046,7 @@ flowchart LR
 
 ---
 
-## 10. Common Mistakes and Anti-Patterns
+## 11. Common Mistakes and Anti-Patterns
 
 ### ❌ Hardcoding Secrets
 
@@ -1008,7 +1103,7 @@ Always plan for failure:
 
 ---
 
-## 11. Debugging Mindset
+## 12. Debugging Mindset
 
 ### CI/CD Debugging Framework
 
@@ -1053,7 +1148,7 @@ act --secret-file .env.secrets  # With secrets
 
 ---
 
-## 12. Security Considerations
+## 13. Security Considerations
 
 > 🔐 Your CI/CD pipeline has access to production — it's a prime attack target.
 
@@ -1090,7 +1185,7 @@ permissions:
 
 ---
 
-## 13. Interview Insights
+## 14. Interview Insights
 
 **Q: What's the difference between Continuous Delivery and Continuous Deployment?**
 > Continuous Delivery means every change is *deployable* to production but requires manual approval. Continuous Deployment means every change that passes tests goes to production *automatically*. Delivery is the safer choice for most teams; Deployment requires very mature testing.
@@ -1122,6 +1217,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 | 1 | **[GitHub Actions](./labs/lab-01-github-actions.md)** | Go from zero to a working CI/CD pipeline. |
 | 2 | **[Jenkins Pipeline](./labs/lab-02-jenkins-pipeline.md)** | Set up Jenkins from scratch using Docker, create a Declarative Pipeline, configure credentials and triggers, and debug common failures. |
 | 3 | **[GitLab CI](./labs/lab-03-gitlab-ci.md)** | Take the pipeline you built in Lab 01 and run it on GitLab CI, on the same application, so the difference you learn is the *dialect* rather than the… |
+| 4 | **[Azure Pipelines](./labs/lab-04-azure-pipelines.md)** | Run a multi-stage Azure Pipelines build on an agent you own, translating the GitHub Actions concepts from Lab 01 into Azure DevOps vocabulary:… |
 
 **Portfolio project:**
 

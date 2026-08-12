@@ -431,4 +431,4 @@ Keep the GitLab project — a working pipeline on a second CI system is worth mo
 
 ---
 
-[← Previous Lab: Jenkins Pipeline](./lab-02-jenkins-pipeline.md) | [Back to Module README](../README.md) | [Module 07: Observability →](../../07-observability/)
+[← Previous Lab: Jenkins Pipeline](./lab-02-jenkins-pipeline.md) | [Back to Module README](../README.md) | [Next Lab: Azure Pipelines →](./lab-04-azure-pipelines.md)

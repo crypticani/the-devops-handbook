@@ -561,4 +561,4 @@ Nothing was ever provisioned, which is the point of reviewing the plan. Keep you
 
 ---
 
-[← Previous Lab: IAM Least Privilege](./lab-02-iam-least-privilege.md) | [Back to Module README](../README.md) | [Module 10: Terraform →](../../10-terraform/)
+[← Previous Lab: IAM Least Privilege](./lab-02-iam-least-privilege.md) | [Back to Module README](../README.md) | [Next Lab: Azure — Bicep Templates and Storage →](./lab-04-azure-bicep.md)

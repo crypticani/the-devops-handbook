@@ -37,8 +37,9 @@ Every DevOps role requires cloud knowledge. Whether it's AWS, GCP, or Azure, the
 8. [DNS & Load Balancing](#8-dns--load-balancing)
 9. [Managed Services Overview](#9-managed-services-overview)
 10. [Cost Management and FinOps](#10-cost-management-and-finops)
-11. [Common Mistakes and Anti-Patterns](#11-common-mistakes-and-anti-patterns)
-12. [Interview Insights](#12-interview-insights)
+11. [Azure — The Same Concepts, Different Nouns](#11-azure--the-same-concepts-different-nouns)
+12. [Common Mistakes and Anti-Patterns](#12-common-mistakes-and-anti-patterns)
+13. [Interview Insights](#13-interview-insights)
 
 ---
 
@@ -756,7 +757,93 @@ Automate the parts humans forget: a **budget with an alert** per environment (no
 
 ---
 
-## 11. Common Mistakes and Anti-Patterns
+## 11. Azure — The Same Concepts, Different Nouns
+
+Roughly a quarter of cloud job listings are Azure, and enterprises with a Microsoft estate are usually Azure-first. The good news is the one this module opened with: **the concepts transfer, the nouns do not.** You do not learn Azure from scratch — you learn a vocabulary and about five genuine differences.
+
+### The Translation Table
+
+| Concept | AWS | Azure |
+|---------|-----|-------|
+| Billing / isolation boundary | Account | **Subscription** |
+| Grouping for policy across boundaries | Organizations + OUs | **Management groups** |
+| Grouping of related resources | *(tags and stacks, informally)* | ⭐ **Resource group** — a real, mandatory container |
+| Virtual machine | EC2 instance | Virtual Machine |
+| Autoscaling group | ASG | Virtual Machine Scale Set (VMSS) |
+| Object storage | S3 bucket | Blob Storage container |
+| Block storage | EBS volume | Managed Disk |
+| File share | EFS | Azure Files |
+| Private network | VPC | **VNet** |
+| Subnet firewall | NACL (stateless) | **NSG** (stateful, and applies to subnet *or* NIC) |
+| Instance firewall | Security group | NSG, again — there is only one object |
+| Identity and permissions | IAM users, roles, policies | **Entra ID** (identity) + **Azure RBAC** (permissions) — two systems |
+| Workload identity, no secret | Instance profile / IRSA | ⭐ **Managed identity** |
+| Managed Kubernetes | EKS | AKS |
+| Serverless functions | Lambda | Azure Functions |
+| Managed relational DB | RDS | Azure SQL / Database for PostgreSQL |
+| Secret store | Secrets Manager / SSM | **Key Vault** (secrets, keys, and certificates in one) |
+| Native IaC | CloudFormation | ARM JSON, authored as **Bicep** |
+| Guardrails you cannot bypass | SCP | **Azure Policy** |
+| Load balancer (L7) | ALB | Application Gateway / Front Door |
+| CDN | CloudFront | Azure Front Door |
+| Metrics and logs | CloudWatch | Azure Monitor + Log Analytics (KQL) |
+| Audit trail | CloudTrail | Activity Log |
+
+### The Five Differences That Actually Matter
+
+**1. Resource groups are mandatory, and they are a lifecycle boundary.** Every resource lives in exactly one, and deleting the group deletes everything in it. There is no AWS equivalent — the closest is a CloudFormation stack, except every resource is in one whether you use IaC or not. Used well it is genuinely better than tag conventions: one group per application per environment gives you a real delete button and a natural RBAC scope. Used badly ("prod-rg" holding four hundred resources) it is just a folder.
+
+**2. Identity is a separate product from permissions.** AWS puts users, roles, and policies in one service. Azure splits them: **Entra ID** (formerly Azure AD) answers *who you are* and is shared with Microsoft 365, while **Azure RBAC** answers *what you may do* on a subscription, resource group, or resource. The practical consequence is that a user can exist, log in fine, and have no access to anything — and that "add them to the directory" is a different task from "grant them a role".
+
+**3. Managed identity removes the credential entirely.** Assign an identity to a VM, Function, or AKS pod, and it obtains tokens from the platform. No key, no rotation, nothing to leak. It is the same idea as an EC2 instance profile, but it is the *normal* way to do things in Azure rather than the good-practice way, and it is the single habit worth importing back into your AWS work.
+
+**4. NSGs are stateful and can attach to a subnet or a NIC.** AWS gives you two objects with different semantics — stateless NACLs at the subnet, stateful security groups at the instance. Azure gives you one stateful object you may attach at either level. Simpler, with one trap: rules are evaluated by **priority number, lowest first, first match wins**, so a broad allow at priority 100 silently defeats your careful deny at 200.
+
+**5. Azure Policy is enforcement, not advice.** It refuses non-compliant resources at deployment time — no public blob containers, no VMs without a tag, only these regions — and it can remediate existing ones. This is the SCP-equivalent, and it is the layer that makes a rule real rather than documented. [Lab 04](./labs/lab-04-azure-bicep.md) shows why: a template can pass every linter and still be wrong.
+
+```mermaid
+flowchart TB
+    subgraph Azure["Azure hierarchy — policy flows downward"]
+        MG["Management group<br/><i>Azure Policy, RBAC</i>"] --> Sub["Subscription<br/><i>billing + quota boundary</i>"]
+        Sub --> RG["Resource group<br/><i>lifecycle + RBAC scope</i>"]
+        RG --> Res["Resources<br/><i>VM, storage, AKS…</i>"]
+    end
+
+    subgraph AWS["AWS equivalent"]
+        OU["Organization / OU<br/><i>SCPs</i>"] --> Acct["Account<br/><i>billing + isolation</i>"]
+        Acct --> Tag["Tags and stacks<br/><i>convention, not a container</i>"]
+        Tag --> Res2["Resources"]
+    end
+
+    style RG fill:#e8f4ff,stroke:#0066cc
+    style Tag fill:#fff4e0,stroke:#cc8800
+```
+
+⭐ **The isolation boundary is the difference to hold on to.** In AWS the strong boundary is the *account*, so mature setups run dozens of them. In Azure the subscription is the billing and quota boundary, and the resource group is the day-to-day one — so an Azure estate uses fewer subscriptions and leans on resource groups, RBAC scopes, and policy instead.
+
+### Getting Hands-On Without a Subscription
+
+```bash
+# Bicep compiles and lints entirely offline — no account needed
+az bicep build --file main.bicep      # → the ARM JSON Azure actually receives
+az bicep lint --file main.bicep       # → rules you choose in bicepconfig.json
+
+# Azurite is Microsoft's official storage emulator: real Blob/Queue/Table APIs
+docker run -p 10000:10000 mcr.microsoft.com/azure-storage/azurite \
+  azurite --blobHost 0.0.0.0 --skipApiVersionCheck
+
+# Then the real CLI, pointed at it
+az storage container create -n uploads
+az storage blob upload -c uploads -f ./file.txt -n file.txt
+```
+
+Run it: [Lab 04 — Azure: Bicep Templates and Storage, Without a Subscription](./labs/lab-04-azure-bicep.md). It gates a template in CI, finds three insecure settings the linter is happy with, and demonstrates anonymous blob access and the SAS token that replaces it — all offline.
+
+> ⭐ **The interview answer** when asked whether you know Azure, having worked in AWS: name the mapping and then name a real difference. "The primitives are the same — VNet for VPC, Blob for S3, Entra ID plus RBAC where AWS has IAM. What I'd have to adjust to is that resource groups are a real lifecycle boundary rather than a tagging convention, that identity and authorisation are two separate systems, and that managed identity means most workloads never hold a credential at all." That answer is worth more than a memorised service list, because it shows you know which knowledge transfers.
+
+---
+
+## 12. Common Mistakes and Anti-Patterns
 
 ### ❌ Using Root Account for Daily Work
 
@@ -788,7 +875,7 @@ GOOD: Use IAM roles for EC2/Lambda/ECS — no credentials to manage
 
 ---
 
-## 12. Interview Insights
+## 13. Interview Insights
 
 **Q: What's the difference between IaaS, PaaS, and SaaS?**
 > IaaS gives you virtual infrastructure (compute, storage, network) — you manage the OS and everything above. PaaS gives you a platform to deploy code — the provider manages the OS and runtime. SaaS is a complete application you use as-is. AWS EC2 is IaaS, Elastic Beanstalk is PaaS, Gmail is SaaS.
@@ -819,6 +906,7 @@ Read the sections above first, then work through these **in order**. Every lab e
 | 1 | **[AWS Fundamentals](./labs/lab-01-aws-fundamentals.md)** | Get hands-on with the four foundational AWS services. |
 | 2 | **[IAM and Least Privilege](./labs/lab-02-iam-least-privilege.md)** | Write IAM policies that grant exactly what's needed and nothing more — and, more importantly, learn to **test** them before they reach production. |
 | 3 | **[FinOps](./labs/lab-03-finops-cost-review.md)** | Do a cost review the way it should happen: on the plan, before apply, with a number attributable to a team. |
+| 4 | **[Azure](./labs/lab-04-azure-bicep.md)** | Work with real Azure tooling on a second cloud: author a Bicep template, gate it in CI with a linter that fails the build, compile it to the ARM… |
 
 **Portfolio project:**
 
