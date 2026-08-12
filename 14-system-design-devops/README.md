@@ -96,6 +96,44 @@ ACTIVE-ACTIVE:
   Con: State synchronization complexity, split-brain risk
 ```
 
+### Split-Brain — The Failure Failover Creates
+
+"Split-brain risk" is one line in that table and a data-corruption incident in real life. Failover works by one node deciding another is dead — and a node cannot tell "peer is dead" apart from "I cannot reach the peer":
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant A as Node A (primary)
+    participant N as Network
+    participant B as Node B (standby)
+
+    Note over A,B: Healthy — heartbeats flowing
+    A->>N: heartbeat
+    N->>B: heartbeat
+
+    Note over N: ❌ The link between them fails.<br/>Both nodes are alive and healthy.
+    A--xN: heartbeat lost
+    N--xB: heartbeat lost
+
+    Note over B: "A is dead. I must take over."
+    B->>B: Promote self to primary
+    Note over A: "B is dead. I'm still primary."
+    A->>A: Keep serving writes
+
+    Note over A,B: 💥 Two primaries. Both accept writes.<br/>Neither set of writes is wrong on its own —<br/>together they are unreconcilable.
+```
+
+⭐ **Two nodes cannot solve this, ever.** With only two participants there is no way to distinguish a dead peer from an unreachable one, so both choices — take over, or stay put — are wrong in one of the two scenarios. That is why real systems use **an odd number of voters and require a quorum** (etcd, Consul, ZooKeeper, Kafka's KRaft controllers, RabbitMQ quorum queues): a node may only act as primary if it can see a strict majority, so a partition leaves at most one side able to proceed.
+
+| Mechanism | What it does | Where you'll meet it |
+|-----------|--------------|----------------------|
+| **Quorum** | Only a majority partition may act — the minority stops | etcd, Consul, MongoDB replica sets, Kafka |
+| **Fencing / STONITH** | The new primary forcibly kills or isolates the old one before taking over | Pacemaker clusters, storage fencing |
+| **Lease with a TTL** | Primacy is a lease that must be renewed; miss a renewal and it lapses | Kubernetes leader election, Redis Sentinel |
+| **A tiebreaker witness** | A cheap third voter so two real nodes can form a majority | Two-AZ deployments with a witness in a third |
+
+⚠️ **This is why "just add a standby" is not a highly available design.** Ask three questions of any failover scheme: *who decides* a node is dead, *how many votes* that decision needs, and *what stops the old primary* from continuing to serve. If any answer is missing, you have built a system that turns a network blip into divergent data.
+
 ---
 
 ## 2. Load Balancing
@@ -236,6 +274,39 @@ RULE: Make your applications STATELESS whenever possible.
       Push state to dedicated, purpose-built stores.
 ```
 
+### Which Kind of Scaling — and Whether to Scale At All
+
+The instinct is to add capacity. Frequently the honest answer is that the system is doing unnecessary work, and buying more machines to do it faster is the expensive way to hide a bug:
+
+```mermaid
+flowchart TD
+    S(["The system is too slow<br/>or falling over"]) --> Measure{"Do you know <b>which</b><br/>resource is saturated?"}
+    Measure -->|"No"| Profile["<b>Stop.</b> Measure first: CPU, memory, disk I/O,<br/>connections, or an external dependency.<br/>Scaling the wrong axis costs money and fixes nothing"]
+    Profile --> Measure
+
+    Measure -->|"Yes"| Waste{"Is the work itself<br/>avoidable?"}
+    Waste -->|"Yes"| Fix["Fix it before scaling:<br/>an N+1 query, a missing index,<br/>an uncached hot path, a retry storm.<br/><i>Usually the cheapest 10× available</i>"]
+
+    Waste -->|"No"| State{"Is the component<br/>stateless?"}
+    State -->|"Yes"| Horiz(["<b>Scale horizontally</b><br/>add replicas behind the load balancer,<br/>autoscale on the saturated metric"])
+    State -->|"No"| Extract{"Can the state be<br/>moved out?<br/><i>sessions → Redis, files → S3</i>"}
+
+    Extract -->|"Yes"| Horiz
+    Extract -->|"No"| Vert{"Is there headroom in a<br/>bigger instance size?"}
+
+    Vert -->|"Yes"| VertOK(["<b>Scale vertically</b> — the pragmatic answer<br/>for databases, and it buys you time"])
+    Vert -->|"No"| Shard(["<b>Shard or partition</b><br/>read replicas, then partition by key.<br/>Expensive and hard to undo — last resort"])
+
+    style Fix fill:#e8ffe8,stroke:#00aa44
+    style Profile fill:#fff4e0,stroke:#cc8800
+    style Horiz fill:#e8f4ff,stroke:#0066cc
+    style Shard fill:#ffe8e8,stroke:#cc3333
+```
+
+⭐ **The two boxes people skip are the first two**, and they are the ones that pay. "We doubled the pods and it's still slow" almost always means the bottleneck was a database the pods share — in which case doubling them made contention *worse*. Name the saturated resource before you touch a replica count.
+
+⚠️ **Sharding is a one-way door.** It changes your data model, your queries, your migrations, and your backup strategy, and un-sharding is a project nobody funds. Exhaust vertical scaling and read replicas first — modern instances go far higher than most people assume, and a year of a larger instance is cheaper than a quarter of engineering time.
+
 ---
 
 ## 4. Caching
@@ -277,6 +348,70 @@ TTL (Time to Live):
   Long TTL (1h): Lower DB load, staler data
   Pick based on how stale your users can tolerate
 ```
+
+The three write strategies differ in *where the crash window is*, which is easier to see as message order than as prose:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant App
+    participant Cache
+    participant DB
+
+    Note over App,DB: Cache-aside — the default, and the one to reach for
+    App->>Cache: GET user:123
+    Cache-->>App: miss
+    App->>DB: SELECT …
+    DB-->>App: row
+    App->>Cache: SET user:123 (with TTL)
+    Note over App,Cache: A cache outage degrades to slow, not broken
+
+    Note over App,DB: Write-through — consistent, slower writes
+    App->>Cache: write
+    Cache->>DB: write (synchronously)
+    DB-->>Cache: ok
+    Cache-->>App: ok
+    Note over App,DB: Every write pays both latencies,<br/>even for data nobody reads
+
+    Note over App,DB: Write-behind — fast writes, real risk
+    App->>Cache: write
+    Cache-->>App: ok ✅ (client believes it's durable)
+    Cache->>DB: write, later, asynchronously
+    Note over Cache,DB: 💥 Cache dies in this gap → the write is gone,<br/>and you already told the user it succeeded
+```
+
+⭐ **Cache-aside is the right default** because its failure mode is the mild one: if the cache is down, every read falls through to the database and the system is slow rather than wrong. Write-behind is the opposite — it is the fastest and it silently converts a cache from a performance optimisation into a *durability dependency*. Never put money, orders, or anything you'd have to apologise for behind a write-behind cache.
+
+### Cache Stampede — The Outage a Cache Causes
+
+A cache does not only fail by being slow. The classic incident is the cache working exactly as designed:
+
+```mermaid
+flowchart TD
+    subgraph Before["Steady state"]
+        R1["10,000 req/s"] --> C1["Cache · 99% hit rate"] --> D1[("DB · ~100 req/s")]
+    end
+
+    subgraph After["The popular key's TTL expires"]
+        R2["10,000 req/s"] --> C2["Cache · all miss<br/>the same key at once"] --> D2[("DB · 10,000 req/s<br/>💥")]
+        D2 -.->|"queries queue,<br/>connections exhausted"| Slow["Every request now slow"]
+        Slow -.->|"more requests pile in<br/>on the same missing key"| D2
+    end
+
+    style D1 fill:#e8ffe8,stroke:#00aa44
+    style D2 fill:#ffe8e8,stroke:#cc3333
+    style Slow fill:#ffe8e8,stroke:#cc3333
+```
+
+**Three fixes, and they compose:**
+
+| Fix | How it works | Cost |
+|-----|--------------|------|
+| **Jittered TTL** | `ttl = base + random(0, base/10)` so keys expire at different moments | One line; do this always |
+| **Single-flight lock** | The first miss takes a lock and refills; the rest wait briefly or serve stale | A little complexity, removes the herd entirely |
+| **Refresh-ahead** | A background job refreshes hot keys before they expire | Needs to know which keys are hot |
+
+⚠️ **The nastiest version is a cold cache after a restart.** Every key misses simultaneously, and a database sized for a 99% hit rate meets 100% of traffic — which is why "we restarted Redis to clear it" is a sentence that precedes an outage. Warm the cache, or roll the restart, and make sure the database has a connection limit that sheds load instead of falling over.
 
 ### Cache Invalidation
 
@@ -555,6 +690,39 @@ MULTI-REGION ACTIVE-ACTIVE (Most expensive, fastest):
   Full production in multiple regions, traffic split
   Cost: $$$$ (full duplicate infrastructure)
 ```
+
+What you are really buying at each tier is **how much is already running when the disaster starts**:
+
+```mermaid
+flowchart TB
+    subgraph T1["Backup & Restore · $ · RTO hours-days"]
+        B1[("Backups in object storage")]
+        B1 -.->|"on disaster: build everything,<br/>then restore"| B1x["Nothing is running"]
+    end
+
+    subgraph T2["Pilot Light · $$ · RTO 30-60 min"]
+        P1[("DB replica, always on")]
+        P2["App tier: defined but scaled to zero"]
+        P1 -.->|"on disaster: promote DB,<br/>scale the app up"| P2
+    end
+
+    subgraph T3["Warm Standby · $$$ · RTO minutes"]
+        W1[("DB replica")] --- W2["App tier running,<br/>scaled down"]
+        W2 -.->|"on disaster: scale out,<br/>switch DNS"| W3["Full capacity"]
+    end
+
+    subgraph T4["Active-Active · $$$$ · RTO seconds"]
+        A1["Region 1 serving traffic"] --- A2["Region 2 serving traffic"]
+        A2 -.->|"on disaster: the LB stops<br/>sending to the dead region"| A3["No promotion step at all"]
+    end
+
+    style T1 fill:#e8ffe8,stroke:#00aa44
+    style T4 fill:#ffe8e8,stroke:#cc3333
+```
+
+⭐ **RTO is bought with always-on infrastructure, RPO with replication frequency.** They are separate purchases and it is normal to want different tiers for each — hourly backups (RPO 1h) with a warm standby (RTO 10 min) is a perfectly coherent, and cheap, combination. Deciding the *strategy* before answering the two questions is how organisations end up paying for active-active to protect a system nobody would miss for a day.
+
+⚠️ **An untested DR plan has an RTO of infinity.** The failure is never the backup — it is the restore path: expired credentials, a bootstrap that needs a service in the dead region, a runbook naming someone who left, a DNS TTL of 24 hours. Schedule a real game day, restore into a clean account, and time it. **The number you measure is your RTO; the number in the document is a wish.**
 
 ---
 
