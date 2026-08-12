@@ -33,3 +33,6 @@ node_modules/
 # Local scratch
 .remember/
 .claude/
+
+# Bicep build output (lab 09/lab-04) — a compiled artefact, like a binary
+09-cloud-fundamentals/code/lab-04/main.json

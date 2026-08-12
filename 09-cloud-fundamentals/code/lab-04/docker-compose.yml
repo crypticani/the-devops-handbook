@@ -1,0 +1,44 @@
+# Azurite is Microsoft's official Azure Storage emulator: real Blob, Queue and Table
+# APIs, spoken by the real az CLI and the real SDKs, with no subscription and no bill.
+# It is what the Azure tooling itself is tested against.
+services:
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: azurite
+    # ⭐ --skipApiVersionCheck is required: the az CLI moves faster than the emulator,
+    # and without this every command fails with "The API version ... is not supported".
+    command: >
+      azurite
+      --blobHost 0.0.0.0
+      --queueHost 0.0.0.0
+      --tableHost 0.0.0.0
+      --skipApiVersionCheck
+      --location /data
+    ports:
+      - "10000:10000" # Blob
+      - "10001:10001" # Queue
+      - "10002:10002" # Table
+    volumes:
+      - azurite-data:/data
+    restart: unless-stopped
+
+  # The az CLI with Bicep preinstalled, on the same network as the emulator.
+  # Run it with:  docker compose run --rm cli <command>
+  cli:
+    image: mcr.microsoft.com/azure-cli
+    working_dir: /work
+    volumes:
+      - .:/work
+    environment:
+      # The well-known Azurite development credentials. They are published in
+      # Microsoft's docs and identical on every machine — which is exactly why
+      # this connection string must never be the pattern you copy for real Azure.
+      AZURE_STORAGE_CONNECTION_STRING: >-
+        DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;QueueEndpoint=http://azurite:10001/devstoreaccount1;TableEndpoint=http://azurite:10002/devstoreaccount1;
+    depends_on:
+      - azurite
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["az version"]
+
+volumes:
+  azurite-data:

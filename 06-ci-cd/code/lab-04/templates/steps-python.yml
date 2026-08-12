@@ -1,0 +1,19 @@
+# A step template: reusable steps, parameterised. The Azure Pipelines answer to a
+# composite GitHub Action, and the unit of sharing inside an organisation.
+#
+# ⭐ Templates are also a security control. `extends:` a template from a protected
+# repository and the pipeline can only do what that template allows — which is how
+# you stop a pull request from editing the pipeline to exfiltrate a secret.
+parameters:
+  - name: pythonVersion
+    type: string
+    default: "3.12"
+
+steps:
+  - task: UsePythonVersion@0
+    displayName: Use Python ${{ parameters.pythonVersion }}
+    inputs:
+      versionSpec: ${{ parameters.pythonVersion }}
+
+  - script: python3 --version
+    displayName: Confirm the interpreter

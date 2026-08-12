@@ -1,0 +1,17 @@
+{
+  "//": "Linter rules for the lab. Bicep ships with a small default set at 'warning'; a CI gate needs rules you have chosen, at 'error'. Anything at error level makes `az bicep lint` exit 1, which is what turns advice into a gate.",
+  "analyzers": {
+    "core": {
+      "enabled": true,
+      "verbose": true,
+      "rules": {
+        "no-unused-params": { "level": "error" },
+        "no-unused-vars": { "level": "error" },
+        "secure-secrets-in-params": { "level": "error" },
+        "no-hardcoded-env-urls": { "level": "error" },
+        "prefer-interpolation": { "level": "error" },
+        "use-recent-api-versions": { "level": "warning" }
+      }
+    }
+  }
+}
