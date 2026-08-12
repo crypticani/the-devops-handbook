@@ -98,6 +98,38 @@ IaC Scanning
 7. ALWAYS encrypt secrets at rest and in transit
 ```
 
+### How a Secret Should Reach a Process
+
+Every rule above is really one rule: the secret should exist in exactly two places — the store, and the memory of the process that needs it. Compare the paths:
+
+```mermaid
+flowchart TB
+    subgraph Bad["❌ The four ways it leaks"]
+        direction TB
+        B1["Hardcoded in source"] --> G[("Git history<br/><i>forever, even after you delete it</i>")]
+        B2["Baked into an image layer"] --> Reg[("Registry<br/><i>anyone who can pull, can read</i>")]
+        B3["Passed as a CLI argument"] --> PS["Visible in ps,<br/>and in shell history"]
+        B4["Printed in a debug log"] --> Logs[("Your log backend,<br/>indexed and searchable")]
+    end
+
+    subgraph Good["✅ The path that doesn't"]
+        direction LR
+        Store[("Secret store<br/>Vault, Secrets Manager, SSM")] -->|"authenticated by<br/><b>identity</b>, not a password:<br/>IAM role, OIDC, k8s SA"| Inject["Injected at start-up:<br/>env var or tmpfs file"]
+        Inject --> Proc["Process memory"]
+        Proc -.->|"short TTL forces<br/>re-fetch, so rotation<br/>actually takes effect"| Store
+    end
+
+    style G fill:#ffe8e8,stroke:#cc3333
+    style Reg fill:#ffe8e8,stroke:#cc3333
+    style PS fill:#ffe8e8,stroke:#cc3333
+    style Logs fill:#ffe8e8,stroke:#cc3333
+    style Store fill:#e8ffe8,stroke:#00aa44
+```
+
+⭐ **The bootstrap question is the one that separates real secret management from theatre**: how does the process authenticate to the *store*? If the answer is "another secret in an env var", you have moved the problem, not solved it. The real answers are all forms of platform identity — an EC2 instance profile or EKS IRSA, a GitHub Actions OIDC token traded for a short-lived role, a Kubernetes ServiceAccount token — none of which is a value anyone can copy out and reuse.
+
+⚠️ **A leaked secret is leaked the moment it is pushed, not when someone notices.** Rewriting history with `git filter-repo` or BFG does not un-clone the repo, and public-repo scrapers are measured in seconds. The order is always: **rotate first, clean history second** — and if you only have time for one, rotate.
+
 ### Where to Store Secrets
 
 | Context | Tool | How |
@@ -326,6 +358,42 @@ trivy config terraform/
 ---
 
 ## 5. CI/CD Pipeline Security
+
+### The Pipeline Is the Attack Surface
+
+Your CI system can write to production, so it is a more valuable target than production itself. There are five ways in, and each has one control that closes it:
+
+```mermaid
+flowchart LR
+    subgraph Sources["Where an attacker gets in"]
+        direction TB
+        A1["① A dependency<br/>typosquat, hijacked maintainer"]
+        A2["② A base image<br/>unpinned, or upstream compromise"]
+        A3["③ A pull request<br/>malicious workflow edit"]
+        A4["④ A third-party Action<br/>mutable @v1 tag"]
+        A5["⑤ Stolen CI credentials<br/>long-lived cloud keys"]
+    end
+
+    A1 & A2 & A3 & A4 & A5 --> Build["Build runner<br/><i>holds the deploy credentials</i>"]
+    Build --> Art["Artifact / image"]
+    Art --> Reg[("Registry")]
+    Reg --> Prod["Production"]
+
+    style Build fill:#ffe8e8,stroke:#cc3333
+    style Prod fill:#fff4e0,stroke:#cc8800
+```
+
+| Way in | The control that closes it |
+|--------|----------------------------|
+| ① Dependency | A lockfile, `npm ci` / `pip install -r` with hashes, plus SCA scanning on every PR |
+| ② Base image | Pin by **digest**, not tag; rebuild on a schedule so pinning doesn't mean stale |
+| ③ Pull request | `pull_request` (not `pull_request_target`) for untrusted forks, and no secrets exposed to fork runs |
+| ④ Third-party Action | Pin to a full commit SHA — a tag is mutable and can be re-pointed at anything |
+| ⑤ CI credentials | OIDC federation instead of stored keys, scoped to one role, one repo, one branch |
+
+⭐ **`permissions:` at the top of every workflow is the cheapest control on this page.** The default token is broad; declaring `contents: read` and adding back only what a job needs means a compromised step cannot push code, tag a release, or open a PR. It is two lines and it turns a full repo takeover into a failed API call.
+
+⚠️ **`pull_request_target` runs with write permissions and the repository's secrets, against code the contributor controls.** It exists for labelling bots, and it is the single most exploited GitHub Actions misconfiguration. If you use it, never check out the PR's head, and never run its build scripts.
 
 ### Secure Pipeline Pattern
 
@@ -632,6 +700,43 @@ INCIDENT DETECTED!
       ├─ Update security controls
       └─ Share learnings with the team
 ```
+
+### 🔧 The First Ten Minutes: A Credential Is Exposed
+
+The most common security incident a DevOps engineer runs, and the order of operations is counterintuitive enough to be worth memorising:
+
+```mermaid
+flowchart TD
+    S(["A key, token or password<br/>is found somewhere public"]) --> Scope{"Can it reach<br/>production data?"}
+
+    Scope -->|"Unsure"| Assume["<b>Assume yes.</b> Time spent deciding<br/>is time the credential is still valid"]
+    Scope -->|"Yes"| Rotate
+    Assume --> Rotate
+
+    Scope -->|"No — dev only,<br/>and you are certain"| RotateLater["Rotate anyway, on a normal<br/>working schedule"]
+
+    Rotate["<b>1 · REVOKE, don't just rotate.</b><br/>Issuing a new key leaves the old one live.<br/>Delete/disable the old credential first"] --> Preserve["<b>2 · Preserve evidence before you clean up.</b><br/>Snapshot logs, CloudTrail, the instance —<br/>rebuilding first destroys the answer to<br/>'what did they do with it?'"]
+
+    Preserve --> Blast["<b>3 · Scope the blast radius.</b><br/>What did that identity touch?<br/>CloudTrail by access key, audit logs by user"]
+
+    Blast --> Used{"Any sign it<br/>was used?"}
+    Used -->|"Yes"| IR["Full incident: unknown IPs, unusual regions,<br/>new IAM users or keys created, data egress.<br/>Escalate — this is no longer just a leak"]
+    Used -->|"No"| Clean["Clean-up: purge from history,<br/>add the detection that should have caught it"]
+
+    IR --> Learn
+    Clean --> Learn
+    RotateLater --> Learn
+    Learn["<b>4 · Blameless review.</b> Why was it possible to<br/>commit it? Why did nothing catch it?<br/>Add the guardrail, not a rule asking people to be careful"]
+
+    style Rotate fill:#ffe8e8,stroke:#cc3333
+    style Preserve fill:#fff4e0,stroke:#cc8800
+    style IR fill:#ffe8e8,stroke:#cc3333
+    style Learn fill:#e8ffe8,stroke:#00aa44
+```
+
+⭐ **Two instincts to override.** First, *revoke rather than rotate* — creating a replacement key feels like fixing it, but the leaked one keeps working until you explicitly kill it. Second, *don't terminate the compromised instance yet* — the reflex to destroy and rebuild is exactly what erases the evidence you need to answer "what did they reach?", and that question is the one your customers and your regulator will ask.
+
+⚠️ **"It was only a dev key" needs proof, not assumption.** Dev credentials with production network access, a shared account, or a role that can assume another are how a minor leak becomes a breach. Check what the identity can *reach*, not what it was *intended* for.
 
 ---
 

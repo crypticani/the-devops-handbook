@@ -149,6 +149,38 @@ for server in "${servers[@]}"; do
 done
 ```
 
+### Why You Quote Everything
+
+The shell rewrites your line before any command sees it, and the steps run in a fixed order. Word splitting and globbing happen *after* your variable is substituted — which is the entire reason unquoted variables are dangerous:
+
+```mermaid
+flowchart LR
+    In["rm -rf $DIR/*.log"] --> B["1 · Brace expansion<br/>{a,b}"]
+    B --> T["2 · Tilde expansion<br/>~"]
+    T --> P["3 · Parameter expansion<br/><b>$DIR becomes its value</b>"]
+    P --> C["4 · Command substitution<br/>$(…)"]
+    C --> A["5 · Arithmetic<br/>$((…))"]
+    A --> W["6 · <b>Word splitting</b><br/>on spaces, tabs, newlines"]
+    W --> G["7 · <b>Pathname expansion</b><br/>*, ?, [ ] hit the filesystem"]
+    G --> Q["8 · Quote removal"]
+    Q --> Exec["The command finally runs"]
+
+    style P fill:#fff4e0,stroke:#cc8800
+    style W fill:#ffe8e8,stroke:#cc3333
+    style G fill:#ffe8e8,stroke:#cc3333
+```
+
+**Trace `DIR="/var/log/my app"` through it.** Step 3 substitutes the value, step 6 splits it on the space into `/var/log/my` and `app`, and you have just deleted the wrong thing. Quoting — `"$DIR"/*.log` — makes steps 6 and 7 skip the variable's contents entirely.
+
+| Written | What the command receives when `DIR="/var/log/my app"` |
+|---------|--------------------------------------------------------|
+| `$DIR` | Two arguments: `/var/log/my` and `app` ❌ |
+| `"$DIR"` | One argument: `/var/log/my app` ✅ |
+| `${arr[@]}` | Split on whitespace, so `"web 01"` becomes two elements ❌ |
+| `"${arr[@]}"` | One argument per element, spaces preserved ✅ |
+
+⭐ **The habit worth building**: quote every expansion unless you have a specific reason not to, and use `"${arr[@]}"` for arrays every single time. `shellcheck` catches this class of bug for free — the labs in this module run it, and so should your CI.
+
 ---
 
 ## 3. Control Flow
@@ -480,6 +512,42 @@ done < <(tail -n +2 /tmp/servers.csv)  # Skip header
 
 ## 7. Error Handling
 
+### What `set -euo pipefail` Actually Catches
+
+Bash's default behaviour is to **keep going after a failure**, which is how a deploy script cheerfully removes a directory it never populated. Each flag closes one of those doors:
+
+```mermaid
+flowchart TD
+    Cmd["A command in your script"] --> Fail{"Did it exit<br/>non-zero?"}
+
+    Fail -->|"No"| Undef{"Did it reference an<br/>unset variable?"}
+    Fail -->|"Yes"| E{"<b>set -e</b><br/>enabled?"}
+
+    E -->|"Yes"| Stop(["🛑 Script exits<br/>with that code"])
+    E -->|"No"| Cont(["➡️ Next line runs anyway<br/><i>with broken state</i>"])
+
+    Undef -->|"Yes"| U{"<b>set -u</b><br/>enabled?"}
+    Undef -->|"No"| Pipe{"Was it a pipeline<br/>where an <i>earlier</i><br/>stage failed?"}
+
+    U -->|"Yes"| Stop
+    U -->|"No"| Empty(["➡️ Expands to an empty string<br/><i>rm -rf $DIR/ becomes rm -rf /</i>"])
+
+    Pipe -->|"Yes"| P{"<b>set -o pipefail</b><br/>enabled?"}
+    Pipe -->|"No"| OK(["✅ Continue"])
+
+    P -->|"Yes"| Stop
+    P -->|"No"| Masked(["➡️ Only the LAST stage's code counts<br/><i>curl fails, grep succeeds,<br/>the script thinks all is well</i>"])
+
+    style Cont fill:#ffe8e8,stroke:#cc3333
+    style Empty fill:#ffe8e8,stroke:#cc3333
+    style Masked fill:#ffe8e8,stroke:#cc3333
+    style Stop fill:#e8ffe8,stroke:#00aa44
+```
+
+⭐ **Every red box is a real outage pattern.** `pipefail` is the one people omit: `curl -s "$URL" | jq .version` returns *jq's* exit code, so a failed download becomes an empty version string that sails into production. Three words at the top of the file remove all three.
+
+⚠️ **`set -e` has holes you must know about.** It does *not* trigger inside a condition (`if cmd; then`), on the left of `&&`/`||`, or — in older Bash — inside a function called in a condition. That is by design, but it means `set -e` is a safety net, not a guarantee. Check the exit codes that matter explicitly.
+
 ```bash
 #!/bin/bash
 set -euo pipefail
@@ -541,6 +609,38 @@ echo $$ > "${LOCK_FILE}"
 ---
 
 # Part 2: Python for DevOps
+
+### Bash or Python?
+
+Both are correct answers to different questions, and picking wrong costs you either an afternoon of `awk` or a 40-line program that should have been one pipe:
+
+```mermaid
+flowchart TD
+    S(["A task to automate"]) --> Glue{"Is it mostly running<br/>other commands in order?"}
+    Glue -->|"Yes, and it's short"| Bash(["✅ <b>Bash</b><br/>glue is what it's for"])
+    Glue -->|"No"| Data{"Does it parse JSON, XML,<br/>or call HTTP APIs?"}
+
+    Bash --> Grow{"Will it stay<br/>under ~100 lines?"}
+    Grow -->|"Yes"| BashOK(["✅ <b>Bash</b>"])
+    Grow -->|"No"| Py
+
+    Data -->|"Yes"| Py(["✅ <b>Python</b><br/>real data structures,<br/>real error handling,<br/>real tests"])
+    Data -->|"No"| Struct{"Does it need dictionaries,<br/>nested data, or arithmetic<br/>beyond counting?"}
+
+    Struct -->|"Yes"| Py
+    Struct -->|"No"| Portable{"Must it run on a box<br/>where you cannot<br/>install anything?"}
+
+    Portable -->|"Yes"| BashOK
+    Portable -->|"No"| Py
+
+    style BashOK fill:#e8ffe8,stroke:#00aa44
+    style Bash fill:#e8ffe8,stroke:#00aa44
+    style Py fill:#e8f4ff,stroke:#0066cc
+```
+
+⭐ **The honest heuristic: Bash for the first hundred lines, Python after.** Bash is unbeatable at "run these five commands and stop if one fails" — that's a whole category of real work. It gets painful the moment you need a dictionary, arithmetic that isn't counting, or JSON, because none of those are things it has. If you find yourself reaching for `jq` in a loop to build up state, you have already outgrown it.
+
+**The other tiebreaker is who maintains it.** A 300-line Bash script with nested functions and `eval` is readable to its author and to nobody else. The same logic in Python can be tested, and "can be tested" is what separates a script from a tool you trust in a pipeline.
 
 ## 8. Python Fundamentals for DevOps
 
@@ -870,6 +970,44 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logger.debug(f"Processing server: {server_name}")
 ```
+
+### 🔧 Troubleshooting: "It Works in My Shell but Fails in Cron"
+
+The most common scripting ticket in existence, and it is almost never the script's logic. A cron job runs in a different world than your terminal:
+
+```mermaid
+flowchart TD
+    S(["Works interactively,<br/>fails or does nothing under cron"]) --> Log{"Do you have<br/>the error output?"}
+
+    Log -->|"No"| Capture["<b>Start here.</b> Cron mails output nobody reads.<br/>* * * * * /path/script.sh >> /tmp/out.log 2>&1<br/>Then read /tmp/out.log"]
+    Log -->|"Yes"| Err{"What does it say?"}
+    Capture --> Err
+
+    Err -->|"command not found"| PATH["Cron's PATH is minimal —<br/>usually /usr/bin:/bin. Your shell's PATH<br/>came from .bashrc, which cron never reads.<br/><b>Use absolute paths</b>, or set PATH in the crontab"]
+    Err -->|"No such file or directory"| CWD["Cron starts in $HOME, not your project.<br/>Every relative path is wrong.<br/><b>cd into the directory first</b>"]
+    Err -->|"Permission denied"| Perm["Cron runs as the crontab's owner.<br/>Check with: sudo crontab -l -u user<br/>and confirm the script is +x"]
+    Err -->|"unbound variable, or<br/>an empty value"| Env["Interactive-only env vars: AWS_PROFILE,<br/>JAVA_HOME, anything from .bashrc or direnv.<br/><b>Source what you need explicitly</b>"]
+    Err -->|"Hangs, or truncated"| TTY["No terminal attached. Anything expecting<br/>a TTY (sudo password, ssh host prompt,<br/>progress bars) blocks forever"]
+    Err -->|"Nothing ran at all"| Cron{"Is cron itself<br/>the problem?"}
+
+    Cron --> C1["systemctl status cron / crond<br/>grep CRON /var/log/syslog<br/>Missing final newline in the crontab<br/>Unescaped % — in cron it means newline"]
+
+    PATH --> Test
+    CWD --> Test
+    Perm --> Test
+    Env --> Test
+    TTY --> Test
+    C1 --> Test
+    Test["Reproduce it properly:<br/><b>env -i /bin/bash --noprofile --norc /path/script.sh</b><br/>— an empty environment, exactly like cron's"] --> Done(["Fixed"])
+
+    style Capture fill:#e8f4ff,stroke:#0066cc
+    style Test fill:#fff4e0,stroke:#cc8800
+    style Done fill:#e8ffe8,stroke:#00aa44
+```
+
+⭐ **`env -i` is the trick worth remembering.** It runs your script with *no* inherited environment, which reproduces the cron failure in your own terminal in one second — instead of the edit-wait-five-minutes-check-again loop that makes this bug so tedious.
+
+⚠️ **Redirect output on every cron entry you write**, even ones you expect to be silent. A cron job with no redirection that fails is completely invisible: no log, no alert, and mail that goes to a local spool nobody has opened since 2009.
 
 ---
 

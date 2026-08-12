@@ -64,6 +64,29 @@ KEY PRINCIPLE:
    infrastructure with a plan-before-apply workflow" → ✅
 ```
 
+Each round filters for something different, and candidates lose offers by preparing for one of them five times:
+
+```mermaid
+flowchart LR
+    R1["Recruiter<br/>30 min"] --> R2["Technical screen<br/>45-60 min"]
+    R2 --> R3["System design<br/>60 min"]
+    R3 --> R4["Hands-on<br/>60-120 min"]
+    R4 --> R5["Behavioural<br/>45 min"]
+    R5 --> O(["Offer"])
+
+    R1 -.-> F1["<i>filters:</i> can you describe<br/>your own experience clearly?"]
+    R2 -.-> F2["<i>filters:</i> is the CV true?<br/>depth on Linux, containers, CI"]
+    R3 -.-> F3["<i>filters:</i> can you reason about<br/>trade-offs you have not seen before?"]
+    R4 -.-> F4["<i>filters:</i> can you actually<br/>do the work, not just discuss it?"]
+    R5 -.-> F5["<i>filters:</i> what do you do when<br/>it goes wrong and it's your fault?"]
+
+    style R3 fill:#fff4e0,stroke:#cc8800
+    style R4 fill:#fff4e0,stroke:#cc8800
+    style O fill:#e8ffe8,stroke:#00aa44
+```
+
+⭐ **The two amber rounds are where DevOps offers are won and lost.** Nearly everyone prepares tool trivia for round 2 and almost nobody rehearses design trade-offs or a live debugging session under observation — which is precisely why those rounds discriminate. If your prep time is limited, spend it on the labs' 🧨 Break It sections rather than on more flashcards.
+
 ---
 
 ## 2. Technical FAQs by Domain
@@ -228,6 +251,30 @@ FRAMEWORK FOR SYSTEM DESIGN QUESTIONS:
    - What would you do differently with more time/budget?
 ```
 
+As a clock, because the failure mode is always the same — burning thirty minutes on the fun part and never reaching operations:
+
+```mermaid
+flowchart TD
+    A["<b>0-3 min · Clarify</b><br/>scale, latency, availability target,<br/>team size, what's in scope"] --> A2{{"Write the numbers down<br/>where the interviewer can see them"}}
+    A2 --> B["<b>3-13 min · High-level design</b><br/>boxes, arrows, data flow,<br/>stateless vs stateful"]
+    B --> C["<b>13-28 min · Deep dive</b><br/>one component, chosen with them:<br/>'which part is most interesting to you?'"]
+    C --> D["<b>28-33 min · Operations</b><br/>deploy, monitor, alert, fail over"]
+    D --> E["<b>33-38 min · Trade-offs</b><br/>what you rejected, what breaks at 10×"]
+    E --> F(["Questions for them"])
+
+    C -.->|"⚠️ the classic trap"| Trap["Designing in silence,<br/>or gold-plating one component<br/>until the clock runs out"]
+    D -.->|"⚠️ the DevOps-specific miss"| Miss["Skipping operations entirely —<br/>the section you are being hired for"]
+
+    style A fill:#e8f4ff,stroke:#0066cc
+    style D fill:#e8ffe8,stroke:#00aa44
+    style Trap fill:#ffe8e8,stroke:#cc3333
+    style Miss fill:#ffe8e8,stroke:#cc3333
+```
+
+⭐ **Operations is your differentiator, so budget for it explicitly.** A backend candidate and a DevOps candidate draw a similar box diagram; only one of them says how it gets deployed, what the SLO is, which metric pages someone at 3am, and what the rollback looks like. If time is running short, cut depth from the deep dive — never the operations section.
+
+**Narrate throughout.** Silence reads as being stuck even when you are thinking well. "I'm going to assume 10k requests per second and revisit if that's wrong" invites a correction that saves you ten minutes of designing for the wrong scale.
+
 ---
 
 ## 5. Behavioral Questions
@@ -273,6 +320,35 @@ Practice these scenarios to build your debugging muscle memory. Each one maps to
 | Memory leak | OOM kills, increasing memory usage | `free -h`, `top`, container metrics |
 | Certificate expiry | TLS errors, browser warnings | `openssl s_client`, `curl -v` |
 | Firewall misconfiguration | Connection timeout, no response | `ss -tlnp`, `iptables -L`, `ufw status` |
+
+### What They're Grading in a Live Incident
+
+The scenario is a pretext. What the interviewer watches is the *order* you work in, and one ordering mistake sinks otherwise strong candidates:
+
+```mermaid
+flowchart TD
+    S(["'Production is down. Go.'"]) --> Impact["<b>1 · Establish impact</b><br/>who is affected, how badly, since when.<br/>Ask — the interviewer is playing your monitoring"]
+    Impact --> Comms["<b>2 · Say you'd communicate</b><br/>status page, incident channel, a named lead.<br/>One sentence, and it scores every time"]
+    Comms --> Mit{"Can you <b>mitigate</b><br/>without knowing<br/>the cause?"}
+
+    Mit -->|"Yes"| Do["Roll back, fail over, scale up,<br/>disable the feature flag.<br/><b>Stop the bleeding first</b>"]
+    Mit -->|"No"| Diag
+
+    Do --> Diag["<b>3 · Now diagnose</b><br/>what changed? deploys, config, certs, traffic.<br/>Form one hypothesis and test it cheaply"]
+    Diag --> Fix["<b>4 · Fix the cause</b>"]
+    Fix --> Ver["<b>5 · Verify</b> with the same signal<br/>that told you it was broken"]
+    Ver --> PM["<b>6 · Postmortem</b>, blameless,<br/>with one concrete action item"]
+
+    Diag -.->|"❌ the losing move"| Bad["Diagnosing first while<br/>the outage continues"]
+
+    style Do fill:#e8ffe8,stroke:#00aa44
+    style Bad fill:#ffe8e8,stroke:#cc3333
+    style Comms fill:#e8f4ff,stroke:#0066cc
+```
+
+⭐ **Mitigate before you diagnose.** Curiosity is the trap: a rollback that restores service in two minutes beats a root cause found in twenty, and the cause is still there to investigate afterwards with the pressure off. Saying "first I'd roll back to the last known-good release, then work out why" in the opening thirty seconds marks you as someone who has actually been on call.
+
+**Say the unglamorous things out loud** — declaring an incident, posting to the status page, handing off if you're the only one awake. Interviewers are listening for whether you know an outage is a coordination problem, not just a technical one.
 
 ---
 

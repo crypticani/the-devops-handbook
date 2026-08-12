@@ -315,6 +315,32 @@ ELK is like indexing every word in every book in the library.
 Loki is like indexing only the book titles and authors — then reading the book when needed.
 ```
 
+The analogy is exact, and the diagram shows where the cost moves to:
+
+```mermaid
+flowchart TB
+    subgraph E["ELK — pay at write time"]
+        direction LR
+        EL["Log line"] --> EP["Parse every field"] --> EI["Invert index<br/><b>every word</b>"] --> ES[("Index<br/>~1× the raw size,<br/>held in RAM-hungry shards")]
+        ES --> EQ["Query: fast,<br/>any word, any field"]
+    end
+
+    subgraph L["Loki — pay at query time"]
+        direction LR
+        LL["Log line"] --> LP["Index the <b>labels only</b><br/>app, env, pod"] --> LC[("Compressed chunks<br/>in object storage<br/>— cheap")]
+        LC --> LQ["Query: select by label,<br/>then <b>grep the chunks</b>"]
+    end
+
+    style ES fill:#ffe8e8,stroke:#cc3333
+    style LC fill:#e8ffe8,stroke:#00aa44
+    style EQ fill:#e8f4ff,stroke:#0066cc
+    style LQ fill:#fff4e0,stroke:#cc8800
+```
+
+⭐ **Neither is cheaper in general — they move the bill.** ELK spends CPU, RAM and disk on every line whether or not anyone ever searches for it, and rewards you with fast arbitrary queries. Loki stores almost nothing extra and charges you at query time, which is fine when your queries start with a label selector and painful when they don't.
+
+⚠️ **Loki's failure mode is high-cardinality labels.** Putting `user_id` or `request_id` in a label creates a separate stream per value and rebuilds the very index you chose Loki to avoid — the cardinality trap from Module 07 §3, in a different product. Labels are for the dimensions you filter by (`app`, `env`, `namespace`); everything else belongs in the log line where LogQL can grep it.
+
 | Aspect | ELK Stack | Loki + Grafana |
 |--------|-----------|----------------|
 | **Indexing** | Full-text (every word) | Labels only (metadata) |
@@ -399,6 +425,38 @@ Application → stdout/stderr → Docker log driver → Loki/ELK
 ```
 
 > 💡 **12-Factor App Rule:** Applications should log to **stdout**, never to files. Let the platform handle log collection.
+
+### The Whole Path, and Where Lines Disappear
+
+Whichever pattern you pick, a log line crosses six boundaries between your `print()` and a search result. Each one drops lines under a specific, predictable condition:
+
+```mermaid
+flowchart LR
+    App["Application<br/>writes to stdout"] --> Buf1["stdout buffer<br/>in the process"]
+    Buf1 --> Drv["Container runtime<br/>log driver → JSON file"]
+    Drv --> Agent["Agent tails the file<br/>Promtail / Filebeat / Fluent Bit"]
+    Agent --> Buf2["Agent buffer<br/>memory or disk"]
+    Buf2 --> Ing["Ingester<br/>parse, label, index"]
+    Ing --> Store[("Store<br/>with a retention window")]
+    Store --> Q["Query<br/>Kibana / Grafana"]
+
+    Buf1 -.->|"❌ process crashed<br/>before the buffer flushed"| X1["lost"]
+    Drv -.->|"❌ file rotated and<br/>deleted before the agent read it"| X2["lost"]
+    Buf2 -.->|"❌ buffer full — backend down<br/>or too slow"| X3["dropped"]
+    Ing -.->|"❌ parse failure, or<br/>a rejected timestamp"| X4["silently discarded"]
+    Store -.->|"❌ past retention"| X5["gone"]
+
+    style X1 fill:#ffe8e8,stroke:#cc3333
+    style X2 fill:#ffe8e8,stroke:#cc3333
+    style X3 fill:#ffe8e8,stroke:#cc3333
+    style X4 fill:#ffe8e8,stroke:#cc3333
+    style X5 fill:#ffe8e8,stroke:#cc3333
+    style Ing fill:#e8f4ff,stroke:#0066cc
+```
+
+⭐ **Logging is best-effort at every hop, and nothing tells you when a line vanishes.** That is the difference between logs and metrics: a dropped counter increment shows as a dip you can see, a dropped log line leaves no trace at all. Two consequences worth designing around — **never build billing or audit on log delivery** (use a durable queue or the database), and **alert on ingestion rate**, because a collector that stopped shipping looks exactly like an application that went quiet.
+
+⚠️ **Unbuffered output is worth the syscalls for anything you'll debug with.** A Python app with block-buffered stdout can hold thousands of lines in memory, and if it segfaults you lose precisely the lines that explain why. `PYTHONUNBUFFERED=1`, `flush=True`, or `stdbuf -oL` for arbitrary commands.
 
 ---
 
@@ -564,6 +622,39 @@ Alert fires: "High error rate on order-service"
       ├─ Restart payment-service (immediate fix)
       └─ Add circuit breaker + retry logic (long-term fix)
 ```
+
+### 🔧 Troubleshooting: "My Logs Aren't Showing Up"
+
+Before you conclude the logging stack is broken, walk the path backwards from the query. Each check is one command and eliminates a whole hop:
+
+```mermaid
+flowchart TD
+    S(["Nothing in Kibana / Grafana"]) --> Time{"Is the time range<br/>and timezone right?"}
+    Time -->|"No"| TZ["The single most common cause.<br/>UTC vs local, a 'last 15 minutes' window,<br/>or the app stamping a wrong timestamp<br/>so lines land in yesterday"]
+    Time -->|"Yes"| Query{"Does a bare query with<br/>no filters return anything?"}
+
+    Query -->|"Yes"| Sel["Your selector is wrong, not the pipeline.<br/>Check label and field spelling, and case —<br/>a Loki label selector matches exactly, never fuzzily"]
+    Query -->|"No"| App{"Is the app actually<br/>writing anything?<br/><i>docker logs / kubectl logs</i>"}
+
+    App -->|"No"| AppFix["Not a logging problem.<br/>Log level too high, wrong stream,<br/>or writing to a file inside the container"]
+    App -->|"Yes"| Agent{"Is the agent running,<br/>and does it see the file?<br/><i>promtail/filebeat logs, targets page</i>"}
+
+    Agent -->|"Not running"| AgFix["DaemonSet not scheduled on that node,<br/>or the agent crash-looped"]
+    Agent -->|"Running, no targets"| Mount["Path or permission problem:<br/>/var/log/pods not mounted,<br/>or the selector matches no pods"]
+    Agent -->|"Running with targets"| Ship{"Errors in the<br/>agent's own log?"}
+
+    Ship -->|"Parse / pipeline errors"| Parse["Malformed JSON, a multi-line stack trace<br/>split into fragments, or a timestamp<br/>format the parser rejects"]
+    Ship -->|"429 / 5xx from the backend"| Back["Backend is rejecting: rate limits,<br/>ingestion quota, a full disk,<br/>or Elasticsearch in read-only mode"]
+    Ship -->|"None"| Retain["Check retention and index rollover —<br/>the lines arrived and were aged out"]
+
+    style TZ fill:#fff4e0,stroke:#cc8800
+    style AppFix fill:#e8f4ff,stroke:#0066cc
+    style Back fill:#ffe8e8,stroke:#cc3333
+```
+
+⭐ **Check the clock first.** It costs five seconds and it is the answer often enough that experienced engineers do it reflexively. A container with a skewed clock, or an app logging local time while the backend assumes UTC, puts perfectly healthy lines hours away from where you are looking.
+
+⚠️ **Elasticsearch turning its indices read-only when a disk crosses the flood-stage watermark (95% by default) is a classic**: ingestion stops, no error surfaces in your app, and the fix is to free space *and* clear the read-only block manually — it does not lift itself.
 
 ---
 
