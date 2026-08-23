@@ -9,7 +9,7 @@ Move Terraform state off your laptop and into shared, versioned, encrypted, **lo
 ## 📋 Prerequisites
 
 - Completed [Lab 01: Terraform Basics](./lab-01-terraform-basics.md)
-- AWS CLI configured, Terraform ≥ 1.6
+- AWS CLI configured, Terraform ≥ 1.10 (S3 native locking needs 1.10+)
 - Two terminals (you'll need them for the locking exercise)
 
 ```bash
@@ -17,13 +17,13 @@ aws sts get-caller-identity      # ⭐ confirm the account before anything else
 terraform version
 ```
 
-> 💰 **Cost**: S3 storage for a few KB is effectively free. DynamoDB on-demand costs fractions of a cent for this lab. Cleanup instructions are at the end — the backend bucket is the one thing you may want to keep.
+> 💰 **Cost**: S3 storage for a few KB is effectively free, and S3 native locking adds no extra resource to pay for. Cleanup instructions are at the end — the backend bucket is the one thing you may want to keep.
 
 ---
 
 ## 📦 Deliverables and Evidence
 
-- Bootstrap configuration for the state backend (S3 + DynamoDB, or S3 native locking)
+- Bootstrap configuration for the state backend (S3 with native locking)
 - Output of a state migration from local to remote
 - A screenshot or transcript of a **real lock conflict** between two terminals
 - Evidence of recovering a previous state version from S3
@@ -51,7 +51,7 @@ mkdir -p tf-state-lab/app && cd tf-state-lab/app
 
 cat > main.tf <<'HCL'
 terraform {
-  required_version = ">= 1.6.0"
+  required_version = ">= 1.10.0"
   required_providers {
     aws    = { source = "hashicorp/aws", version = "~> 5.0" }
     random = { source = "hashicorp/random", version = "~> 3.6" }
@@ -201,14 +201,15 @@ aws s3api put-bucket-lifecycle-configuration --bucket "$TF_STATE_BUCKET" \
     "NoncurrentVersionExpiration":{"NoncurrentDays":90},
     "AbortIncompleteMultipartUpload":{"DaysAfterInitiation":7}}]}'
 
-# DynamoDB lock table — the partition key MUST be named LockID
-aws dynamodb create-table --table-name terraform-locks \
-  --attribute-definitions AttributeName=LockID,AttributeType=S \
-  --key-schema AttributeName=LockID,KeyType=HASH \
-  --billing-mode PAY_PER_REQUEST >/dev/null
-aws dynamodb wait table-exists --table-name terraform-locks
+# ⭐ No lock table. S3 native locking (Terraform 1.10+) takes the lock with a
+# conditional write on a <key>.tflock object in this same bucket.
 echo "✅ backend ready"
 ```
+
+> ⚠️ **Older guides create a DynamoDB `terraform-locks` table here.** DynamoDB-based
+> locking is [deprecated and will be removed in a future minor version](https://developer.hashicorp.com/terraform/language/backend/s3#state-locking).
+> The bucket you just made is the whole backend now — one less resource to bootstrap,
+> pay for, and forget to grant IAM on.
 
 ### Step 2: Verify the Guard Rails
 
@@ -216,10 +217,9 @@ echo "✅ backend ready"
 aws s3api get-bucket-versioning  --bucket "$TF_STATE_BUCKET"
 aws s3api get-bucket-encryption  --bucket "$TF_STATE_BUCKET" --query 'ServerSideEncryptionConfiguration.Rules[0]'
 aws s3api get-public-access-block --bucket "$TF_STATE_BUCKET" --query PublicAccessBlockConfiguration
-aws dynamodb describe-table --table-name terraform-locks --query 'Table.{Name:TableName,Status:TableStatus,Key:KeySchema}'
 ```
 
-**✅ Checkpoint:** Versioning `Enabled`, encryption configured, all four public-access blocks `true`, lock table `ACTIVE`.
+**✅ Checkpoint:** Versioning `Enabled`, encryption configured, all four public-access blocks `true`.
 
 ---
 
@@ -237,16 +237,16 @@ terraform {
   backend "s3" {
     # Intentionally minimal: the rest comes from -backend-config at init time,
     # which is how you point the same code at different environments.
-    key     = "lab-02/app/terraform.tfstate"
-    encrypt = true
+    key          = "lab-02/app/terraform.tfstate"
+    encrypt      = true
+    use_lockfile = true    # ⭐ locking is a property of the code, not the environment
   }
 }
 HCL
 
 cat > backend.hcl <<HCL
-bucket         = "$TF_STATE_BUCKET"
-region         = "$AWS_REGION"
-dynamodb_table = "terraform-locks"
+bucket = "$TF_STATE_BUCKET"
+region = "$AWS_REGION"
 HCL
 ```
 
@@ -287,21 +287,25 @@ aws s3api list-object-versions --bucket "$TF_STATE_BUCKET" --prefix lab-02/app/t
   --query 'Versions[].{Version:VersionId,Modified:LastModified,Latest:IsLatest}' --output table
 ```
 
-> 💡 **S3 native locking (Terraform 1.10+)** removes the DynamoDB table entirely:
+> 💡 **Inheriting a DynamoDB backend?** You will meet `dynamodb_table = "terraform-locks"`
+> in most existing repos, and it still works — but it is deprecated and slated for removal.
+> Migrate by setting **both** for one release:
 >
 > ```hcl
 > terraform {
 >   backend "s3" {
->     bucket       = "my-tf-state"
->     key          = "prod/terraform.tfstate"
->     region       = "us-east-1"
->     encrypt      = true
->     use_lockfile = true    # ⭐ a .tflock object in S3 instead of a DynamoDB row
+>     bucket         = "my-tf-state"
+>     key            = "prod/terraform.tfstate"
+>     region         = "us-east-1"
+>     encrypt        = true
+>     use_lockfile   = true                 # ⭐ new path
+>     dynamodb_table = "terraform-locks"    # keep until everyone is on 1.10+
 >   }
 > }
 > ```
 >
-> One less resource to bootstrap and pay for. DynamoDB remains the compatible choice for older Terraform versions and for teams already running it.
+> Terraform takes both locks, so a colleague still on an older CLI is still protected.
+> Once every runner and laptop is on 1.10+, delete the `dynamodb_table` line, then the table.
 
 ---
 
@@ -352,13 +356,15 @@ terraform plan
 ╷
 │ Error: Error acquiring the state lock
 │
-│ Error message: operation error DynamoDB: PutItem, ConditionalCheckFailedException
+│ Error message: operation error S3: PutObject, https response error StatusCode: 412,
+│                api error PreconditionFailed: At least one of the pre-conditions you
+│                specified did not hold
 │ Lock Info:
 │   ID:        3f8a91c2-...
 │   Path:      tf-state-.../lab-02/app/terraform.tfstate
 │   Operation: OperationTypeApply
 │   Who:       you@your-laptop
-│   Version:   1.9.x
+│   Version:   1.10.x
 │   Created:   2026-08-04 11:42:07 UTC
 ╵
 ```
@@ -370,14 +376,19 @@ terraform plan
 **Terminal 2**, still while the apply runs:
 
 ```bash
-aws dynamodb scan --table-name terraform-locks \
-  --query 'Items[].{LockID:LockID.S,Info:Info.S}' --output json | python3 -m json.tool
+# ⭐ The lock IS an object: <state key>.tflock, right next to the state
+aws s3 ls "s3://$TF_STATE_BUCKET/lab-02/app/"
+
+# Its body is the same lock info Terraform printed in the error
+aws s3 cp "s3://$TF_STATE_BUCKET/lab-02/app/terraform.tfstate.tflock" - | python3 -m json.tool
 ```
 
 Wait for terminal 1 to finish, then:
 
 ```bash
-aws dynamodb scan --table-name terraform-locks --query 'Count'   # 0 — released automatically
+# Gone — the lock object is deleted on exit
+aws s3api head-object --bucket "$TF_STATE_BUCKET" \
+  --key lab-02/app/terraform.tfstate.tflock 2>&1 | grep -q 'Not Found' && echo "✅ lock released"
 terraform plan                                                    # ✅ works now
 ```
 
@@ -407,13 +418,14 @@ mkdir -p consumer && cd consumer
 
 cat > main.tf <<'HCL'
 terraform {
-  required_version = ">= 1.6.0"
+  required_version = ">= 1.10.0"
   required_providers {
     aws = { source = "hashicorp/aws", version = "~> 5.0" }
   }
   backend "s3" {
-    key     = "lab-02/consumer/terraform.tfstate"
-    encrypt = true
+    key          = "lab-02/consumer/terraform.tfstate"
+    encrypt      = true
+    use_lockfile = true
   }
 }
 
@@ -515,7 +527,7 @@ terraform plan
 
 ```bash
 # What is the lock, and who holds it?
-aws dynamodb scan --table-name terraform-locks --query 'Items[].Info.S' --output text | python3 -m json.tool
+aws s3 cp "s3://$TF_STATE_BUCKET/lab-02/app/terraform.tfstate.tflock" - | python3 -m json.tool
 
 # ⭐ THE CRITICAL CHECK — is an apply genuinely still running?
 #   1. Ask the person named in "Who"
@@ -531,11 +543,11 @@ aws cloudtrail lookup-events --max-results 10 \
 **Fix — only after confirming the operation is dead:**
 
 ```bash
-LOCK_ID=$(aws dynamodb scan --table-name terraform-locks \
-  --query 'Items[0].Info.S' --output text | python3 -c 'import json,sys; print(json.load(sys.stdin)["ID"])')
-echo "lock id: $LOCK_ID"
+LOCK_ID=$(aws s3 cp "s3://$TF_STATE_BUCKET/lab-02/app/terraform.tfstate.tflock" - \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["ID"])')
+echo "lock id: $LOCK_ID"     # ⭐ same ID Terraform printed in the error
 terraform force-unlock "$LOCK_ID"
-terraform plan       # ✅ works again
+terraform plan               # ✅ works again
 ```
 
 > ⚠️ **`force-unlock` during a genuinely running apply is how state actually gets corrupted** — two processes writing different views of reality to the same file. A stuck lock costs you minutes; a corrupted state costs you a day. If you are not certain, wait.
@@ -737,7 +749,7 @@ Generate the key from the directory path in CI so it can never be wrong by hand.
 - [ ] Versioning **enabled** on the state bucket
 - [ ] Encryption at rest (SSE-S3 minimum, SSE-KMS for regulated data)
 - [ ] All four public-access blocks on
-- [ ] Locking configured (DynamoDB table, or `use_lockfile = true`)
+- [ ] Locking configured — `use_lockfile = true` (not the deprecated `dynamodb_table`)
 - [ ] Lifecycle rule expiring noncurrent versions (they accumulate)
 - [ ] Bucket IAM policy restricted to the roles that need it — **state contains secrets**
 - [ ] A key convention that makes collisions structurally impossible
@@ -760,8 +772,7 @@ cd .. && rm -rf tf-state-lab
 # aws s3 rm "s3://$TF_STATE_BUCKET" --recursive
 # aws s3api delete-objects --bucket "$TF_STATE_BUCKET" --delete "$(aws s3api list-object-versions \
 #   --bucket "$TF_STATE_BUCKET" --query '{Objects: Versions[].{Key:Key,VersionId:VersionId}}')" 2>/dev/null
-# aws s3api delete-bucket --bucket "$TF_STATE_BUCKET"
-# aws dynamodb delete-table --table-name terraform-locks
+# aws s3api delete-bucket --bucket "$TF_STATE_BUCKET"   # ⭐ nothing else to delete
 
 # Verify nothing is left billing
 aws s3 ls | grep tf-lab-app || echo "✅ no lab buckets remain"
@@ -773,7 +784,7 @@ aws s3 ls | grep tf-lab-app || echo "✅ no lab buckets remain"
 
 - [ ] Explain the three ways local state fails a team
 - [ ] Show that a `sensitive` value is stored in plaintext in state
-- [ ] Bootstrap an S3 + DynamoDB backend with versioning, encryption, and public-access blocks
+- [ ] Bootstrap an S3 backend with native locking, versioning, encryption, and public-access blocks
 - [ ] Migrate existing state with `-migrate-state` and prove no infrastructure changed
 - [ ] Use partial backend configuration with `-backend-config`
 - [ ] Trigger and inspect a real lock conflict between two terminals

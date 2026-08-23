@@ -149,11 +149,11 @@ terraform {
     }
   }
   backend "s3" {
-    bucket         = "my-tf-state"
-    key            = "prod/network/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "terraform-locks"
-    encrypt        = true
+    bucket       = "my-tf-state"
+    key          = "prod/network/terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true        # ⭐ locking; dynamodb_table is deprecated
   }
 }
 
@@ -497,29 +497,34 @@ terraform-docs markdown table . > README.md
 ## Backends & Locking
 
 ```hcl
-# S3 + DynamoDB (classic)
-terraform {
-  backend "s3" {
-    bucket         = "my-tf-state"
-    key            = "prod/network/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "terraform-locks"        # ⭐ the lock
-    encrypt        = true
-    kms_key_id     = "arn:aws:kms:..."
-  }
-}
-
-# S3 native locking (Terraform 1.10+) — no DynamoDB table needed
+# S3 native locking (Terraform 1.10+) — ⭐ the default choice
 terraform {
   backend "s3" {
     bucket       = "my-tf-state"
-    key          = "prod/terraform.tfstate"
+    key          = "prod/network/terraform.tfstate"
     region       = "us-east-1"
     encrypt      = true
-    use_lockfile = true
+    kms_key_id   = "arn:aws:kms:..."
+    use_lockfile = true        # ⭐ the lock: a <key>.tflock object, conditional write
+  }
+}
+
+# DynamoDB locking (legacy) — ⚠️ deprecated, removal planned in a future minor version
+terraform {
+  backend "s3" {
+    bucket         = "my-tf-state"
+    key            = "prod/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+    dynamodb_table = "terraform-locks"
   }
 }
 ```
+
+**Migrating off DynamoDB:** set `use_lockfile = true` *and* keep `dynamodb_table` for one
+release — Terraform accepts both and takes both locks, so a colleague still on an older
+CLI stays protected. Once everyone is on 1.10+, drop `dynamodb_table` and delete the table.
+IAM for the lockfile needs `s3:GetObject`, `s3:PutObject`, `s3:DeleteObject` on `<key>.tflock`.
 
 **Bootstrap the backend** (chicken-and-egg: create these once, by hand or with local state):
 
@@ -533,10 +538,12 @@ aws s3api put-bucket-encryption --bucket my-tf-state \
 aws s3api put-public-access-block --bucket my-tf-state \
   --public-access-block-configuration \
   "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
-aws dynamodb create-table --table-name terraform-locks \
-  --attribute-definitions AttributeName=LockID,AttributeType=S \
-  --key-schema AttributeName=LockID,KeyType=HASH \
-  --billing-mode PAY_PER_REQUEST
+# ⭐ That's it — with use_lockfile there is no lock table to create.
+# Legacy DynamoDB locking only (partition key MUST be named LockID):
+# aws dynamodb create-table --table-name terraform-locks \
+#   --attribute-definitions AttributeName=LockID,AttributeType=S \
+#   --key-schema AttributeName=LockID,KeyType=HASH \
+#   --billing-mode PAY_PER_REQUEST
 ```
 
 ```hcl

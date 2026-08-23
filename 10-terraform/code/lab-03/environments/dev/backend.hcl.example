@@ -1,3 +1,2 @@
-bucket         = "tf-state-<ACCOUNT_ID>-<REGION>"
-region         = "us-east-1"
-dynamodb_table = "terraform-locks"
+bucket = "tf-state-<ACCOUNT_ID>-<REGION>"
+region = "us-east-1"

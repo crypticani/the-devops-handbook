@@ -27,7 +27,7 @@ Jump: [A](#a) · [B](#b) · [C](#c) · [D](#d) · [E](#e) · [F](#f) · [G](#g) 
 
 ## B
 
-- **Backend (Terraform)** — Where state is stored. A remote backend (S3 + DynamoDB lock, Terraform Cloud) is what makes team use safe. [10]
+- **Backend (Terraform)** — Where state is stored. A remote backend (S3 with `use_lockfile` for locking, HCP Terraform) is what makes team use safe. [10]
 - **Backpressure** — What happens when consumers can't keep up: either the queue grows (memory, disk, cost) or producers must be slowed. Choose deliberately and set retention, or the broker chooses for you. [14]
 - **Base image** — The image a Dockerfile starts `FROM`. Everything in it ships in your image, including its vulnerabilities. [05] [13]
 - **Bastion host** — A hardened, audited jump host that is the only SSH entry point into a private network. [09] [13]

@@ -359,26 +359,26 @@ flowchart TB
 sequenceDiagram
     participant A as Engineer A
     participant B as Engineer B
-    participant DDB as DynamoDB<br/>(lock table)
+    participant LK as S3 lock object<br/>(terraform.tfstate.tflock)
     participant S3 as S3 bucket<br/>(state, versioned + encrypted)
     participant AWS as ☁️ AWS
 
-    A->>DDB: acquire lock
-    DDB-->>A: 🔒 acquired
+    A->>LK: conditional PUT (if-none-match)
+    LK-->>A: 🔒 acquired
     A->>S3: read state
-    B->>DDB: acquire lock
-    DDB-->>B: ❌ Error: state locked by Engineer A
+    B->>LK: conditional PUT (if-none-match)
+    LK-->>B: ❌ 412 Precondition Failed — locked by Engineer A
     Note over B: B waits — cannot corrupt state
     A->>AWS: apply changes
     A->>S3: write new state (new version)
-    A->>DDB: release lock
-    B->>DDB: acquire lock
-    DDB-->>B: 🔒 acquired
+    A->>LK: DELETE lock object
+    B->>LK: conditional PUT (if-none-match)
+    LK-->>B: 🔒 acquired
     B->>S3: read A's updated state
     Note over B: B now plans against reality
 ```
 
-| | Local | Remote (S3 + DynamoDB, or Terraform Cloud) |
+| | Local | Remote (S3 with `use_lockfile`, or HCP Terraform) |
 |---|-------|--------------------------------------------|
 | **Collaboration** | ❌ One person only | ✅ Whole team |
 | **Locking** | ❌ None | ✅ Concurrent applies blocked |
@@ -391,14 +391,21 @@ sequenceDiagram
 ```hcl
 terraform {
   backend "s3" {
-    bucket         = "my-terraform-state"
-    key            = "prod/infrastructure/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "terraform-locks"    # State locking
-    encrypt        = true
+    bucket       = "my-terraform-state"
+    key          = "prod/infrastructure/terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true    # ⭐ State locking — a .tflock object in the bucket
   }
 }
 ```
+
+> ⚠️ **Older guides use `dynamodb_table = "terraform-locks"` for locking.** That is
+> [deprecated and will be removed in a future minor version](https://developer.hashicorp.com/terraform/language/backend/s3#state-locking).
+> Use `use_lockfile = true` (Terraform 1.10+) instead: S3 itself does the locking with a
+> conditional write, so there is no second resource to bootstrap, pay for, or forget to
+> grant IAM on. Migrating? Set both for one release — Terraform accepts them together —
+> then drop `dynamodb_table` and delete the table.
 
 ### State Commands
 
@@ -910,7 +917,7 @@ Two engineers run "terraform apply" at the same time:
   Engineer B: Creating instance → OVERWRITES state
   Result: Orphaned resources, corrupted state
 
-FIX: Use remote state with DynamoDB locking.
+FIX: Use remote state with locking (S3 `use_lockfile = true`).
 ```
 
 ### ❌ Massive Monolithic Configs
@@ -957,10 +964,10 @@ terraform plan fails?
 > Terraform is a declarative IaC tool that provisions infrastructure across any cloud provider. Unlike CloudFormation (AWS-only), Terraform is multi-cloud — the same workflow works for AWS, GCP, Azure, and hundreds of other providers. It has a larger community, reusable modules on the Terraform Registry, and the plan/apply workflow provides safe change management.
 
 **Q: Explain Terraform state. Why is it important?**
-> State maps your code to real cloud resources. When you write `resource "aws_instance" "web"`, the state records that "web" = instance `i-0abc123`. Without state, Terraform would try to create duplicates on every apply. State must be stored remotely (S3 + DynamoDB) for team collaboration and locking.
+> State maps your code to real cloud resources. When you write `resource "aws_instance" "web"`, the state records that "web" = instance `i-0abc123`. Without state, Terraform would try to create duplicates on every apply. State must be stored remotely (S3 with `use_lockfile = true`) for team collaboration and locking.
 
 **Q: What happens if two people run terraform apply simultaneously?**
-> Without state locking, they can corrupt the state file. With DynamoDB locking, the second person gets a "state locked" error and must wait. This is why remote state with locking is essential for teams.
+> Without state locking, they can corrupt the state file. With locking on, the second person gets a "state locked" error and must wait. This is why remote state with locking is essential for teams.
 
 **Q: How do you manage multiple environments?**
 > Separate directories per environment (dev/, staging/, prod/) with shared modules. Each environment has its own state file and variable values. Modules ensure consistency — same infrastructure pattern, different parameters. Some teams use workspaces, but separate directories provide better isolation.

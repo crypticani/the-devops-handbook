@@ -77,7 +77,7 @@ tf-modules-lab/
 ```bash
 cat > modules/bucket/versions.tf <<'HCL'
 terraform {
-  required_version = ">= 1.6.0"
+  required_version = ">= 1.10.0"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -325,7 +325,7 @@ MD
 ```bash
 cat > environments/dev/backend.tf <<'HCL'
 terraform {
-  required_version = ">= 1.6.0"
+  required_version = ">= 1.10.0"
   required_providers {
     aws    = { source = "hashicorp/aws", version = "~> 5.0" }
     random = { source = "hashicorp/random", version = "~> 3.6" }
@@ -376,9 +376,8 @@ output "bucket" {
 HCL
 
 cat > environments/dev/backend.hcl <<HCL
-bucket         = "$TF_STATE_BUCKET"
-region         = "$AWS_REGION"
-dynamodb_table = "terraform-locks"
+bucket = "$TF_STATE_BUCKET"
+region = "$AWS_REGION"
 HCL
 
 cd environments/dev

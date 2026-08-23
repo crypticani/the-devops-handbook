@@ -35,7 +35,7 @@ lab-01/
 
 ### `lab-02/`
 
-Two stacks sharing an S3 + DynamoDB backend: `app/` produces outputs, `consumer/` reads them via `terraform_remote_state`.
+Two stacks sharing an S3 backend with native locking: `app/` produces outputs, `consumer/` reads them via `terraform_remote_state`.
 
 ```
 lab-02/

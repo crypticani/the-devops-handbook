@@ -43,4 +43,4 @@
 ## 🎯 Recommended Practice Path
 
 1. **Week 1**: Install Terraform. Create a VPC + EC2 instance on AWS free tier. Learn plan/apply/destroy. Use variables and outputs. Practice `terraform import` on existing resources.
-2. **Week 2**: Set up remote state (S3 + DynamoDB). Build a reusable VPC module. Create dev and prod environments using the same module. Add tflint and checkov to your workflow.
+2. **Week 2**: Set up remote state (S3 with `use_lockfile = true`). Build a reusable VPC module. Create dev and prod environments using the same module. Add tflint and checkov to your workflow.
