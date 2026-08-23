@@ -1,11 +1,12 @@
 terraform {
-  required_version = ">= 1.6.0"
+  required_version = ">= 1.10.0" # ⭐ use_lockfile needs 1.10+
   required_providers {
     aws = { source = "hashicorp/aws", version = "~> 5.0" }
   }
   backend "s3" {
-    key     = "lab-02/consumer/terraform.tfstate"
-    encrypt = true
+    key          = "lab-02/consumer/terraform.tfstate"
+    encrypt      = true
+    use_lockfile = true # ⭐ S3 native locking — no DynamoDB table
   }
 }
 

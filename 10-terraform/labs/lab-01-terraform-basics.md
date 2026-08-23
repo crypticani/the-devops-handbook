@@ -482,7 +482,7 @@ Error: Error acquiring the state lock
     Created:   2026-08-04 09:12:33 UTC
 ```
 
-Nobody on the team can plan or apply. With a local backend you'll see `.terraform.tfstate.lock.info`; with S3+DynamoDB the lock row sits in the table.
+Nobody on the team can plan or apply. With a local backend you'll see `.terraform.tfstate.lock.info`; with an S3 backend the lock is a `<state key>.tflock` object next to the state.
 
 **Investigate — before you force anything, confirm nothing is actually running:**
 
@@ -490,9 +490,8 @@ Nobody on the team can plan or apply. With a local backend you'll see `.terrafor
 # Local backend
 ls -la .terraform.tfstate.lock.info && cat .terraform.tfstate.lock.info | jq
 
-# S3 + DynamoDB backend
-aws dynamodb scan --table-name terraform-locks \
-  --query 'Items[].{LockID:LockID.S,Info:Info.S}' --output json | jq
+# S3 backend with use_lockfile — the lock is an object, and its body is the lock info
+aws s3 cp s3://my-tf-state/prod/terraform.tfstate.tflock - | jq
 
 # ⭐ THE CRITICAL CHECK: is a real apply still in flight?
 #   - Ask the person named in "Who"
@@ -536,7 +535,7 @@ terraform state push restored.tfstate
 **Prevention checklist:**
 
 - [ ] Remote backend with **versioning** and **encryption** enabled
-- [ ] State locking configured (DynamoDB table, or S3 `use_lockfile`)
+- [ ] State locking configured — S3 `use_lockfile = true` (`dynamodb_table` is deprecated)
 - [ ] `lifecycle { prevent_destroy = true }` on databases, state buckets, and anything holding data
 - [ ] CI runs `terraform plan -out=tfplan`, posts it to the PR, and `apply`s **that exact file**
 - [ ] Scheduled `plan -detailed-exitcode` to catch drift before it surprises a deploy

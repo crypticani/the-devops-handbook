@@ -133,7 +133,7 @@ flowchart LR
 ### Infrastructure as Code
 
 **Q: What is Terraform state and why does it matter?**
-> State is Terraform's record of what it has created. It maps your configuration to real infrastructure. Without state, Terraform can't know what exists and would try to create duplicates. State should be stored remotely (S3 + DynamoDB for locking) in team environments. Never commit state to git — it may contain secrets. Use `terraform plan` to preview changes before applying.
+> State is Terraform's record of what it has created. It maps your configuration to real infrastructure. Without state, Terraform can't know what exists and would try to create duplicates. State should be stored remotely (S3 with `use_lockfile = true` for locking) in team environments. Never commit state to git — it may contain secrets. Use `terraform plan` to preview changes before applying.
 
 **Q: Terraform vs Ansible — when to use each?**
 > Terraform is declarative and excels at provisioning infrastructure (VMs, networks, databases). Ansible is procedural/declarative and excels at configuring software on existing machines. Use Terraform to create the servers, Ansible to configure them. Some overlap exists — Terraform has provisioners, Ansible has cloud modules — but each tool is strongest in its primary domain.
